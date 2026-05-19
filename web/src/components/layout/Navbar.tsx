@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { ThemeToggle } from '../ui/ThemeToggle'
 
 export function Navbar() {
-  const { user, signOut } = useAuth()
+  const { user, role, signOut } = useAuth()
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -23,6 +23,7 @@ export function Navbar() {
           <NavLink to="/browse" className="font-semibold text-zinc-700 transition-colors hover:text-ink dark:text-white/70 dark:hover:text-white">Browse</NavLink>
           <a href="/#how-it-works" className="font-semibold text-zinc-700 transition-colors hover:text-ink dark:text-white/70 dark:hover:text-white">How it works</a>
           {user ? <NavLink to="/dashboard" className="font-semibold text-zinc-700 transition-colors hover:text-ink dark:text-white/70 dark:hover:text-white">Dashboard</NavLink> : null}
+          {user && role === 'admin' ? <NavLink to="/admin" className="font-semibold text-zinc-700 transition-colors hover:text-ink dark:text-white/70 dark:hover:text-white">Admin</NavLink> : null}
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />

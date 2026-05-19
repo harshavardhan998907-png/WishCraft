@@ -2,6 +2,12 @@ import { Route, Routes } from 'react-router-dom'
 import { PageWrapper } from './components/layout/PageWrapper'
 import { AdminRoute } from './components/layout/AdminRoute'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
+import { AdminLayout } from './modules/admin/layouts/AdminLayout'
+import { AdminDashboard } from './modules/admin/pages/AdminDashboard'
+import { AdminOrders } from './modules/admin/pages/AdminOrders'
+import { AdminSettings } from './modules/admin/pages/AdminSettings'
+import { AdminTemplates } from './modules/admin/pages/AdminTemplates'
+import { AdminUsers } from './modules/admin/pages/AdminUsers'
 import { Home } from './pages/Home'
 import { Browse } from './pages/Browse'
 import { Auth } from './pages/Auth'
@@ -25,7 +31,14 @@ export default function App() {
         <Route path="/preview" element={<ProtectedRoute><Preview /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/share/:slug" element={<ProtectedRoute><Share /></ProtectedRoute>} />
-        <Route path="/admin/*" element={<AdminRoute><NotFound /></AdminRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="templates" element={<AdminTemplates />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
         <Route path="/w/:slug" element={<WishPage />} />
         <Route path="/expired" element={<Expired />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
