@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { defaultRole, getPermissions, normalizeRole } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
 import type { Profile } from '../types'
 
 export function useAuth() {
-  const { user, profile, setUser, setProfile } = useAuthStore()
+  const { user, profile, role, permissions, setUser, setProfile } = useAuthStore()
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (nextUser: User | null) => {
@@ -18,7 +19,7 @@ export function useAuth() {
       console.warn('[useAuth] profile lookup failed', { userId: nextUser.id, error })
       return
     }
-    setProfile(data as Profile)
+    setProfile({ ...(data as Profile), role: normalizeRole((data as Profile).role) })
   }, [setProfile])
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export function useAuth() {
     })
     if (error) throw new Error(error.message)
     if (data.user) {
-      const profileRow = { id: data.user.id, email, full_name: fullName, avatar_url: null }
+      const profileRow = { id: data.user.id, email, full_name: fullName, avatar_url: null, role: defaultRole }
       const { error: profileError } = await supabase.from('profiles').upsert(profileRow)
       if (profileError) {
         console.error('[useAuth] profile upsert failed after signup', { userId: data.user.id, profileError })
@@ -74,5 +75,5 @@ export function useAuth() {
     setProfile(null)
   }
 
-  return { user, profile, signUp, signIn, signOut, loading }
+  return { user, profile, role, permissions: permissions ?? getPermissions(role), signUp, signIn, signOut, loading }
 }

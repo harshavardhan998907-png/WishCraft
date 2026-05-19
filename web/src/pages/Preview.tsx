@@ -27,6 +27,7 @@ export function Preview() {
       email: user.email ?? '',
       full_name: profile?.full_name ?? editor.senderName,
       avatar_url: profile?.avatar_url ?? null,
+      role: profile?.role ?? 'user',
     })
 
     if (error) {

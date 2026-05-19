@@ -1,4 +1,5 @@
 export type TemplateTier = 'free' | 'standard' | 'premium'
+export type { Permission, UserRole } from './roles'
 export type OccasionType =
   | 'birthday' | 'wedding' | 'anniversary' | 'festival'
   | 'graduation' | 'baby_shower' | 'farewell' | 'valentine' | 'other'
@@ -10,6 +11,7 @@ export interface Profile {
   email: string
   full_name: string | null
   avatar_url: string | null
+  role: import('./roles').UserRole
   created_at: string
 }
 

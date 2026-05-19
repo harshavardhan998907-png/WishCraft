@@ -1,0 +1,18 @@
+export type UserRole = 'user' | 'admin' | 'moderator' | 'creator'
+
+export type Permission =
+  | 'wishes:create'
+  | 'wishes:manage_own'
+  | 'media:upload'
+  | 'dashboard:access'
+  | 'payments:create'
+  | 'templates:manage'
+  | 'users:manage'
+  | 'analytics:access'
+  | 'moderation:access'
+  | 'content:review'
+  | 'content:hide'
+  | 'reports:review'
+  | 'creator_templates:manage'
+  | 'creator_analytics:access'
+  | 'creator_profile:manage'
