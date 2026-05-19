@@ -1,0 +1,103 @@
+insert into public.templates (
+  name,
+  slug,
+  occasion,
+  tier,
+  price_paise,
+  thumbnail_url,
+  preview_url,
+  has_animation,
+  has_music,
+  component_name,
+  is_active
+)
+values
+  (
+    'Birthday Classic',
+    'birthday-classic',
+    'birthday',
+    'free',
+    0,
+    'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=crop&w=900&q=80',
+    null,
+    true,
+    false,
+    'birthday-classic',
+    true
+  ),
+  (
+    'Birthday Glow',
+    'birthday-glow',
+    'birthday',
+    'standard',
+    9900,
+    'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=900&q=80',
+    null,
+    true,
+    true,
+    'birthday-glow',
+    true
+  ),
+  (
+    'Wedding Elegant',
+    'wedding-elegant',
+    'wedding',
+    'premium',
+    19900,
+    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80',
+    null,
+    true,
+    true,
+    'wedding-elegant',
+    true
+  ),
+  (
+    'Anniversary Romantic',
+    'anniversary-romantic',
+    'anniversary',
+    'standard',
+    12900,
+    'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=80',
+    null,
+    true,
+    true,
+    'anniversary-romantic',
+    true
+  ),
+  (
+    'Festival Diwali',
+    'festival-diwali',
+    'festival',
+    'premium',
+    17900,
+    'https://images.unsplash.com/photo-1605292356183-a77d0a9c9d1d?auto=format&fit=crop&w=900&q=80',
+    null,
+    true,
+    true,
+    'festival-diwali',
+    true
+  ),
+  (
+    'Graduation Celebration',
+    'graduation-celebration',
+    'graduation',
+    'free',
+    0,
+    'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=900&q=80',
+    null,
+    true,
+    false,
+    'graduation-celebration',
+    true
+  )
+on conflict (slug) do update set
+  name = excluded.name,
+  occasion = excluded.occasion,
+  tier = excluded.tier,
+  price_paise = excluded.price_paise,
+  thumbnail_url = excluded.thumbnail_url,
+  preview_url = excluded.preview_url,
+  has_animation = excluded.has_animation,
+  has_music = excluded.has_music,
+  component_name = excluded.component_name,
+  is_active = excluded.is_active;
