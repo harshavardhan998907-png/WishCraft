@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { useWish } from '../hooks/useWish'
-import { templateRegistry } from '../components/templates/registry'
+import { getTemplateComponent } from '../components/templates/registry'
 import { Button } from '../components/ui/Button'
 import { Expired } from './Expired'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
@@ -33,7 +33,7 @@ export function WishPage() {
   if (error || !data) return <div className="grid min-h-screen place-items-center px-4 text-center text-2xl font-black">This wish does not exist.</div>
   if (data.isExpired) return <Expired />
 
-  const Component = templateRegistry[data.template.component_name]
+  const Component = getTemplateComponent(data.template.component_name)
   const wishData = {
     recipientName: data.wish.recipient_name,
     senderName: data.wish.sender_name,

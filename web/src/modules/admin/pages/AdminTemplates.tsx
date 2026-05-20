@@ -7,6 +7,7 @@ import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
 import { useAuth } from '../../../hooks/useAuth'
 import { useToastStore } from '../../../store/toastStore'
 import { fetchAdminTemplates, setTemplateActive } from '../services/adminTemplates'
+import { moderateTemplate } from '../../creator/services/templateModeration'
 import type { AdminTemplate } from '../types'
 
 export function AdminTemplates() {
@@ -44,6 +45,31 @@ export function AdminTemplates() {
     }
   }
 
+  async function moderate(template: AdminTemplate, status: 'published' | 'rejected' | 'hidden' | 'archived') {
+    if (!user) return
+    setSavingId(template.id)
+    try {
+      await moderateTemplate({
+        templateId: template.id,
+        status,
+        notes: status === 'rejected' ? 'Rejected from admin moderation queue.' : undefined,
+        adminUserId: user.id,
+      })
+      setTemplates((items) => items.map((item) => item.id === template.id ? {
+        ...item,
+        status,
+        is_active: status === 'published',
+        moderation_notes: status === 'rejected' ? 'Rejected from admin moderation queue.' : null,
+        published_at: status === 'published' ? new Date().toISOString() : null,
+      } : item))
+      toast.push('success', `Template ${status}`)
+    } catch (err) {
+      toast.push('error', err instanceof Error ? err.message : 'Could not moderate template')
+    } finally {
+      setSavingId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -67,6 +93,7 @@ export function AdminTemplates() {
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="min-w-0 break-words text-lg font-black text-ink dark:text-white sm:text-xl">{template.name}</h3>
                 <Badge tone={template.is_active ? 'green' : 'red'}>{template.is_active ? 'active' : 'disabled'}</Badge>
+                <Badge tone={template.status === 'published' ? 'green' : template.status === 'rejected' || template.status === 'hidden' ? 'red' : 'yellow'}>{template.status ?? 'published'}</Badge>
               </div>
               <p className="mt-1 break-all text-sm font-semibold text-zinc-500">{template.slug}</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -76,9 +103,15 @@ export function AdminTemplates() {
                 <Badge tone="gray">{template.has_animation ? 'animated' : 'static'}</Badge>
               </div>
             </div>
-            <Button className="min-h-11 w-full lg:w-auto" variant={template.is_active ? 'danger' : 'secondary'} loading={savingId === template.id} onClick={() => toggleTemplate(template)}>
-              {template.is_active ? 'Disable' : 'Enable'}
-            </Button>
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              <Button className="min-h-11 w-full lg:w-auto" variant={template.is_active ? 'danger' : 'secondary'} loading={savingId === template.id} onClick={() => toggleTemplate(template)}>
+                {template.is_active ? 'Disable' : 'Enable'}
+              </Button>
+              <Button className="min-h-11 w-full lg:w-auto" variant="secondary" disabled={savingId === template.id} onClick={() => moderate(template, 'published')}>Approve</Button>
+              <Button className="min-h-11 w-full lg:w-auto" variant="ghost" disabled={savingId === template.id} onClick={() => moderate(template, 'hidden')}>Hide</Button>
+              <Button className="min-h-11 w-full lg:w-auto" variant="danger" disabled={savingId === template.id} onClick={() => moderate(template, 'rejected')}>Reject</Button>
+              <Button className="min-h-11 w-full lg:w-auto" variant="ghost" disabled={savingId === template.id} onClick={() => moderate(template, 'archived')}>Archive</Button>
+            </div>
           </ResponsiveCard>
         ))}
         {!loading && templates.length === 0 ? <Card className="text-center font-semibold text-zinc-500">No templates found.</Card> : null}

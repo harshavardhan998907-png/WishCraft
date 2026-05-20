@@ -12,3 +12,8 @@ export const templateRegistry: Record<string, TemplateComponent> = {
   'festival-diwali': lazy(() => import('./FestivalDiwali').then((module) => ({ default: module.FestivalDiwali }))),
   'graduation-celebration': lazy(() => import('./GraduationCelebration').then((module) => ({ default: module.GraduationCelebration }))),
 }
+
+export function getTemplateComponent(componentName: string | null | undefined) {
+  if (!componentName) return null
+  return templateRegistry[componentName] ?? null
+}

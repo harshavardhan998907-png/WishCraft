@@ -1,4 +1,5 @@
 export type TemplateTier = 'free' | 'standard' | 'premium'
+export type TemplateStatus = 'draft' | 'review' | 'published' | 'hidden' | 'archived' | 'rejected'
 export type { Permission, UserRole } from './roles'
 export type OccasionType =
   | 'birthday' | 'wedding' | 'anniversary' | 'festival'
@@ -28,6 +29,11 @@ export interface Template {
   has_music: boolean
   component_name: string
   is_active: boolean
+  creator_id?: string | null
+  status?: TemplateStatus
+  is_marketplace_template?: boolean
+  moderation_notes?: string | null
+  published_at?: string | null
   created_at?: string
 }
 

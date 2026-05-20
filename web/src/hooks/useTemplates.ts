@@ -17,7 +17,7 @@ export function useTemplates() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.from('templates').select('*').eq('is_active', true).order('tier', { ascending: true }).then(({ data, error: fetchError }) => {
+    supabase.from('templates').select('*').eq('is_active', true).eq('status', 'published').order('tier', { ascending: true }).then(({ data, error: fetchError }) => {
       if (fetchError || !data?.length) {
         console.warn('[useTemplates] falling back to demo templates', {
           reason: fetchError?.message ?? 'No active templates returned from Supabase',

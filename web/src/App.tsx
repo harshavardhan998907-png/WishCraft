@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { PageWrapper } from './components/layout/PageWrapper'
 import { AdminRoute } from './components/layout/AdminRoute'
+import { CreatorRoute } from './components/layout/CreatorRoute'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { AdminLayout } from './modules/admin/layouts/AdminLayout'
 import { AdminDashboard } from './modules/admin/pages/AdminDashboard'
@@ -9,6 +10,11 @@ import { AdminOrders } from './modules/admin/pages/AdminOrders'
 import { AdminSettings } from './modules/admin/pages/AdminSettings'
 import { AdminTemplates } from './modules/admin/pages/AdminTemplates'
 import { AdminUsers } from './modules/admin/pages/AdminUsers'
+import { CreatorLayout } from './modules/creator/layouts/CreatorLayout'
+import { CreatorDashboard } from './modules/creator/pages/CreatorDashboard'
+import { CreatorTemplates } from './modules/creator/pages/CreatorTemplates'
+import { CreatorAnalytics } from './modules/creator/pages/CreatorAnalytics'
+import { CreatorSettings } from './modules/creator/pages/CreatorSettings'
 import { Home } from './pages/Home'
 import { Browse } from './pages/Browse'
 import { Auth } from './pages/Auth'
@@ -39,6 +45,13 @@ export default function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+        <Route path="/creator" element={<CreatorRoute><CreatorLayout /></CreatorRoute>}>
+          <Route index element={<CreatorDashboard />} />
+          <Route path="templates" element={<CreatorTemplates />} />
+          <Route path="analytics" element={<CreatorAnalytics />} />
+          <Route path="settings" element={<CreatorSettings />} />
           <Route path="*" element={<NotFound />} />
         </Route>
         <Route path="/w/:slug" element={<WishPage />} />

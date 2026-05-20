@@ -30,7 +30,7 @@ export function Editor() {
   useEffect(() => {
     const local = demoTemplates.find((template) => template.slug === templateSlug)
     if (local) store.setTemplate(local)
-    supabase.from('templates').select('*').eq('slug', templateSlug).single().then(({ data, error }) => {
+    supabase.from('templates').select('*').eq('slug', templateSlug).eq('is_active', true).eq('status', 'published').single().then(({ data, error }) => {
       console.info('[Editor] template lookup result', { templateSlug, found: Boolean(data), error })
       if (data) store.setTemplate(data)
       if (error) {

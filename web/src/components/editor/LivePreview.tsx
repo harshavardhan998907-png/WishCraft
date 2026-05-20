@@ -1,10 +1,10 @@
-import { templateRegistry } from '../templates/registry'
+import { getTemplateComponent } from '../templates/registry'
 import type { Template, WishData } from '../../types'
 import { Suspense } from 'react'
 import { motion } from 'framer-motion'
 
 export function LivePreview({ template, data }: { template: Template | null; data: WishData }) {
-  const Component = template ? templateRegistry[template.component_name] : null
+  const Component = template ? getTemplateComponent(template.component_name) : null
   if (!Component) {
     return <div className="grid min-h-[520px] place-items-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-white/10 dark:text-white/55">Choose a template to preview</div>
   }

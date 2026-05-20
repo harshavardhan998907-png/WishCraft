@@ -4,6 +4,7 @@ const links = [
   { to: '/admin', label: 'Dashboard', end: true },
   { to: '/admin/analytics', label: 'Analytics' },
   { to: '/admin/templates', label: 'Templates' },
+  { to: '/creator', label: 'Creator Studio' },
   { to: '/admin/users', label: 'Users' },
   { to: '/admin/orders', label: 'Orders' },
   { to: '/admin/settings', label: 'Settings' },
