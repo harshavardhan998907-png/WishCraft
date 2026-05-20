@@ -3,6 +3,7 @@ import { Badge, OccasionBadge, TierBadge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Input } from '../../../components/ui/Input'
+import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
 import { useAuth } from '../../../hooks/useAuth'
 import { useToastStore } from '../../../store/toastStore'
 import { fetchAdminTemplates, setTemplateActive } from '../services/adminTemplates'
@@ -47,8 +48,8 @@ export function AdminTemplates() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h2 className="text-3xl font-black text-ink dark:text-white">Templates</h2>
-          <p className="mt-2 text-zinc-600 dark:text-white/70">Search templates and control public availability.</p>
+          <h2 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Templates</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-white/70 sm:text-base">Search templates and control public availability.</p>
         </div>
         <div className="w-full md:w-80">
           <Input label="Search templates" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, slug, component" />
@@ -60,11 +61,11 @@ export function AdminTemplates() {
 
       <div className="grid gap-4">
         {templates.map((template) => (
-          <Card key={template.id} className="grid gap-4 lg:grid-cols-[96px_1fr_auto] lg:items-center">
-            <img src={template.thumbnail_url ?? ''} alt="" className="h-24 w-full rounded-md object-cover lg:w-24" />
+          <ResponsiveCard key={template.id} className="grid gap-4 lg:grid-cols-[96px_1fr_auto] lg:items-center">
+            <img src={template.thumbnail_url ?? ''} alt="" className="aspect-video w-full rounded-md object-cover sm:h-28 lg:h-24 lg:w-24" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-xl font-black text-ink dark:text-white">{template.name}</h3>
+                <h3 className="min-w-0 break-words text-lg font-black text-ink dark:text-white sm:text-xl">{template.name}</h3>
                 <Badge tone={template.is_active ? 'green' : 'red'}>{template.is_active ? 'active' : 'disabled'}</Badge>
               </div>
               <p className="mt-1 break-all text-sm font-semibold text-zinc-500">{template.slug}</p>
@@ -75,11 +76,12 @@ export function AdminTemplates() {
                 <Badge tone="gray">{template.has_animation ? 'animated' : 'static'}</Badge>
               </div>
             </div>
-            <Button variant={template.is_active ? 'danger' : 'secondary'} loading={savingId === template.id} onClick={() => toggleTemplate(template)}>
+            <Button className="min-h-11 w-full lg:w-auto" variant={template.is_active ? 'danger' : 'secondary'} loading={savingId === template.id} onClick={() => toggleTemplate(template)}>
               {template.is_active ? 'Disable' : 'Enable'}
             </Button>
-          </Card>
+          </ResponsiveCard>
         ))}
+        {!loading && templates.length === 0 ? <Card className="text-center font-semibold text-zinc-500">No templates found.</Card> : null}
       </div>
     </div>
   )

@@ -8,6 +8,7 @@ import { initiatePayment } from '../lib/razorpay'
 import { useEditorStore } from '../store/editorStore'
 import { useToastStore } from '../store/toastStore'
 import type { Template } from '../types'
+import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const missingTableCode = 'PGRST205'
@@ -17,6 +18,7 @@ export function Preview() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
   const toast = useToastStore()
+  const analytics = useAnalytics()
   const data = { recipientName: editor.recipientName, senderName: editor.senderName, customMessage: editor.customMessage, photoUrls: editor.photoUrls, musicUrl: editor.musicUrl }
 
   async function ensureProfileExists() {
@@ -141,10 +143,12 @@ export function Preview() {
             })
             console.info('[Preview] verify-payment response', { error })
             if (error) throw error
+            analytics.trackPaymentSuccess({ wishId: wish.id, templateId: template.id, orderId: dbOrderId, paymentId })
             navigate(`/share/${wish.slug}`)
           },
           onFailure: (error) => {
             console.warn('[Preview] Razorpay payment failed or dismissed', error)
+            analytics.trackPaymentFailed({ wishId: wish.id, templateId: template.id, reason: error instanceof Error ? error.message : 'Payment failed' })
             toast.push('error', 'Payment was not completed')
           },
         })

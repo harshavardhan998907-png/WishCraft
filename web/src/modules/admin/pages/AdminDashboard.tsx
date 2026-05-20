@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../../components/ui/Card'
+import { ResponsiveGrid } from '../../../components/responsive/ResponsiveGrid'
+import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
 import { fetchAdminMetrics } from '../services/adminMetrics'
 import type { AdminMetrics } from '../types'
 import { RecentActivity } from '../components/RecentActivity'
@@ -45,21 +47,21 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-black text-ink dark:text-white">Dashboard</h2>
-        <p className="mt-2 text-zinc-600 dark:text-white/70">Read-only platform metrics and recent operational activity.</p>
+        <h2 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Dashboard</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-white/70 sm:text-base">Read-only platform metrics and recent operational activity.</p>
       </div>
 
       {error ? <Card className="border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
       {loading ? <Card className="text-sm font-semibold text-zinc-500">Loading admin metrics...</Card> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <ResponsiveGrid columns="metrics">
         {cards.map(([label, value]) => (
-          <Card key={label} className="min-h-32">
+          <ResponsiveCard key={label} className="min-h-28 sm:min-h-32">
             <p className="text-sm font-black uppercase tracking-[0.12em] text-zinc-500">{label}</p>
-            <p className="mt-4 text-3xl font-black text-ink dark:text-white">{value}</p>
-          </Card>
+            <p className="mt-4 break-words text-2xl font-black text-ink dark:text-white sm:text-3xl">{value}</p>
+          </ResponsiveCard>
         ))}
-      </div>
+      </ResponsiveGrid>
 
       <RecentActivity />
     </div>

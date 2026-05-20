@@ -9,6 +9,7 @@ import { TemplateScenePreview } from '../components/templates/TemplateScenePrevi
 import type { OccasionType, Template, TemplateTier } from '../types'
 import { formatPrice } from '../lib/utils'
 import { FloatingRibbons, OrbitGlow, ShimmerSweep } from '../components/ui/MotionDecor'
+import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
 
 const occasions: Array<'all' | OccasionType> = ['all', 'birthday', 'wedding', 'anniversary', 'festival', 'graduation', 'baby_shower', 'farewell', 'valentine']
 const tiers: Array<'all' | TemplateTier> = ['all', 'free', 'standard', 'premium']
@@ -56,6 +57,7 @@ export function Browse() {
   const [animation, setAnimation] = useState(false)
   const [music, setMusic] = useState(false)
   const navigate = useNavigate()
+  const analytics = useAnalytics()
 
   const filtered = useMemo(() => templates.filter((template) =>
     (occasion === 'all' || template.occasion === occasion) &&
@@ -113,7 +115,22 @@ export function Browse() {
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {loading
                 ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-96" />)
-                : filtered.map((template) => <TemplateCard key={template.id} template={template} onClick={() => navigate(`/editor/${template.slug}`)} />)}
+                : filtered.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    onClick={() => {
+                      analytics.trackTemplateSelection({
+                        templateId: template.id,
+                        templateSlug: template.slug,
+                        templateName: template.name,
+                        tier: template.tier,
+                        occasion: template.occasion,
+                      })
+                      navigate(`/editor/${template.slug}`)
+                    }}
+                  />
+                ))}
             </div>
           </div>
         </div>

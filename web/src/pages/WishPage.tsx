@@ -6,13 +6,22 @@ import { useWish } from '../hooks/useWish'
 import { templateRegistry } from '../components/templates/registry'
 import { Button } from '../components/ui/Button'
 import { Expired } from './Expired'
+import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
 
 export function WishPage() {
   const { slug } = useParams()
   const { data, loading, error } = useWish(slug)
+  const analytics = useAnalytics()
   const [opened, setOpened] = useState(false)
   const [muted, setMuted] = useState(false)
+  const trackedWishId = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (!data || data.isExpired || trackedWishId.current === data.wish.id) return
+    trackedWishId.current = data.wish.id
+    analytics.trackWishOpen({ wishId: data.wish.id, templateId: data.template.id, slug })
+  }, [analytics, data, slug])
 
   useEffect(() => {
     if (!opened || !audioRef.current) return

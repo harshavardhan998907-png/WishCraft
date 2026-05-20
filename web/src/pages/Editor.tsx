@@ -12,6 +12,7 @@ import { useToastStore } from '../store/toastStore'
 import { Modal } from '../components/ui/Modal'
 import { motion } from 'framer-motion'
 import { ShimmerSweep } from '../components/ui/MotionDecor'
+import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
 
 const musicTracks = ['Gentle Piano', 'Warm Celebration', 'Soft Romance', 'Festival Lights', 'Bright Future']
 
@@ -20,6 +21,7 @@ export function Editor() {
   const navigate = useNavigate()
   const toast = useToastStore()
   const store = useEditorStore()
+  const analytics = useAnalytics()
   const [uploading, setUploading] = useState(false)
   const [musicUploading, setMusicUploading] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -56,6 +58,7 @@ export function Editor() {
         const { data } = supabase.storage.from('wish-photos').getPublicUrl(path)
         store.addPhoto(data.publicUrl)
       }
+      analytics.trackUpload({ type: 'photo', templateId: selectedTemplate?.id ?? null, fileCount: Math.min(files.length, 5 - store.photoUrls.length) })
     } catch (err) {
       toast.push('error', err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -74,6 +77,7 @@ export function Editor() {
       const { data } = supabase.storage.from('wish-music').getPublicUrl(path)
       store.setMusicUrl(data.publicUrl)
       store.setUseCustomMusic(true)
+      analytics.trackUpload({ type: 'music', templateId: selectedTemplate?.id ?? null, fileCount: 1 })
       toast.push('success', 'Custom music uploaded')
     } catch (err) {
       toast.push('error', err instanceof Error ? err.message : 'Music upload failed')

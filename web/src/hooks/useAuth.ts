@@ -4,6 +4,11 @@ import { supabase } from '../lib/supabase'
 import { defaultRole, getPermissions, normalizeRole } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
 import type { Profile } from '../types'
+import type { UserRole } from '../types/roles'
+
+interface SignUpOptions {
+  adminInviteCode?: string
+}
 
 export function useAuth() {
   const { user, profile, role, permissions, setUser, setProfile } = useAuthStore()
@@ -33,8 +38,10 @@ export function useAuth() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      void fetchProfile(session?.user ?? null)
-      setLoading(false)
+      setLoading(true)
+      void fetchProfile(session?.user ?? null).finally(() => {
+        if (mounted) setLoading(false)
+      })
     })
 
     return () => {
@@ -43,7 +50,14 @@ export function useAuth() {
     }
   }, [fetchProfile, setUser])
 
-  async function signUp(email: string, password: string, fullName: string) {
+  async function claimAdminRole(inviteCode: string) {
+    const { error } = await supabase.rpc('claim_admin_role', { invite_code: inviteCode })
+    if (error) throw new Error(error.message)
+    const { data } = await supabase.auth.getUser()
+    await fetchProfile(data.user)
+  }
+
+  async function signUp(email: string, password: string, fullName: string, options: SignUpOptions = {}) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -57,7 +71,17 @@ export function useAuth() {
         console.error('[useAuth] profile upsert failed after signup', { userId: data.user.id, profileError })
         throw new Error(profileError.message)
       }
-      setProfile({ ...profileRow, created_at: new Date().toISOString() })
+      let assignedRole: UserRole = defaultRole
+      if (options.adminInviteCode) {
+        try {
+          await claimAdminRole(options.adminInviteCode)
+        } catch (err) {
+          console.warn('[useAuth] admin role claim failed', { userId: data.user.id, err })
+          throw err
+        }
+        assignedRole = 'admin'
+      }
+      setProfile({ ...profileRow, role: assignedRole, created_at: new Date().toISOString() })
     }
     return data
   }
@@ -75,5 +99,5 @@ export function useAuth() {
     setProfile(null)
   }
 
-  return { user, profile, role, permissions: permissions ?? getPermissions(role), signUp, signIn, signOut, loading }
+  return { user, profile, role, permissions: permissions ?? getPermissions(role), signUp, signIn, signOut, claimAdminRole, loading }
 }

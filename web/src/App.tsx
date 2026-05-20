@@ -4,6 +4,7 @@ import { AdminRoute } from './components/layout/AdminRoute'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { AdminLayout } from './modules/admin/layouts/AdminLayout'
 import { AdminDashboard } from './modules/admin/pages/AdminDashboard'
+import { AdminAnalytics } from './modules/admin/pages/AdminAnalytics'
 import { AdminOrders } from './modules/admin/pages/AdminOrders'
 import { AdminSettings } from './modules/admin/pages/AdminSettings'
 import { AdminTemplates } from './modules/admin/pages/AdminTemplates'
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/share/:slug" element={<ProtectedRoute><Share /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route index element={<AdminDashboard />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="templates" element={<AdminTemplates />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="orders" element={<AdminOrders />} />
