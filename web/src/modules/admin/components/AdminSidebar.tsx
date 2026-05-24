@@ -3,10 +3,16 @@ import { NavLink } from 'react-router-dom'
 const links = [
   { to: '/admin', label: 'Dashboard', end: true },
   { to: '/admin/analytics', label: 'Analytics' },
+  { to: '/admin/production', label: 'Production' },
+  { to: '/admin/ai', label: 'AI' },
+  { to: '/admin/automation', label: 'Automation' },
+  { to: '/admin/engagement', label: 'Engagement' },
   { to: '/admin/templates', label: 'Templates' },
   { to: '/creator', label: 'Creator Studio' },
   { to: '/admin/users', label: 'Users' },
   { to: '/admin/orders', label: 'Orders' },
+  { to: '/admin/payments', label: 'Payments' },
+  { to: '/admin/storage', label: 'Storage' },
   { to: '/admin/settings', label: 'Settings' },
 ]
 

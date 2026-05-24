@@ -8,6 +8,13 @@ async function hmac(secret: string, message: string) {
   return Array.from(new Uint8Array(signature)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false
+  let mismatch = 0
+  for (let i = 0; i < a.length; i += 1) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return mismatch === 0
+}
+
 serve(async (req) => {
   try {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -25,22 +32,33 @@ serve(async (req) => {
       return jsonResponse({ error: 'Missing secret' }, { status: 500 })
     }
     const expectedSignature = await hmac(secret, `${orderId}|${paymentId}`)
-    if (expectedSignature !== signature) {
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+
+    if (!timingSafeEqual(expectedSignature, signature)) {
       console.warn('[verify-payment] invalid signature', { orderId, paymentId, dbOrderId, wishId })
+      await supabase.from('payment_audit_logs').insert({
+        order_id: dbOrderId,
+        wish_id: wishId,
+        razorpay_order_id: orderId,
+        razorpay_payment_id: paymentId,
+        event_type: 'payment_verification_failed',
+        status: 'invalid_signature',
+        payload: { dbOrderId, wishId },
+        signature_verified: false,
+      })
       return jsonResponse({ error: 'Invalid signature' }, { status: 400 })
     }
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, wish_id, razorpay_order_id, status')
+      .select('id, wish_id, razorpay_order_id, razorpay_payment_id, status')
       .eq('id', dbOrderId)
       .single()
     if (orderError || !order) {
       console.warn('[verify-payment] database order not found', { dbOrderId, orderError })
       return jsonResponse({ error: 'Order not found' }, { status: 400 })
     }
-    if (order.wish_id !== wishId || order.razorpay_order_id !== orderId || order.status !== 'pending') {
+    if (order.wish_id !== wishId || order.razorpay_order_id !== orderId) {
       console.warn('[verify-payment] order mismatch', {
         dbOrderId,
         wishId,
@@ -50,6 +68,22 @@ serve(async (req) => {
         storedStatus: order.status,
       })
       return jsonResponse({ error: 'Order does not match payment payload' }, { status: 400 })
+    }
+    if (order.status === 'paid' && order.razorpay_payment_id === paymentId) {
+      await supabase.from('payment_audit_logs').insert({
+        order_id: dbOrderId,
+        wish_id: wishId,
+        razorpay_order_id: orderId,
+        razorpay_payment_id: paymentId,
+        event_type: 'payment_verification_replayed',
+        status: 'paid',
+        payload: { dbOrderId, wishId },
+        signature_verified: true,
+      })
+      return jsonResponse({ verified: true, idempotent: true })
+    }
+    if (order.status !== 'pending') {
+      return jsonResponse({ error: 'Order is not payable' }, { status: 400 })
     }
 
     const { error } = await supabase.rpc('activate_paid_wish', {
@@ -61,6 +95,16 @@ serve(async (req) => {
 
     console.info('[verify-payment] activation result', { error, dbOrderId, wishId })
     if (error) return jsonResponse({ error: error.message }, { status: 400 })
+    await supabase.from('payment_audit_logs').insert({
+      order_id: dbOrderId,
+      wish_id: wishId,
+      razorpay_order_id: orderId,
+      razorpay_payment_id: paymentId,
+      event_type: 'payment_success',
+      status: 'paid',
+      payload: { dbOrderId, wishId },
+      signature_verified: true,
+    })
     return jsonResponse({ verified: true })
   } catch (error) {
     console.error('[verify-payment] unhandled error', error)

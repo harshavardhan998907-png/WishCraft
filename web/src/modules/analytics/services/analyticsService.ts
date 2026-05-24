@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabase'
+import { getCached } from '../../performance/services/cacheService'
 import type { AnalyticsEventInput, DailyAnalyticsMetric, TemplatePerformanceMetric } from '../types'
 import { getDeviceType, getReferrer, getSessionId } from '../utils/device'
 
@@ -112,6 +113,16 @@ export function trackUpload(input: { type: 'photo' | 'music'; templateId?: strin
   })
 }
 
+export function trackStorageWarning(input: { reason: string; metadata?: Record<string, unknown> }) {
+  void trackEvent({
+    eventName: 'storage_warning',
+    metadata: {
+      reason: input.reason,
+      ...input.metadata,
+    },
+  })
+}
+
 export function trackDashboardAction(input: { action: string; metadata?: Record<string, unknown> }) {
   void trackEvent({
     eventName: 'dashboard_opened',
@@ -123,20 +134,24 @@ export function trackDashboardAction(input: { action: string; metadata?: Record<
 }
 
 export async function fetchDailyAnalytics(): Promise<DailyAnalyticsMetric[]> {
-  const { data, error } = await supabase
-    .from('analytics_daily_metrics')
-    .select('*')
-    .order('metric_date', { ascending: false })
-    .limit(30)
-  if (error) throw new Error(error.message)
-  return (data ?? []) as DailyAnalyticsMetric[]
+  return getCached('analytics_aggregates', 'daily_30', 60_000, async () => {
+    const { data, error } = await supabase
+      .from('analytics_daily_metrics')
+      .select('*')
+      .order('metric_date', { ascending: false })
+      .limit(30)
+    if (error) throw new Error(error.message)
+    return (data ?? []) as DailyAnalyticsMetric[]
+  })
 }
 
 export async function fetchTemplatePerformance(): Promise<TemplatePerformanceMetric[]> {
-  const { data, error } = await supabase
-    .from('template_performance_metrics')
-    .select('*')
-    .limit(10)
-  if (error) throw new Error(error.message)
-  return (data ?? []) as TemplatePerformanceMetric[]
+  return getCached('analytics_aggregates', 'template_performance_10', 60_000, async () => {
+    const { data, error } = await supabase
+      .from('template_performance_metrics')
+      .select('*')
+      .limit(10)
+    if (error) throw new Error(error.message)
+    return (data ?? []) as TemplatePerformanceMetric[]
+  })
 }

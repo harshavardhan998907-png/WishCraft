@@ -17,3 +17,7 @@ export function getTemplateComponent(componentName: string | null | undefined) {
   if (!componentName) return null
   return templateRegistry[componentName] ?? null
 }
+
+export function getRegisteredTemplateNames() {
+  return Object.keys(templateRegistry)
+}

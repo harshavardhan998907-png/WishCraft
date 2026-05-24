@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { StatusBadge } from '../components/ui/Badge'
 import { useToastStore } from '../store/toastStore'
+import { NotificationCenter } from '../modules/notifications/components/NotificationCenter'
 
 export function Dashboard() {
   const { user } = useAuth()
@@ -40,7 +41,14 @@ export function Dashboard() {
     <section className="mx-auto max-w-7xl px-4 py-10">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-4xl font-black">Dashboard</h1>
-        <Link to="/browse"><Button>Create wish</Button></Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/notifications/preferences"><Button variant="ghost">Notification settings</Button></Link>
+          <Link to="/payments"><Button variant="ghost">Payments</Button></Link>
+          <Link to="/browse"><Button>Create wish</Button></Link>
+        </div>
+      </div>
+      <div className="mt-8">
+        <NotificationCenter />
       </div>
       {wishes.length === 0 ? (
         <Card className="mt-8 text-center"><h2 className="text-2xl font-black">Create your first wish</h2><Link to="/browse" className="mt-4 inline-block"><Button>Browse templates</Button></Link></Card>

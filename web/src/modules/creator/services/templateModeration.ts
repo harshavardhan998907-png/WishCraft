@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabase'
+import { notifyUser } from '../../notifications/services/notificationService'
 import type { CreatorTemplate, TemplateStatus } from '../types'
 
 const moderationActions: Record<TemplateStatus, string> = {
@@ -22,6 +23,12 @@ export async function fetchTemplatesForModeration(): Promise<CreatorTemplate[]> 
 }
 
 export async function moderateTemplate(input: { templateId: string; status: Exclude<TemplateStatus, 'draft' | 'review'>; notes?: string; adminUserId: string }): Promise<void> {
+  const { data: existingTemplate } = await supabase
+    .from('templates')
+    .select('name, creator:creator_profiles(user_id)')
+    .eq('id', input.templateId)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('templates')
     .update({
@@ -43,4 +50,16 @@ export async function moderateTemplate(input: { templateId: string; status: Excl
   })
 
   if (logError) throw new Error(logError.message)
+
+  const creator = Array.isArray(existingTemplate?.creator) ? existingTemplate.creator[0] : existingTemplate?.creator
+  const creatorUserId = creator?.user_id
+  if (creatorUserId) {
+    void notifyUser({
+      userId: creatorUserId,
+      type: 'template_moderation',
+      title: 'Template moderation update',
+      message: `${existingTemplate?.name ?? 'Your template'} was ${input.status}.`,
+      metadata: { template_id: input.templateId, status: input.status, notes: input.notes ?? null },
+    })
+  }
 }

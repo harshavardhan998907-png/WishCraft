@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
@@ -7,6 +7,10 @@ import { getTemplateComponent } from '../components/templates/registry'
 import { Button } from '../components/ui/Button'
 import { Expired } from './Expired'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
+import { preloadMedia } from '../modules/media/services/mediaService'
+
+const WishReactions = lazy(() => import('../modules/engagement/components/WishReactions').then((module) => ({ default: module.WishReactions })))
+const WishMessages = lazy(() => import('../modules/engagement/components/WishMessages').then((module) => ({ default: module.WishMessages })))
 
 export function WishPage() {
   const { slug } = useParams()
@@ -29,6 +33,11 @@ export function WishPage() {
     audioRef.current.play().catch(() => setMuted(true))
   }, [opened, muted])
 
+  useEffect(() => {
+    if (!data) return
+    preloadMedia([data.template.thumbnail_url, ...data.wish.photo_urls, data.wish.music_url])
+  }, [data])
+
   if (loading) return <div className="grid min-h-screen place-items-center">Loading wish...</div>
   if (error || !data) return <div className="grid min-h-screen place-items-center px-4 text-center text-2xl font-black">This wish does not exist.</div>
   if (data.isExpired) return <Expired />
@@ -49,6 +58,9 @@ export function WishPage() {
         <meta property="og:title" content={`${data.wish.recipient_name} has a wish for you!`} />
         <meta property="og:description" content="Tap to open your special wish" />
         {data.template.thumbnail_url ? <meta property="og:image" content={data.template.thumbnail_url} /> : null}
+        {data.template.thumbnail_url ? <link rel="preload" as="image" href={data.template.thumbnail_url} /> : null}
+        {data.wish.photo_urls[0] ? <link rel="preload" as="image" href={data.wish.photo_urls[0]} /> : null}
+        {data.wish.music_url ? <link rel="preload" as="audio" href={data.wish.music_url} /> : null}
       </Helmet>
       {!opened ? (
         <section className="grid min-h-screen place-items-center overflow-hidden bg-ink px-5 py-12 text-center text-white sm:px-8">
@@ -76,6 +88,12 @@ export function WishPage() {
           <Suspense fallback={<div className="grid min-h-screen place-items-center bg-cream font-bold">Loading template...</div>}>
             <Component data={wishData} />
           </Suspense>
+          <div className="mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[360px_1fr]">
+            <Suspense fallback={<div className="rounded-lg border border-black/10 bg-white p-4 font-bold dark:border-white/10 dark:bg-[#181824]">Loading engagement...</div>}>
+              <WishReactions wishId={data.wish.id} templateId={data.template.id} />
+              <WishMessages wishId={data.wish.id} templateId={data.template.id} />
+            </Suspense>
+          </div>
         </motion.div>
       ) : <div>Template missing.</div>}
     </>

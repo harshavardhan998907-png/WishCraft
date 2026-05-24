@@ -1,4 +1,6 @@
 import { supabase } from '../../../lib/supabase'
+import { uploadTemplateThumbnailAsset } from '../../media/services/mediaService'
+import { createSelfNotification } from '../../notifications/services/notificationService'
 import type { CreatorTemplate, CreatorTemplateInput } from '../types'
 import { isMissingMarketplaceSchema } from './marketplaceSchema'
 
@@ -52,13 +54,7 @@ export async function updateTemplateMetadata(templateId: string, input: Partial<
 }
 
 export async function uploadTemplateThumbnail(file: File, pathPrefix: string): Promise<string> {
-  const extension = file.name.split('.').pop() ?? 'jpg'
-  const filePath = `${pathPrefix}/${crypto.randomUUID()}.${extension}`
-  const { error } = await supabase.storage.from('template-thumbnails').upload(filePath, file, { upsert: true })
-  if (error) throw new Error(error.message)
-
-  const { data } = supabase.storage.from('template-thumbnails').getPublicUrl(filePath)
-  return data.publicUrl
+  return uploadTemplateThumbnailAsset(file, pathPrefix)
 }
 
 export async function submitTemplateForReview(templateId: string): Promise<void> {
@@ -71,6 +67,13 @@ export async function submitTemplateForReview(templateId: string): Promise<void>
     if (isMissingMarketplaceSchema(error)) throw new Error('Creator template storage is not ready yet.')
     throw new Error(error.message)
   }
+
+  void createSelfNotification({
+    type: 'creator_alert',
+    title: 'Template submitted',
+    message: 'Your template was submitted for review.',
+    metadata: { template_id: templateId, status: 'review' },
+  })
 }
 
 export async function archiveCreatorTemplate(templateId: string): Promise<void> {
@@ -83,4 +86,11 @@ export async function archiveCreatorTemplate(templateId: string): Promise<void> 
     if (isMissingMarketplaceSchema(error)) throw new Error('Creator template storage is not ready yet.')
     throw new Error(error.message)
   }
+
+  void createSelfNotification({
+    type: 'creator_alert',
+    title: 'Template archived',
+    message: 'Your template was archived.',
+    metadata: { template_id: templateId, status: 'archived' },
+  })
 }

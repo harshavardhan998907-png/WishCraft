@@ -4,11 +4,12 @@ import { Button } from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
 import { addDays, formatPrice, generateWishSlug } from '../lib/utils'
 import { supabase } from '../lib/supabase'
-import { initiatePayment } from '../lib/razorpay'
 import { useEditorStore } from '../store/editorStore'
 import { useToastStore } from '../store/toastStore'
 import type { Template } from '../types'
-import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
+import { markPaymentFailed, startPayment, verifyPayment } from '../modules/payments/services/paymentService'
+import { linkMediaAssetsToWish } from '../modules/media/services/mediaService'
+import { createSelfNotification, enqueueScheduledJob } from '../modules/notifications/services/notificationService'
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const missingTableCode = 'PGRST205'
@@ -18,7 +19,6 @@ export function Preview() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
   const toast = useToastStore()
-  const analytics = useAnalytics()
   const data = { recipientName: editor.recipientName, senderName: editor.senderName, customMessage: editor.customMessage, photoUrls: editor.photoUrls, musicUrl: editor.musicUrl }
 
   async function ensureProfileExists() {
@@ -108,6 +108,26 @@ export function Preview() {
     const { data, error } = await supabase.from('wishes').insert(row).select('id, slug').single()
     console.info('[Preview] wish insert result', { data, error })
     if (error) throw new Error(error.message)
+    await linkMediaAssetsToWish([...editor.photoUrls, editor.musicUrl ?? ''], data.id)
+    void createSelfNotification({
+      type: status === 'active' ? 'wish_published' : 'abandoned_wish_reminder',
+      title: status === 'active' ? 'Wish created' : 'Wish draft created',
+      message: status === 'active' ? 'Your wish is live and ready to share.' : 'Your wish draft is ready. Finish payment to activate it.',
+      metadata: { wish_id: data.id, slug, template_id: template.id },
+    })
+    if (status === 'active') {
+      void enqueueScheduledJob({
+        jobType: 'wish_expiry_reminder',
+        payload: { user_id: user.id, wish_id: data.id, template_id: template.id },
+        scheduledFor: addDays(new Date(), 6),
+      }).catch(() => undefined)
+    } else {
+      void enqueueScheduledJob({
+        jobType: 'abandoned_wish_reminder',
+        payload: { user_id: user.id, wish_id: data.id, template_id: template.id },
+        scheduledFor: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+      }).catch(() => undefined)
+    }
     return data as { id: string; slug: string }
   }
 
@@ -130,31 +150,26 @@ export function Preview() {
       else {
         const wish = await createWish('draft', false)
         console.info('[Preview] draft wish created, opening payment', wish)
-        await initiatePayment({
+        const payment = await startPayment({
           amount: template.price_paise,
           wishId: wish.id,
           templateId: template.id,
           userName: profile?.full_name ?? editor.senderName,
           userEmail: user?.email ?? '',
-          onSuccess: async (paymentId, orderId, signature, dbOrderId) => {
-            console.info('[Preview] Razorpay payment success callback', { paymentId, orderId, dbOrderId, wishId: wish.id })
-            const { error } = await supabase.functions.invoke('verify-payment', {
-              body: { paymentId, orderId, signature, dbOrderId, wishId: wish.id },
-            })
-            console.info('[Preview] verify-payment response', { error })
-            if (error) throw error
-            analytics.trackPaymentSuccess({ wishId: wish.id, templateId: template.id, orderId: dbOrderId, paymentId })
-            navigate(`/share/${wish.slug}`)
-          },
-          onFailure: (error) => {
-            console.warn('[Preview] Razorpay payment failed or dismissed', error)
-            analytics.trackPaymentFailed({ wishId: wish.id, templateId: template.id, reason: error instanceof Error ? error.message : 'Payment failed' })
-            toast.push('error', 'Payment was not completed')
-          },
         })
+        console.info('[Preview] Razorpay payment success callback', { paymentId: payment.paymentId, orderId: payment.orderId, dbOrderId: payment.dbOrderId, wishId: wish.id })
+        await verifyPayment({ ...payment, wishId: wish.id, templateId: template.id })
+        navigate(`/share/${wish.slug}`)
       }
     } catch (err) {
       console.error('[Preview] create/share failed', err)
+      if (editor.template) {
+        await markPaymentFailed({
+          wishId: undefined,
+          templateId: editor.template.id,
+          reason: err instanceof Error ? err.message : 'Payment failed',
+        })
+      }
       toast.push('error', err instanceof Error ? err.message : 'Could not create wish')
     }
   }

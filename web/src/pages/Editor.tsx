@@ -12,7 +12,9 @@ import { useToastStore } from '../store/toastStore'
 import { Modal } from '../components/ui/Modal'
 import { motion } from 'framer-motion'
 import { ShimmerSweep } from '../components/ui/MotionDecor'
-import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
+import { MusicUploadManager } from '../modules/media/components/MusicUploadManager'
+import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
+import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
 
 const musicTracks = ['Gentle Piano', 'Warm Celebration', 'Soft Romance', 'Festival Lights', 'Bright Future']
 
@@ -21,9 +23,6 @@ export function Editor() {
   const navigate = useNavigate()
   const toast = useToastStore()
   const store = useEditorStore()
-  const analytics = useAnalytics()
-  const [uploading, setUploading] = useState(false)
-  const [musicUploading, setMusicUploading] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const selectedTemplate = store.template
 
@@ -47,45 +46,6 @@ export function Editor() {
     musicUrl: store.musicUrl,
   }), [store.recipientName, store.senderName, store.customMessage, store.photoUrls, store.musicUrl])
 
-  async function uploadFiles(files: FileList) {
-    setUploading(true)
-    try {
-      for (const file of Array.from(files).slice(0, 5 - store.photoUrls.length)) {
-        if (file.size > 5 * 1024 * 1024) throw new Error(`${file.name} is larger than 5MB`)
-        const path = `draft/${Date.now()}-${file.name}`
-        const { error } = await supabase.storage.from('wish-photos').upload(path, file)
-        if (error) throw error
-        const { data } = supabase.storage.from('wish-photos').getPublicUrl(path)
-        store.addPhoto(data.publicUrl)
-      }
-      analytics.trackUpload({ type: 'photo', templateId: selectedTemplate?.id ?? null, fileCount: Math.min(files.length, 5 - store.photoUrls.length) })
-    } catch (err) {
-      toast.push('error', err instanceof Error ? err.message : 'Upload failed')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  async function uploadMusic(file: File) {
-    setMusicUploading(true)
-    try {
-      if (file.size > 10 * 1024 * 1024) throw new Error('Music file must be under 10MB')
-      const ext = file.name.split('.').pop() || 'mp3'
-      const path = `draft/${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('wish-music').upload(path, file)
-      if (error) throw error
-      const { data } = supabase.storage.from('wish-music').getPublicUrl(path)
-      store.setMusicUrl(data.publicUrl)
-      store.setUseCustomMusic(true)
-      analytics.trackUpload({ type: 'music', templateId: selectedTemplate?.id ?? null, fileCount: 1 })
-      toast.push('success', 'Custom music uploaded')
-    } catch (err) {
-      toast.push('error', err instanceof Error ? err.message : 'Music upload failed')
-    } finally {
-      setMusicUploading(false)
-    }
-  }
-
   function goPreview() {
     if (!store.recipientName || !store.senderName) {
       toast.push('error', 'Recipient and sender names are required')
@@ -106,7 +66,8 @@ export function Editor() {
         <Input label="Recipient name" value={store.recipientName} onChange={(event) => store.setRecipientName(event.target.value)} required />
         <Input label="Sender name" value={store.senderName} onChange={(event) => store.setSenderName(event.target.value)} required />
         <Textarea label="Custom message" maxLength={300} value={store.customMessage} onChange={(event) => store.setCustomMessage(event.target.value)} />
-        <ImageUpload urls={store.photoUrls} onFiles={uploadFiles} onRemove={store.removePhoto} disabled={uploading} />
+        <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
+        <ImageUpload urls={store.photoUrls} onUploaded={store.addPhoto} onRemove={store.removePhoto} templateId={selectedTemplate?.id ?? null} />
         {selectedTemplate && selectedTemplate.tier !== 'free' ? (
           <div className="space-y-3">
             <label className="block space-y-1.5">
@@ -117,14 +78,18 @@ export function Editor() {
               </select>
             </label>
             {selectedTemplate.tier === 'premium' ? (
-            <label className="block rounded-lg border border-dashed border-black/20 bg-white/80 p-4 dark:border-white/15 dark:bg-white/10">
-                <span className="block text-sm font-bold">Upload your own music</span>
-                <span className="block text-sm text-zinc-500">Premium only, max 10MB</span>
-                <input className="mt-3 block w-full text-sm" type="file" accept="audio/*" disabled={musicUploading} onChange={(event) => event.target.files?.[0] && uploadMusic(event.target.files[0])} />
-              </label>
+              <MusicUploadManager
+                templateId={selectedTemplate.id}
+                onUploaded={(url) => {
+                  store.setMusicUrl(url)
+                  store.setUseCustomMusic(true)
+                  toast.push('success', 'Custom music uploaded')
+                }}
+              />
             ) : null}
           </div>
         ) : null}
+        <AITemplateRecommendations occasion={selectedTemplate?.occasion} />
         <Button type="button" variant="secondary" className="w-full lg:hidden" onClick={() => setPreviewOpen(true)}>See Preview</Button>
         <Button onClick={goPreview} className="w-full">Preview & create</Button>
       </motion.div>

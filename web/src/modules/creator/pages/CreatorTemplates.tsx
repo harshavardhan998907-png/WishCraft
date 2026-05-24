@@ -10,9 +10,12 @@ import { ensureCreatorProfile } from '../services/creatorProfile'
 import { archiveCreatorTemplate, createTemplateDraft, fetchCreatorTemplates, submitTemplateForReview, updateTemplateMetadata, uploadTemplateThumbnail } from '../services/creatorTemplates'
 import { marketplaceSchemaMessage } from '../services/marketplaceSchema'
 import type { CreatorProfile, CreatorTemplate, CreatorTemplateInput } from '../types'
+import { CreatorAIAssistant } from '../../ai/components/CreatorAIAssistant'
+import { getRegisteredTemplateNames } from '../../../components/templates/registry'
 
 const occasions: OccasionType[] = ['birthday', 'wedding', 'anniversary', 'festival', 'graduation', 'baby_shower', 'farewell', 'valentine', 'other']
 const tiers: TemplateTier[] = ['free', 'standard', 'premium']
+const registryNames = getRegisteredTemplateNames()
 
 const emptyDraft: CreatorTemplateInput = {
   name: '',
@@ -190,7 +193,12 @@ export function CreatorTemplates() {
             </select>
           </label>
           <Input label="Price paise" type="number" min={0} value={draft.price_paise} onChange={(event) => setDraft((current) => ({ ...current, price_paise: Number(event.target.value) }))} />
-          <Input label="Registry component name" value={draft.component_name} onChange={(event) => setDraft((current) => ({ ...current, component_name: event.target.value }))} required />
+          <label className="block space-y-1.5">
+            <span className="text-sm font-semibold text-ink dark:text-white/90">Registry component name</span>
+            <select className="focus-ring h-11 w-full rounded-md border border-black/15 bg-white px-3 dark:border-white/10 dark:bg-white/10 dark:text-white" value={draft.component_name} onChange={(event) => setDraft((current) => ({ ...current, component_name: event.target.value }))}>
+              {registryNames.map((name) => <option key={name} value={name}>{name}</option>)}
+            </select>
+          </label>
           <Input label="Thumbnail URL" value={draft.thumbnail_url ?? ''} onChange={(event) => setDraft((current) => ({ ...current, thumbnail_url: event.target.value }))} />
           <label className="flex min-h-11 items-center rounded-md border border-dashed border-black/15 px-3 text-sm font-semibold dark:border-white/10">
             Upload thumbnail
@@ -204,6 +212,11 @@ export function CreatorTemplates() {
           </div>
         </form>
       </Card>
+
+      <CreatorAIAssistant
+        input={{ templateName: draft.name, occasion: draft.occasion, tier: draft.tier, description: draft.slug }}
+        onApplyDescription={(value) => setDraft((current) => ({ ...current, name: current.name || value.split('.')[0] || current.name }))}
+      />
 
       <div className="grid gap-4">
         {templates.map((template) => (

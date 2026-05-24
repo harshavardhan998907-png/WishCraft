@@ -1,58 +1,44 @@
-import { supabase } from './supabase'
-
 declare global {
   interface Window {
     Razorpay: new (options: Record<string, unknown>) => { open: () => void }
   }
 }
 
-interface RazorpayOptions {
+interface RazorpayCheckoutOptions {
   amount: number
-  wishId: string
-  templateId: string
+  razorpayOrderId: string
+  dbOrderId: string
   userName: string
   userEmail: string
-  onSuccess: (paymentId: string, orderId: string, signature: string, dbOrderId: string) => void
-  onFailure: (error: unknown) => void
 }
 
-export async function initiatePayment(opts: RazorpayOptions) {
+export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions) {
   await loadRazorpayScript()
-  const { data: order, error } = await supabase.functions.invoke('create-razorpay-order', {
-    body: { amount: opts.amount, wishId: opts.wishId, templateId: opts.templateId },
-  })
-
-  if (error) {
-    console.error('[Razorpay] create-razorpay-order failed', { error, amount: opts.amount, wishId: opts.wishId, templateId: opts.templateId })
-    const message = error.message?.toLowerCase() ?? ''
-    if (message.includes('failed to send a request') || message.includes('function') || message.includes('not found')) {
-      throw new Error('Payment backend is not deployed yet. Deploy the create-razorpay-order Edge Function and set its secrets.')
-    }
-    throw new Error(error.message || 'Could not create payment order')
-  }
-  console.info('[Razorpay] create-razorpay-order response', { order })
-  if (!order?.razorpay_order_id || !order?.order_id) {
-    console.error('[Razorpay] create-razorpay-order returned an invalid response', { order })
-    throw new Error('Payment backend returned an invalid order response')
-  }
   if (!window.Razorpay) throw new Error('Razorpay checkout script is not loaded')
 
-  const checkout = new window.Razorpay({
-    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-    amount: opts.amount,
-    currency: 'INR',
-    name: 'Template Hub',
-    description: 'Wish page unlock',
-    order_id: order.razorpay_order_id,
-    prefill: { name: opts.userName, email: opts.userEmail },
-    theme: { color: '#7F77DD' },
-    handler: (response: any) => {
-      opts.onSuccess(response.razorpay_payment_id, response.razorpay_order_id, response.razorpay_signature, order.order_id)
-    },
-    modal: { ondismiss: () => opts.onFailure(new Error('Payment dismissed')) },
-  })
+  return new Promise<{ paymentId: string; orderId: string; signature: string; dbOrderId: string }>((resolve, reject) => {
+    const checkout = new window.Razorpay({
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: opts.amount,
+      currency: 'INR',
+      name: 'Template Hub',
+      description: 'Wish page unlock',
+      order_id: opts.razorpayOrderId,
+      prefill: { name: opts.userName, email: opts.userEmail },
+      theme: { color: '#7F77DD' },
+      handler: (response: any) => {
+        resolve({
+          paymentId: response.razorpay_payment_id,
+          orderId: response.razorpay_order_id,
+          signature: response.razorpay_signature,
+          dbOrderId: opts.dbOrderId,
+        })
+      },
+      modal: { ondismiss: () => reject(new Error('Payment dismissed')) },
+    })
 
-  checkout.open()
+    checkout.open()
+  })
 }
 
 function loadRazorpayScript() {
