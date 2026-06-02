@@ -1,6 +1,8 @@
 import { supabase } from '../../../lib/supabase'
 import { trackEvent } from '../../analytics/services/analyticsService'
 import { withRetry } from '../../performance/services/loggerService'
+import { logSecurityAudit } from '../../security/services/governanceService'
+import { getStoredLocalePreference } from '../../i18n/services/localeService'
 import type { AutomationLog, NotificationItem, NotificationMetrics, NotificationPreferences, ScheduledJob } from '../types'
 
 function clean(value: string, maxLength = 600) {
@@ -43,13 +45,14 @@ export async function createSelfNotification(input: { type: string; title: strin
   const { data: userData } = await supabase.auth.getUser()
   const userId = userData.user?.id
   if (!userId) return null
+  const localePreference = getStoredLocalePreference()
 
   const { data, error } = await withRetry(async () => supabase.rpc('create_notification', {
     target_user_id: userId,
     target_notification_type: clean(input.type, 80),
     target_title: clean(input.title, 140),
     target_message: clean(input.message, 600),
-    target_metadata: input.metadata ?? {},
+    target_metadata: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.metadata ?? {}) },
   }), { serviceName: 'notifications', operationName: 'create_self_notification', attempts: 2 })
 
   if (error) {
@@ -61,12 +64,13 @@ export async function createSelfNotification(input: { type: string; title: strin
 }
 
 export async function notifyUser(input: { userId: string; type: string; title: string; message: string; metadata?: Record<string, unknown> }) {
+  const localePreference = getStoredLocalePreference()
   const { data, error } = await withRetry(async () => supabase.rpc('create_notification', {
     target_user_id: input.userId,
     target_notification_type: clean(input.type, 80),
     target_title: clean(input.title, 140),
     target_message: clean(input.message, 600),
-    target_metadata: input.metadata ?? {},
+    target_metadata: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.metadata ?? {}) },
   }), { serviceName: 'notifications', operationName: 'notify_user', attempts: 2 })
   if (error) {
     console.warn('[Notifications] notify user failed', error)
@@ -77,12 +81,13 @@ export async function notifyUser(input: { userId: string; type: string; title: s
 }
 
 export async function notifyWishOwner(input: { wishId: string; type: string; title: string; message: string; metadata?: Record<string, unknown> }) {
+  const localePreference = getStoredLocalePreference()
   const { data, error } = await withRetry(async () => supabase.rpc('notify_wish_owner', {
     target_wish_id: input.wishId,
     target_notification_type: clean(input.type, 80),
     target_title: clean(input.title, 140),
     target_message: clean(input.message, 600),
-    target_metadata: input.metadata ?? {},
+    target_metadata: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.metadata ?? {}) },
   }), { serviceName: 'notifications', operationName: 'notify_wish_owner', attempts: 2 })
   if (error) {
     console.warn('[Notifications] notify wish owner failed', error)
@@ -126,16 +131,31 @@ export async function updateNotificationPreferences(input: Partial<Omit<Notifica
     .select('*')
     .single()
   if (error) throw new Error(error.message)
+  void logSecurityAudit({
+    eventType: 'notification_preferences_updated',
+    targetType: 'notification_preferences',
+    targetId: data.id,
+    riskLevel: 'low',
+    metadata: input,
+  }).catch((auditError) => console.warn('[Governance] notification preference audit failed', auditError))
   return data as NotificationPreferences
 }
 
 export async function enqueueScheduledJob(input: { jobType: string; payload?: Record<string, unknown>; scheduledFor?: string }) {
+  const localePreference = getStoredLocalePreference()
   const { data, error } = await withRetry(async () => supabase.rpc('enqueue_scheduled_job', {
     target_job_type: input.jobType,
-    target_payload: input.payload ?? {},
+    target_payload: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.payload ?? {}) },
     target_scheduled_for: input.scheduledFor ?? new Date().toISOString(),
   }), { serviceName: 'automation', operationName: 'enqueue_scheduled_job', attempts: 2 })
   if (error) throw new Error(error.message)
+  void logSecurityAudit({
+    eventType: 'automation_job_enqueued',
+    targetType: 'scheduled_job',
+    targetId: data as string,
+    riskLevel: 'medium',
+    metadata: { job_type: input.jobType, scheduled_for: input.scheduledFor },
+  }).catch((auditError) => console.warn('[Governance] automation audit failed', auditError))
   return data as string
 }
 

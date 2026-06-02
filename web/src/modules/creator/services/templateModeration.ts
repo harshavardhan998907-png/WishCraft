@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase'
 import { notifyUser } from '../../notifications/services/notificationService'
+import { trackPrivilegedAction } from '../../security/services/governanceService'
 import type { CreatorTemplate, TemplateStatus } from '../types'
 
 const moderationActions: Record<TemplateStatus, string> = {
@@ -50,6 +51,13 @@ export async function moderateTemplate(input: { templateId: string; status: Excl
   })
 
   if (logError) throw new Error(logError.message)
+
+  void trackPrivilegedAction({
+    eventType: moderationActions[input.status],
+    targetType: 'template',
+    targetId: input.templateId,
+    metadata: { status: input.status, notes: input.notes ?? null, admin_user_id: input.adminUserId },
+  }).catch((auditError) => console.warn('[Governance] template moderation audit failed', auditError))
 
   const creator = Array.isArray(existingTemplate?.creator) ? existingTemplate.creator[0] : existingTemplate?.creator
   const creatorUserId = creator?.user_id

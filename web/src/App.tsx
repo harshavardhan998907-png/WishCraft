@@ -19,12 +19,16 @@ const Share = lazy(() => import('./pages/Share').then((module) => ({ default: mo
 const Unauthorized = lazy(() => import('./pages/Unauthorized').then((module) => ({ default: module.Unauthorized })))
 const PaymentHistory = lazy(() => import('./modules/payments/pages/PaymentHistory').then((module) => ({ default: module.PaymentHistory })))
 const NotificationPreferences = lazy(() => import('./modules/notifications/pages/NotificationPreferences').then((module) => ({ default: module.NotificationPreferences })))
+const SecuritySettings = lazy(() => import('./modules/security/pages/SecuritySettings').then((module) => ({ default: module.SecuritySettings })))
+const DeveloperAPIKeys = lazy(() => import('./modules/developer/pages/DeveloperAPIKeys').then((module) => ({ default: module.DeveloperAPIKeys })))
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })))
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard').then((module) => ({ default: module.AdminDashboard })))
 const AdminAnalytics = lazy(() => import('./modules/admin/pages/AdminAnalytics').then((module) => ({ default: module.AdminAnalytics })))
 const AdminAIAnalytics = lazy(() => import('./modules/admin/pages/AdminAIAnalytics').then((module) => ({ default: module.AdminAIAnalytics })))
 const AdminAutomationDashboard = lazy(() => import('./modules/admin/pages/AdminAutomationDashboard').then((module) => ({ default: module.AdminAutomationDashboard })))
 const AdminEngagementModeration = lazy(() => import('./modules/admin/pages/AdminEngagementModeration').then((module) => ({ default: module.AdminEngagementModeration })))
+const AdminGovernanceDashboard = lazy(() => import('./modules/admin/pages/AdminGovernanceDashboard').then((module) => ({ default: module.AdminGovernanceDashboard })))
+const AdminPlatformIntelligenceDashboard = lazy(() => import('./modules/admin/pages/AdminPlatformIntelligenceDashboard').then((module) => ({ default: module.AdminPlatformIntelligenceDashboard })))
 const AdminOrders = lazy(() => import('./modules/admin/pages/AdminOrders').then((module) => ({ default: module.AdminOrders })))
 const AdminPayments = lazy(() => import('./modules/admin/pages/AdminPayments').then((module) => ({ default: module.AdminPayments })))
 const AdminProductionDashboard = lazy(() => import('./modules/admin/pages/AdminProductionDashboard').then((module) => ({ default: module.AdminProductionDashboard })))
@@ -52,10 +56,14 @@ export default function App() {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute><PaymentHistory /></ProtectedRoute>} />
         <Route path="/notifications/preferences" element={<ProtectedRoute><NotificationPreferences /></ProtectedRoute>} />
+        <Route path="/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
+        <Route path="/developer/api-keys" element={<ProtectedRoute><DeveloperAPIKeys /></ProtectedRoute>} />
         <Route path="/share/:slug" element={<ProtectedRoute><Share /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route index element={<AdminDashboard />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="governance" element={<AdminGovernanceDashboard />} />
+          <Route path="intelligence" element={<AdminPlatformIntelligenceDashboard />} />
           <Route path="ai" element={<AdminAIAnalytics />} />
           <Route path="automation" element={<AdminAutomationDashboard />} />
           <Route path="production" element={<AdminProductionDashboard />} />

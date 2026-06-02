@@ -32,6 +32,16 @@ export type AnalyticsEventName =
   | 'production_error_logged'
   | 'dashboard_opened'
   | 'admin_action'
+  | 'suspicious_login_detected'
+  | 'admin_privilege_changed'
+  | 'compliance_export_requested'
+  | 'account_deletion_requested'
+  | 'rate_limit_triggered'
+  | 'locale_changed'
+  | 'api_key_generated'
+  | 'platform_growth_snapshot_generated'
+  | 'regional_growth_detected'
+  | 'integration_request_created'
 
 export interface AnalyticsEventInput {
   eventName: AnalyticsEventName

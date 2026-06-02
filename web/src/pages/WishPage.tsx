@@ -3,11 +3,11 @@ import { useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { useWish } from '../hooks/useWish'
-import { getTemplateComponent } from '../components/templates/registry'
 import { Button } from '../components/ui/Button'
 import { Expired } from './Expired'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
 import { preloadMedia } from '../modules/media/services/mediaService'
+import { TemplateRenderer, wishDataToTemplateProps } from '../template-engine'
 
 const WishReactions = lazy(() => import('../modules/engagement/components/WishReactions').then((module) => ({ default: module.WishReactions })))
 const WishMessages = lazy(() => import('../modules/engagement/components/WishMessages').then((module) => ({ default: module.WishMessages })))
@@ -42,7 +42,6 @@ export function WishPage() {
   if (error || !data) return <div className="grid min-h-screen place-items-center px-4 text-center text-2xl font-black">This wish does not exist.</div>
   if (data.isExpired) return <Expired />
 
-  const Component = getTemplateComponent(data.template.component_name)
   const wishData = {
     recipientName: data.wish.recipient_name,
     senderName: data.wish.sender_name,
@@ -75,7 +74,7 @@ export function WishPage() {
             </div>
           </motion.div>
         </section>
-      ) : Component ? (
+      ) : (
         <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
           {wishData.musicUrl ? (
             <>
@@ -85,9 +84,13 @@ export function WishPage() {
               </button>
             </>
           ) : null}
-          <Suspense fallback={<div className="grid min-h-screen place-items-center bg-cream font-bold">Loading template...</div>}>
-            <Component data={wishData} />
-          </Suspense>
+          <TemplateRenderer
+            templateId={data.template.id}
+            slug={data.template.slug}
+            componentKey={data.template.component_name}
+            props={wishDataToTemplateProps(wishData)}
+            fallback={<div className="grid min-h-screen place-items-center bg-cream font-bold">Loading template...</div>}
+          />
           <div className="mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[360px_1fr]">
             <Suspense fallback={<div className="rounded-lg border border-black/10 bg-white p-4 font-bold dark:border-white/10 dark:bg-[#181824]">Loading engagement...</div>}>
               <WishReactions wishId={data.wish.id} templateId={data.template.id} />
@@ -95,7 +98,7 @@ export function WishPage() {
             </Suspense>
           </div>
         </motion.div>
-      ) : <div>Template missing.</div>}
+      )}
     </>
   )
 }

@@ -1,23 +1,35 @@
-import { lazy } from 'react'
 import type { ComponentType, LazyExoticComponent } from 'react'
+import { createElement } from 'react'
 import type { WishData } from '../../types'
+import { getTemplateByComponentKey, listTemplates } from '../../template-engine/registry'
+import { wishDataToTemplateProps } from '../../template-engine/types'
+import { registerFounderTemplates } from '../../templates/founder/registerFounderTemplates'
 
 type TemplateComponent = ComponentType<{ data: WishData }> | LazyExoticComponent<ComponentType<{ data: WishData }>>
 
-export const templateRegistry: Record<string, TemplateComponent> = {
-  'birthday-classic': lazy(() => import('./BirthdayClassic').then((module) => ({ default: module.BirthdayClassic }))),
-  'birthday-glow': lazy(() => import('./BirthdayGlow').then((module) => ({ default: module.BirthdayGlow }))),
-  'wedding-elegant': lazy(() => import('./WeddingElegant').then((module) => ({ default: module.WeddingElegant }))),
-  'anniversary-romantic': lazy(() => import('./AnniversaryRomantic').then((module) => ({ default: module.AnniversaryRomantic }))),
-  'festival-diwali': lazy(() => import('./FestivalDiwali').then((module) => ({ default: module.FestivalDiwali }))),
-  'graduation-celebration': lazy(() => import('./GraduationCelebration').then((module) => ({ default: module.GraduationCelebration }))),
-}
+registerFounderTemplates()
+
+export const templateRegistry: Record<string, TemplateComponent> = Object.fromEntries(
+  listTemplates({ includeDisabled: true }).map((entry) => [
+    entry.manifest.componentKey,
+    function LegacyRegistryComponent({ data }: { data: WishData }) {
+      const Component = entry.component
+      return createElement(Component, wishDataToTemplateProps(data))
+    },
+  ])
+)
 
 export function getTemplateComponent(componentName: string | null | undefined) {
   if (!componentName) return null
-  return templateRegistry[componentName] ?? null
+  const entry = getTemplateByComponentKey(componentName)
+  if (!entry) return null
+
+  return function LegacyRegistryComponent({ data }: { data: WishData }) {
+    const Component = entry.component
+    return createElement(Component, wishDataToTemplateProps(data))
+  }
 }
 
 export function getRegisteredTemplateNames() {
-  return Object.keys(templateRegistry)
+  return listTemplates({ includeDisabled: true }).map((entry) => entry.manifest.componentKey)
 }

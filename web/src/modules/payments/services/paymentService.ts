@@ -2,6 +2,7 @@ import { supabase } from '../../../lib/supabase'
 import { openRazorpayCheckout } from '../../../lib/razorpay'
 import { trackEvent, trackPaymentFailed, trackPaymentSuccess } from '../../analytics/services/analyticsService'
 import { createSelfNotification } from '../../notifications/services/notificationService'
+import { logSecurityAudit, trackPrivilegedAction } from '../../security/services/governanceService'
 import type { AdminPaymentAuditLog, PaymentHistoryItem, PaymentReconciliation, RefundRequest } from '../types'
 
 interface StartPaymentInput {
@@ -28,6 +29,14 @@ function paymentBackendError(error: { message?: string }) {
 }
 
 export async function createPaymentOrder(input: Pick<StartPaymentInput, 'amount' | 'wishId' | 'templateId'>) {
+  void logSecurityAudit({
+    eventType: 'payment_order_requested',
+    targetType: 'wish',
+    targetId: input.wishId,
+    riskLevel: 'medium',
+    metadata: { amount: input.amount, template_id: input.templateId },
+  }).catch((error) => console.warn('[Governance] payment order audit failed', error))
+
   const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
     body: { amount: input.amount, wishId: input.wishId, templateId: input.templateId },
   })
@@ -48,6 +57,13 @@ export async function verifyPayment(input: VerifiedPayment & { wishId: string; t
     },
   })
   if (error) throw paymentBackendError(error)
+  void logSecurityAudit({
+    eventType: 'payment_verification_requested',
+    targetType: 'order',
+    targetId: input.dbOrderId,
+    riskLevel: 'medium',
+    metadata: { wish_id: input.wishId, template_id: input.templateId },
+  }).catch((auditError) => console.warn('[Governance] payment verification audit failed', auditError))
   trackPaymentSuccess({ wishId: input.wishId, templateId: input.templateId, orderId: input.dbOrderId, paymentId: input.paymentId })
   void createSelfNotification({
     type: 'payment_confirmation',
@@ -69,6 +85,13 @@ export async function startPayment(input: StartPaymentInput) {
 }
 
 export async function markPaymentFailed(input: { orderId?: string; wishId?: string; templateId?: string; reason: string }) {
+  void logSecurityAudit({
+    eventType: 'payment_failed',
+    targetType: input.orderId ? 'order' : 'wish',
+    targetId: input.orderId ?? input.wishId,
+    riskLevel: 'medium',
+    metadata: { wish_id: input.wishId, template_id: input.templateId, reason: input.reason },
+  }).catch((error) => console.warn('[Governance] payment failure audit failed', error))
   trackPaymentFailed({ wishId: input.wishId, templateId: input.templateId, reason: input.reason })
   void createSelfNotification({
     type: 'payment_failed',
@@ -96,6 +119,13 @@ export async function requestRefund(orderId: string, reason: string) {
   })
   if (error) throw new Error(error.message)
   void trackEvent({ eventName: 'refund_requested', metadata: { order_id: orderId } })
+  void logSecurityAudit({
+    eventType: 'refund_requested',
+    targetType: 'order',
+    targetId: orderId,
+    riskLevel: 'medium',
+    metadata: { reason },
+  }).catch((auditError) => console.warn('[Governance] refund request audit failed', auditError))
   void createSelfNotification({
     type: 'refund_update',
     title: 'Refund request received',
@@ -125,6 +155,12 @@ export async function reviewRefundRequest(input: { refundId: string; status: 'ap
     .single()
 
   if (error) throw new Error(error.message)
+  void trackPrivilegedAction({
+    eventType: input.status === 'completed' ? 'refund_completed' : 'refund_reviewed',
+    targetType: 'refund_request',
+    targetId: input.refundId,
+    metadata: { status: input.status, order_id: refund.order_id },
+  }).catch((auditError) => console.warn('[Governance] refund review audit failed', auditError))
   if (input.status === 'completed') {
     await supabase.from('orders').update({ status: 'refunded' }).eq('id', refund.order_id)
     await supabase

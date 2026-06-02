@@ -2,6 +2,8 @@ import { supabase } from '../../../lib/supabase'
 import { trackEvent } from '../../analytics/services/analyticsService'
 import { getCached } from '../../performance/services/cacheService'
 import { withCircuitBreaker, withRetry } from '../../performance/services/loggerService'
+import { logSecurityAudit, recordRateLimitEvent } from '../../security/services/governanceService'
+import { getStoredLocalePreference } from '../../i18n/services/localeService'
 import type { AIGenerationLog, AITemplateRecommendation, AIUsageMetrics, AIWishContext, AIWishResponse, CreatorMetadataInput } from '../types'
 
 function sanitize(value: string) {
@@ -9,11 +11,25 @@ function sanitize(value: string) {
 }
 
 async function invokeAI<T>(action: string, context: Record<string, unknown>): Promise<T> {
+  const localePreference = getStoredLocalePreference()
+  const localizedContext = {
+    ...context,
+    preferred_locale: localePreference.preferred_locale,
+    preferred_timezone: localePreference.preferred_timezone,
+  }
+
+  void recordRateLimitEvent({
+    key: action,
+    action: `ai:${action}`,
+    blocked: false,
+    metadata: { context_keys: Object.keys(localizedContext).slice(0, 12), locale: localePreference.preferred_locale },
+  }).catch((error) => console.warn('[Governance] AI rate event failed', error))
+
   try {
     return await withCircuitBreaker(
       `ai-services:${action}`,
       () => withRetry(async () => {
-        const { data, error } = await supabase.functions.invoke('ai-services', { body: { action, context } })
+        const { data, error } = await supabase.functions.invoke('ai-services', { body: { action, context: localizedContext } })
         if (error) throw error
         return data as T
       }, {
@@ -27,6 +43,13 @@ async function invokeAI<T>(action: string, context: Record<string, unknown>): Pr
     )
   } catch (error) {
     void trackEvent({ eventName: 'ai_generation_failed', metadata: { action, reason: error instanceof Error ? error.message : 'AI request failed' } })
+    void logSecurityAudit({
+      eventType: 'ai_request_failed',
+      targetType: 'ai_service',
+      targetId: action,
+      riskLevel: 'low',
+      metadata: { reason: error instanceof Error ? error.message : 'AI request failed' },
+    }).catch((auditError) => console.warn('[Governance] AI failure audit failed', auditError))
     throw new Error(error instanceof Error ? error.message : 'AI is unavailable right now')
   }
 }

@@ -15,6 +15,9 @@ export const permissionsByRole: Record<UserRole, readonly Permission[]> = {
     'templates:manage',
     'users:manage',
     'analytics:access',
+    'governance:access',
+    'intelligence:access',
+    'ecosystem_api:manage',
     'moderation:access',
     'content:review',
     'content:hide',
@@ -24,7 +27,7 @@ export const permissionsByRole: Record<UserRole, readonly Permission[]> = {
     'creator_profile:manage',
   ],
   moderator: ['dashboard:access', 'content:review', 'content:hide', 'reports:review'],
-  creator: ['wishes:create', 'wishes:manage_own', 'media:upload', 'dashboard:access', 'payments:create', 'creator_templates:manage', 'creator_analytics:access', 'creator_profile:manage'],
+  creator: ['wishes:create', 'wishes:manage_own', 'media:upload', 'dashboard:access', 'payments:create', 'creator_templates:manage', 'creator_analytics:access', 'creator_profile:manage', 'ecosystem_api:manage'],
 }
 
 export function normalizeRole(role: unknown): UserRole {

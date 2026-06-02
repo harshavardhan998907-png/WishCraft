@@ -1,5 +1,6 @@
 export type TemplateTier = 'free' | 'standard' | 'premium'
 export type TemplateStatus = 'draft' | 'review' | 'published' | 'hidden' | 'archived' | 'rejected'
+export type TemplateRendererType = 'react-component'
 export type { Permission, UserRole } from './roles'
 export type OccasionType =
   | 'birthday' | 'wedding' | 'anniversary' | 'festival'
@@ -28,6 +29,12 @@ export interface Template {
   has_animation: boolean
   has_music: boolean
   component_name: string
+  renderer_type?: TemplateRendererType
+  component_key?: string | null
+  manifest_json?: Record<string, unknown> | null
+  description?: string | null
+  preview_video_url?: string | null
+  storage_prefix?: string | null
   is_active: boolean
   creator_id?: string | null
   status?: TemplateStatus
