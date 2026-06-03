@@ -22,18 +22,18 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at 8% 8%, rgba(255, 195, 77, 0.24), transparent 28rem),
-    radial-gradient(circle at 90% 10%, rgba(69, 200, 165, 0.13), transparent 24rem),
-    linear-gradient(90deg, #fff6e4 0%, #fff8ed 42%, #f8fbef 100%);
+    radial-gradient(circle at 8% 8%, rgba(212, 175, 55, 0.15), transparent 28rem),
+    radial-gradient(circle at 90% 10%, rgba(243, 229, 171, 0.2), transparent 24rem),
+    linear-gradient(90deg, #fdfbf7 0%, #f9f6ef 42%, #fdfbf7 100%);
   transition: background-color 220ms ease, color 220ms ease;
 }
 
 .dark body {
   background:
-    radial-gradient(circle at 12% 8%, rgba(127, 119, 221, 0.22), transparent 30rem),
-    radial-gradient(circle at 86% 12%, rgba(43, 191, 159, 0.12), transparent 24rem),
-    linear-gradient(135deg, #080812 0%, #10101a 48%, #161322 100%);
-  color: #f8f7ff;
+    radial-gradient(circle at 12% 8%, rgba(212, 175, 55, 0.15), transparent 30rem),
+    radial-gradient(circle at 86% 12%, rgba(125, 114, 222, 0.12), transparent 24rem),
+    linear-gradient(135deg, #0a1128 0%, #120d1e 48%, #0a1128 100%);
+  color: #fdfbf7;
 }
 
 button, input, textarea, select {
@@ -41,7 +41,7 @@ button, input, textarea, select {
 }
 
 .focus-ring {
-  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-cream;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-cream dark:focus-visible:ring-offset-deep-navy;
 }
 
 .glass-panel {
@@ -84,3 +84,15 @@ button, input, textarea, select {
 .dark .bg-zinc-100 {
   background-color: rgba(255, 255, 255, 0.08);
 }
+
+.hidden-scrollbar {
+  scrollbar-width: none;
+}
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-brand focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-cream dark:focus:ring-offset-deep-navy;
+}
+

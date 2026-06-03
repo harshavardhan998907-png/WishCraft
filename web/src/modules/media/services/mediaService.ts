@@ -165,7 +165,8 @@ export async function uploadMusicAsset(file: File, input: { templateId?: string 
   input.onProgress?.(15)
   await validateAudio(file)
   const ownerUserId = await currentUserId()
-  const extension = file.name.split('.').pop() || 'mp3'
+  const rawExtension = file.name.split('.').pop()?.toLowerCase() || ''
+  const extension = ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'mp4'].includes(rawExtension) ? rawExtension : 'mp3'
   const prefix = input.pathPrefix ?? `draft/${ownerUserId}`
   const path = `${prefix}/${crypto.randomUUID()}.${extension}`
   const bucket = 'wish-music'

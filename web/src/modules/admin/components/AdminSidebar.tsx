@@ -1,41 +1,53 @@
 import { NavLink } from 'react-router-dom'
 
-const links = [
+const primaryLinks = [
   { to: '/admin', label: 'Dashboard', end: true },
-  { to: '/admin/analytics', label: 'Analytics' },
-  { to: '/admin/governance', label: 'Governance' },
-  { to: '/admin/intelligence', label: 'Intelligence' },
-  { to: '/admin/production', label: 'Production' },
-  { to: '/admin/ai', label: 'AI' },
-  { to: '/admin/automation', label: 'Automation' },
-  { to: '/admin/engagement', label: 'Engagement' },
   { to: '/admin/templates', label: 'Templates' },
-  { to: '/creator', label: 'Creator Studio' },
   { to: '/admin/users', label: 'Users' },
   { to: '/admin/orders', label: 'Orders' },
+  { to: '/admin/analytics', label: 'Analytics' },
+]
+
+const advancedLinks = [
   { to: '/admin/payments', label: 'Payments' },
+  { to: '/admin/governance', label: 'Governance' },
+  { to: '/admin/production', label: 'Production' },
+  { to: '/admin/ai', label: 'AI Services' },
   { to: '/admin/storage', label: 'Storage' },
   { to: '/admin/settings', label: 'Settings' },
 ]
 
-export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
+function NavItem({ to, label, end, onClick }: { to: string; label: string; end?: boolean; onClick?: () => void }) {
   return (
-    <aside className="border-b border-black/10 bg-white/80 p-3 dark:border-white/10 dark:bg-[#10101a]/90 lg:min-h-[calc(100vh-66px)] lg:border-b-0 lg:border-r">
-      <nav className="flex gap-2 overflow-x-auto lg:grid">
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            end={link.end}
-            onClick={onNavigate}
-            className={({ isActive }) => `whitespace-nowrap rounded-md px-3 py-2 text-sm font-black transition ${
-              isActive
-                ? 'bg-ink text-white dark:bg-white dark:text-ink'
-                : 'text-zinc-600 hover:bg-black/5 hover:text-ink dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white'
-            }`}
-          >
-            {link.label}
-          </NavLink>
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onClick}
+      className={({ isActive }) => `focus-ring whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+        isActive
+          ? 'bg-brand/10 text-brand dark:bg-brand/20 dark:text-brand'
+          : 'text-zinc-600 hover:bg-zinc-100 hover:text-ink dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white'
+      }`}
+    >
+      {label}
+    </NavLink>
+  )
+}
+
+export function AdminSidebar({ onNavigate, className = '' }: { onNavigate?: () => void; className?: string }) {
+  return (
+    <aside className={className}>
+      <nav className="flex flex-col gap-1" aria-label="Admin Navigation">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-4 py-2 mb-1">Core Operations</span>
+        {primaryLinks.map((link) => (
+          <NavItem key={link.to} {...link} onClick={onNavigate} />
+        ))}
+
+        <div className="mt-8 mb-1">
+           <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-4 py-2">Advanced Systems</span>
+        </div>
+        {advancedLinks.map((link) => (
+          <NavItem key={link.to} {...link} onClick={onNavigate} />
         ))}
       </nav>
     </aside>

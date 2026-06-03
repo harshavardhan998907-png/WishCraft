@@ -28,9 +28,14 @@ export function PageWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      {fullscreen ? null : (
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+      )}
       {fullscreen ? null : <OfflineBanner />}
       {fullscreen ? null : <Navbar />}
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
       <ToastViewport />
     </>
   )

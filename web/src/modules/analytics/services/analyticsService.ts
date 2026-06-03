@@ -92,7 +92,7 @@ export function trackPaymentFailed(input: { wishId?: string; templateId?: string
   })
 }
 
-export function trackShareClick(input: { slug: string; action: 'copy' | 'open' }) {
+export function trackShareClick(input: { slug: string; action: 'copy' | 'open' | 'native_share' }) {
   void trackEvent({
     eventName: 'wish_shared',
     metadata: {

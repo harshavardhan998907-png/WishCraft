@@ -5,6 +5,7 @@ import { withCircuitBreaker, withRetry } from '../../performance/services/logger
 import { logSecurityAudit, recordRateLimitEvent } from '../../security/services/governanceService'
 import { getStoredLocalePreference } from '../../i18n/services/localeService'
 import type { AIGenerationLog, AITemplateRecommendation, AIUsageMetrics, AIWishContext, AIWishResponse, CreatorMetadataInput } from '../types'
+import { getCsrfToken } from '../../../lib/csrf'
 
 function sanitize(value: string) {
   return value.replace(/<[^>]*>/g, '').replace(/[{}[\]<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 700)
@@ -29,7 +30,10 @@ async function invokeAI<T>(action: string, context: Record<string, unknown>): Pr
     return await withCircuitBreaker(
       `ai-services:${action}`,
       () => withRetry(async () => {
-        const { data, error } = await supabase.functions.invoke('ai-services', { body: { action, context: localizedContext } })
+        const { data, error } = await supabase.functions.invoke('ai-services', {
+          body: { action, context: localizedContext },
+          headers: { 'X-CSRF-Token': getCsrfToken() },
+        })
         if (error) throw error
         return data as T
       }, {

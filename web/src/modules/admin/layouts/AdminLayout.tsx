@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Button } from '../../../components/ui/Button'
 import { RoleBadge } from '../../../components/ui/RoleBadge'
@@ -12,22 +12,26 @@ export function AdminLayout() {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  if (role !== 'admin') {
+    return <Navigate to="/unauthorized" replace />
+  }
+
   async function handleLogout() {
     await signOut()
     navigate('/')
   }
 
   return (
-    <div className="min-h-[calc(100vh-66px)] bg-white/35 dark:bg-[#080812]">
+    <div className="min-h-[calc(100vh-66px)] bg-soft-cream dark:bg-deep-navy">
       <div className="grid lg:grid-cols-[240px_1fr]">
         <div className="hidden lg:block">
-          <AdminSidebar />
+          <AdminSidebar className="bg-white p-4 dark:bg-ink lg:min-h-[calc(100vh-66px)] lg:border-r border-zinc-100 dark:border-white/5 w-64" />
         </div>
         <MobileDrawer open={sidebarOpen} title="Admin menu" onClose={() => setSidebarOpen(false)}>
-          <AdminSidebar onNavigate={() => setSidebarOpen(false)} />
+          <AdminSidebar className="w-full" onNavigate={() => setSidebarOpen(false)} />
         </MobileDrawer>
         <main className="min-w-0">
-          <div className="border-b border-black/10 bg-white/75 px-4 py-4 backdrop-blur dark:border-white/10 dark:bg-[#10101a]/85">
+          <div className="border-b border-black/5 bg-white/75 px-4 py-4 backdrop-blur dark:border-white/5 dark:bg-ink/85">
             <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-3">
                 <button

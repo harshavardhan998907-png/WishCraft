@@ -8,6 +8,7 @@ import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
 import { useAuth } from '../../../hooks/useAuth'
 import { fetchPaymentHistory, markPaymentFailed, requestRefund, startPayment, verifyPayment } from '../services/paymentService'
 import type { PaymentHistoryItem } from '../types'
+import { CreditCard } from 'lucide-react'
 
 function formatMoney(paise: number) {
   return `Rs ${new Intl.NumberFormat('en-IN').format(Math.round(paise / 100))}`
@@ -128,7 +129,20 @@ export function PaymentHistory() {
             </ResponsiveCard>
           )
         })}
-        {!loading && payments.length === 0 ? <Card className="text-center font-semibold text-zinc-500">No payments yet.</Card> : null}
+        {!loading && payments.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-zinc-200 dark:border-white/10 p-12 text-center bg-white/50 dark:bg-ink/50 mt-4">
+            <div className="w-16 h-16 rounded-full bg-brand/10 text-brand flex items-center justify-center mx-auto mb-4">
+              <CreditCard size={24} />
+            </div>
+            <h3 className="text-xl font-black text-ink dark:text-white mb-1">No payment history</h3>
+            <p className="text-zinc-500 max-w-sm mx-auto text-sm">
+              You haven't purchased or created any premium wishes yet.
+            </p>
+            <Button onClick={() => navigate('/browse')} className="mt-6 rounded-xl px-6">
+              Explore Templates
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {refundOrderId ? (

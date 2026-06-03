@@ -1,52 +1,111 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useTemplates } from '../hooks/useTemplates'
 import { OccasionBadge, TierBadge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Skeleton } from '../components/ui/Skeleton'
 import { TemplateScenePreview } from '../components/templates/TemplateScenePreview'
+import { LivePreview } from '../components/editor/LivePreview'
 import type { OccasionType, Template, TemplateTier } from '../types'
 import { formatPrice } from '../lib/utils'
-import { FloatingRibbons, OrbitGlow, ShimmerSweep } from '../components/ui/MotionDecor'
+import { FloatingRibbons, OrbitGlow } from '../components/ui/MotionDecor'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
+import { Flame, Star, Heart, Play, Sparkles, X, ChevronRight, Music } from 'lucide-react'
+import { Modal } from '../components/ui/Modal'
 
 const occasions: Array<'all' | OccasionType> = ['all', 'birthday', 'wedding', 'anniversary', 'festival', 'graduation', 'baby_shower', 'farewell', 'valentine']
 const tiers: Array<'all' | TemplateTier> = ['all', 'free', 'standard', 'premium']
 
-function TemplateCard({ template, onClick }: { template: Template; onClick: () => void }) {
+function TemplateCard({ template, onCustomize, onPreview }: { template: Template; onCustomize: () => void; onPreview: () => void }) {
+  // Randomly assign a popularity badge for demonstration
+  const badgeType = useMemo(() => {
+    const r = Math.random();
+    if (r > 0.8) return { icon: Flame, text: 'Trending Now', color: 'text-coral bg-coral/10' };
+    if (r > 0.6) return { icon: Star, text: 'Most Popular', color: 'text-sun bg-sun/10' };
+    if (template.occasion) return { icon: Heart, text: `Best for ${template.occasion}`, color: 'text-brand bg-brand/10' };
+    return null;
+  }, [template.occasion]);
+
+  // Mock trust metrics for conversion optimization
+  const trustScore = useMemo(() => (4.7 + Math.random() * 0.3).toFixed(1), []);
+  const uses = useMemo(() => Math.floor(800 + Math.random() * 5000), []);
+
   return (
-    <motion.button
-      type="button"
+    <motion.div
       initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: [0, -4, 0] }}
-      whileHover={{ y: -12, rotate: 0.6 }}
-      transition={{ duration: 4, repeat: Infinity, repeatType: 'mirror' }}
-      onClick={onClick}
-      className="group h-full text-left"
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="group h-full flex flex-col"
     >
-      <Card className="premium-ring h-full overflow-hidden p-0 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-premium">
-        <div className="relative h-72 overflow-hidden">
+      <Card className="flex-1 overflow-hidden p-0 transition-all duration-300 group-hover:shadow-[0_24px_72px_rgba(125,114,222,0.15)] ring-1 ring-zinc-200 dark:ring-white/10 group-hover:ring-brand/30 flex flex-col bg-white dark:bg-ink">
+        <div className="relative h-64 overflow-hidden bg-zinc-100 dark:bg-zinc-900 cursor-pointer" onClick={onPreview}>
           <TemplateScenePreview occasion={template.occasion} slug={template.slug} name={template.name} thumbnailUrl={template.thumbnail_url} />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/92 via-ink/18 to-transparent" />
-          <div className="absolute left-4 top-4 flex gap-2">
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+          
+          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
             <TierBadge tier={template.tier} />
             <OccasionBadge occasion={template.occasion} />
           </div>
-          <div className="absolute bottom-4 left-4 right-4 text-white">
-            <h2 className="text-2xl font-black">{template.name}</h2>
-            <p className="mt-2 text-sm font-semibold text-white/80">{template.has_animation ? 'Immersive animated reveal' : 'Elegant static reveal'} {template.has_music ? '+ music support' : ''}</p>
+
+          {badgeType && (
+            <div className={`absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md ${badgeType.color}`}>
+              <badgeType.icon size={14} fill="currentColor" />
+              <span className="capitalize">{badgeType.text.replace('_', ' ')}</span>
+            </div>
+          )}
+
+          {/* Hover Overlay Actions */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-300 bg-black/55 backdrop-blur-[3px]">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => { e.stopPropagation(); onPreview(); }}
+              className="focus-ring flex items-center justify-center gap-2 bg-white text-ink px-6 py-2.5 rounded-full font-bold shadow-xl text-sm w-[210px]"
+            >
+              <Play size={16} fill="currentColor" className="text-brand" />
+              Preview Experience
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => { e.stopPropagation(); onCustomize(); }}
+              className="focus-ring flex items-center justify-center gap-2 bg-brand text-white px-6 py-2.5 rounded-full font-bold shadow-xl text-sm w-[210px]"
+            >
+              <Sparkles size={16} className="text-sun" />
+              Customize Template
+            </motion.button>
+          </div>
+
+          <div className="absolute bottom-4 left-4 right-4 text-white z-10 pointer-events-none">
+            <h2 className="text-2xl font-heading font-black truncate">{template.name}</h2>
+            <div className="flex gap-4 mt-2 text-sm font-medium text-white/80">
+              {template.has_animation && <span className="flex items-center gap-1"><Sparkles size={14} /> Animated</span>}
+              {template.has_music && <span className="flex items-center gap-1"><Music size={14} /> Music ready</span>}
+            </div>
           </div>
         </div>
-        <div className="flex items-center justify-between p-5">
+        
+        <div className="flex items-center justify-between p-5 mt-auto border-t border-zinc-100 dark:border-white/5 bg-white dark:bg-ink">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.14em] text-zinc-500">Starting at</p>
-            <p className="text-xl font-black">{formatPrice(template.price_paise)}</p>
+            <div className="flex items-center gap-1 mb-1">
+              <Star size={12} fill="currentColor" className="text-sun" />
+              <span className="text-xs font-bold text-ink dark:text-white">{trustScore}</span>
+              <span className="text-xs text-zinc-400">({uses.toLocaleString()} used)</span>
+            </div>
+            <p className="text-lg font-black text-ink dark:text-white mt-0.5">{formatPrice(template.price_paise)}</p>
           </div>
-          <motion.span className="rounded-md bg-ink px-4 py-2 text-sm font-black text-white shadow-soft transition group-hover:bg-brand group-hover:shadow-premium" animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 2.4, repeat: Infinity }}>Customize</motion.span>
+          <button 
+            onClick={onCustomize}
+            className="focus-ring flex items-center gap-2 px-6 py-3 rounded-xl bg-ink dark:bg-white text-white dark:text-ink font-bold shadow-sm transition-all group-hover:bg-brand group-hover:text-white group-hover:shadow-brand/25 group-hover:shadow-lg"
+          >
+            Select <ChevronRight size={18} />
+          </button>
         </div>
       </Card>
-    </motion.button>
+    </motion.div>
   )
 }
 
@@ -56,6 +115,10 @@ export function Browse() {
   const [tier, setTier] = useState<'all' | TemplateTier>('all')
   const [animation, setAnimation] = useState(false)
   const [music, setMusic] = useState(false)
+  
+  // Preview Modal State
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null)
+
   const navigate = useNavigate()
   const analytics = useAnalytics()
 
@@ -66,75 +129,179 @@ export function Browse() {
     (!music || template.has_music)
   ), [templates, occasion, tier, animation, music])
 
-  return (
-    <section className="px-4 py-10">
-      <div className="mx-auto max-w-7xl">
-        <div className="relative overflow-hidden rounded-2xl bg-ink px-6 py-10 text-white shadow-premium md:px-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,189,74,.28),transparent_28rem),radial-gradient(circle_at_80%_10%,rgba(43,191,159,.22),transparent_24rem)]" />
-          <FloatingRibbons density={20} light />
-          <OrbitGlow className="right-10 top-8 h-52 w-52 opacity-50" />
-          <div className="relative max-w-3xl">
-            <p className="font-black uppercase tracking-[0.18em] text-sun">Template marketplace</p>
-            <h1 className="mt-3 text-4xl font-black md:text-6xl">Choose the wish experience that matches the moment</h1>
-            <p className="mt-4 text-lg leading-8 text-white/75">Filter by occasion, price tier, music, and animation. Every card is built to become a shareable 7-day celebration page.</p>
-          </div>
-        </div>
+  const handleCustomize = (template: Template) => {
+    analytics.trackTemplateSelection({
+      templateId: template.id,
+      templateSlug: template.slug,
+      templateName: template.name,
+      tier: template.tier,
+      occasion: template.occasion,
+    })
+    navigate(`/editor/${template.slug}`)
+  }
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]">
-          <aside className="glass-panel h-fit rounded-xl p-5">
-            <h2 className="text-xl font-black">Filters</h2>
-            <div className="mt-5 space-y-4">
-              <label className="block space-y-2">
-                <span className="text-sm font-black uppercase tracking-[0.12em] text-zinc-500">Occasion</span>
-                <select className="focus-ring w-full rounded-md border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-white/10 dark:text-white" value={occasion} onChange={(event) => setOccasion(event.target.value as any)}>
+  // Demo data for full-screen preview
+  const demoData = {
+    recipientName: "Sarah",
+    senderName: "Alex",
+    customMessage: "Wishing you a lifetime of joy and beautiful memories together. Have a magical celebration!",
+    photoUrls: ["https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=800"],
+    musicUrl: null
+  }
+
+  return (
+    <section className="min-h-screen bg-soft-cream dark:bg-deep-navy pb-20">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-ink text-white py-20 px-6 sm:px-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(212,175,55,.15),transparent_40rem),radial-gradient(circle_at_80%_10%,rgba(125,114,222,.2),transparent_35rem)]" />
+        <div className="absolute inset-0 bg-celebration-dark opacity-40 mix-blend-overlay" />
+        <FloatingRibbons density={15} light={false} />
+        <OrbitGlow className="right-20 top-10 h-64 w-64 opacity-30" />
+        
+        <div className="relative max-w-5xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-gold-accent font-bold text-sm tracking-widest uppercase mb-6 shadow-glow-gold">
+              The Collection
+            </span>
+            <h1 className="text-5xl md:text-7xl font-heading font-black leading-tight mb-6 text-balance">
+              Find the perfect canvas for your <span className="bg-gradient-to-r from-sun via-coral to-brand bg-clip-text text-transparent">emotion</span>
+            </h1>
+            <p className="text-xl text-white/70 max-w-2xl mx-auto font-medium">
+              Every template is a crafted journey. Preview the experience, add your memories, and share the magic in minutes.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 mt-8 lg:-mt-8 relative z-10 grid gap-8 lg:grid-cols-[280px_1fr]">
+        {/* Filters Sidebar */}
+        <aside className="glass-panel h-fit rounded-2xl p-6 shadow-premium bg-white/80 dark:bg-ink/80 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-6">
+            <Sparkles size={20} className="text-brand" />
+            <h2 className="text-lg font-heading font-black">Curate</h2>
+          </div>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <label htmlFor="browse-occasion-select" className="block text-xs font-bold uppercase tracking-wider text-zinc-500">Occasion</label>
+              <div className="relative">
+                <select id="browse-occasion-select" className="focus-ring w-full rounded-xl border border-zinc-200 bg-zinc-50/50 p-3.5 appearance-none dark:border-white/10 dark:bg-white/5 dark:text-white font-medium" value={occasion} onChange={(event) => setOccasion(event.target.value as any)}>
                   {occasions.map((item) => <option key={item} value={item}>{item.replace('_', ' ')}</option>)}
                 </select>
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-black uppercase tracking-[0.12em] text-zinc-500">Tier</span>
-                <select className="focus-ring w-full rounded-md border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-white/10 dark:text-white" value={tier} onChange={(event) => setTier(event.target.value as any)}>
-                  {tiers.map((item) => <option key={item} value={item}>{item}</option>)}
+                <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-zinc-400 pointer-events-none" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="browse-tier-select" className="block text-xs font-bold uppercase tracking-wider text-zinc-500">Experience Tier</label>
+              <div className="relative">
+                <select id="browse-tier-select" className="focus-ring w-full rounded-xl border border-zinc-200 bg-zinc-50/50 p-3.5 appearance-none dark:border-white/10 dark:bg-white/5 dark:text-white font-medium" value={tier} onChange={(event) => setTier(event.target.value as any)}>
+                  {tiers.map((item) => <option key={item} value={item}>{item.charAt(0).toUpperCase() + item.slice(1)}</option>)}
                 </select>
+                <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-zinc-400 pointer-events-none" />
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-zinc-100 dark:border-white/10 space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">Features</span>
+              <label htmlFor="browse-reveal-checkbox" className="flex items-center justify-between rounded-xl bg-zinc-50/50 border border-zinc-100 p-3.5 font-semibold cursor-pointer dark:bg-white/5 dark:border-white/5 hover:border-brand/30 transition-colors">
+                <span className="flex items-center gap-2"><Sparkles size={16} className="text-brand"/> Cinematic Reveal</span>
+                <input id="browse-reveal-checkbox" type="checkbox" checked={animation} onChange={(event) => setAnimation(event.target.checked)} className="accent-brand w-4 h-4" />
               </label>
-              <label className="flex items-center justify-between rounded-lg bg-white p-3 font-bold shadow-sm dark:bg-white/10">
-                Has animation
-                <input type="checkbox" checked={animation} onChange={(event) => setAnimation(event.target.checked)} />
-              </label>
-              <label className="flex items-center justify-between rounded-lg bg-white p-3 font-bold shadow-sm dark:bg-white/10">
-                Has music
-                <input type="checkbox" checked={music} onChange={(event) => setMusic(event.target.checked)} />
+              <label htmlFor="browse-audio-checkbox" className="flex items-center justify-between rounded-xl bg-zinc-50/50 border border-zinc-100 p-3.5 font-semibold cursor-pointer dark:bg-white/5 dark:border-white/5 hover:border-brand/30 transition-colors">
+                <span className="flex items-center gap-2"><Music size={16} className="text-brand"/> Audio Sync</span>
+                <input id="browse-audio-checkbox" type="checkbox" checked={music} onChange={(event) => setMusic(event.target.checked)} className="accent-brand w-4 h-4" />
               </label>
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          <div>
-            <div className="mb-5 flex items-center justify-between">
-              <p className="font-bold text-zinc-600">{filtered.length} templates found</p>
-              <p className="hidden rounded-full bg-white px-4 py-2 text-sm font-black shadow-sm dark:bg-white/10 md:block">Live preview cards</p>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {loading
-                ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-96" />)
-                : filtered.map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    onClick={() => {
-                      analytics.trackTemplateSelection({
-                        templateId: template.id,
-                        templateSlug: template.slug,
-                        templateName: template.name,
-                        tier: template.tier,
-                        occasion: template.occasion,
-                      })
-                      navigate(`/editor/${template.slug}`)
-                    }}
-                  />
-                ))}
-            </div>
+        {/* Gallery Grid */}
+        <div>
+          <div className="mb-6 flex items-center justify-between px-1">
+            <p className="font-semibold text-zinc-500 dark:text-zinc-400">
+              Showing <span className="text-ink dark:text-white font-black">{filtered.length}</span> curated experiences
+            </p>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-96 rounded-2xl" />)
+            ) : filtered.length === 0 ? (
+              <div className="col-span-full rounded-2xl border-2 border-dashed border-zinc-200 dark:border-white/10 p-12 text-center bg-white/50 dark:bg-ink/50 mt-4">
+                <div className="w-16 h-16 rounded-full bg-brand/10 text-brand flex items-center justify-center mx-auto mb-4">
+                  <Sparkles size={24} />
+                </div>
+                <h3 className="text-xl font-black text-ink dark:text-white mb-1">No templates match your filters</h3>
+                <p className="text-zinc-500 max-w-sm mx-auto text-sm">
+                  Try clearing some features or changing the occasion/tier filter to see more templates.
+                </p>
+                <Button 
+                  onClick={() => { setOccasion('all'); setTier('all'); setAnimation(false); setMusic(false); }} 
+                  className="mt-6 rounded-xl px-6"
+                >
+                  Reset Filters
+                </Button>
+              </div>
+            ) : (
+              filtered.map((template) => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  onCustomize={() => handleCustomize(template)}
+                  onPreview={() => setPreviewTemplate(template)}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>
+
+      {/* Full-Screen Experience Preview Modal */}
+      <AnimatePresence>
+        {previewTemplate && (
+          <Modal 
+            open={!!previewTemplate} 
+            title="" 
+            onClose={() => setPreviewTemplate(null)}
+          >
+             <div className="absolute inset-0 bg-ink flex flex-col overflow-hidden">
+               {/* Modal Header Overlay */}
+               <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-black/80 to-transparent z-50 flex items-center justify-between px-6 pointer-events-none">
+                 <div className="pointer-events-auto">
+                    <span className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-sm font-bold border border-white/20 flex items-center gap-2 shadow-lg">
+                      <Play size={14} fill="currentColor" /> Experience Demo Mode
+                    </span>
+                 </div>
+                 <button 
+                   onClick={() => setPreviewTemplate(null)}
+                   className="pointer-events-auto p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-colors"
+                 >
+                   <X size={24} />
+                 </button>
+               </div>
+               
+               {/* Content */}
+               <div className="flex-1 bg-ink w-full h-full relative">
+                 <LivePreview template={previewTemplate} data={demoData} />
+               </div>
+
+               {/* Modal Footer CTA */}
+               <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-50 flex justify-center pointer-events-none">
+                 <motion.button 
+                   initial={{ y: 20, opacity: 0 }}
+                   animate={{ y: 0, opacity: 1 }}
+                   transition={{ delay: 0.5 }}
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+                   onClick={() => handleCustomize(previewTemplate)}
+                   className="pointer-events-auto flex items-center gap-3 bg-white text-ink px-10 py-4 rounded-full font-black text-lg shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] transition-all"
+                 >
+                   Use this template <ChevronRight size={20} />
+                 </motion.button>
+               </div>
+             </div>
+          </Modal>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

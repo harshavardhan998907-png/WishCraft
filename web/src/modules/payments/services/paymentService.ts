@@ -4,6 +4,7 @@ import { trackEvent, trackPaymentFailed, trackPaymentSuccess } from '../../analy
 import { createSelfNotification } from '../../notifications/services/notificationService'
 import { logSecurityAudit, trackPrivilegedAction } from '../../security/services/governanceService'
 import type { AdminPaymentAuditLog, PaymentHistoryItem, PaymentReconciliation, RefundRequest } from '../types'
+import { getCsrfToken } from '../../../lib/csrf'
 
 interface StartPaymentInput {
   amount: number
@@ -39,6 +40,7 @@ export async function createPaymentOrder(input: Pick<StartPaymentInput, 'amount'
 
   const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
     body: { amount: input.amount, wishId: input.wishId, templateId: input.templateId },
+    headers: { 'X-CSRF-Token': getCsrfToken() },
   })
 
   if (error) throw paymentBackendError(error)
@@ -55,6 +57,7 @@ export async function verifyPayment(input: VerifiedPayment & { wishId: string; t
       dbOrderId: input.dbOrderId,
       wishId: input.wishId,
     },
+    headers: { 'X-CSRF-Token': getCsrfToken() },
   })
   if (error) throw paymentBackendError(error)
   void logSecurityAudit({

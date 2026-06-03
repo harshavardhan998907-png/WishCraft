@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LivePreview } from '../components/editor/LivePreview'
 import { Button } from '../components/ui/Button'
@@ -10,6 +11,7 @@ import type { Template } from '../types'
 import { markPaymentFailed, startPayment, verifyPayment } from '../modules/payments/services/paymentService'
 import { linkMediaAssetsToWish } from '../modules/media/services/mediaService'
 import { createSelfNotification, enqueueScheduledJob } from '../modules/notifications/services/notificationService'
+import { Sparkles } from 'lucide-react'
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const missingTableCode = 'PGRST205'
@@ -19,6 +21,7 @@ export function Preview() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
   const toast = useToastStore()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const data = { recipientName: editor.recipientName, senderName: editor.senderName, customMessage: editor.customMessage, photoUrls: editor.photoUrls, musicUrl: editor.musicUrl }
 
   async function ensureProfileExists() {
@@ -132,6 +135,8 @@ export function Preview() {
   }
 
   async function handleShare() {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (!editor.template) return
       console.info('[Preview] share submit started', {
@@ -145,6 +150,7 @@ export function Preview() {
       if (template.price_paise === 0) {
         const wish = await createWish('active', false)
         console.info('[Preview] free wish created', wish)
+        toast.push('success', 'Wish published successfully!')
         navigate(`/share/${wish.slug}`)
       }
       else {
@@ -159,6 +165,7 @@ export function Preview() {
         })
         console.info('[Preview] Razorpay payment success callback', { paymentId: payment.paymentId, orderId: payment.orderId, dbOrderId: payment.dbOrderId, wishId: wish.id })
         await verifyPayment({ ...payment, wishId: wish.id, templateId: template.id })
+        toast.push('success', 'Wish published successfully!')
         navigate(`/share/${wish.slug}`)
       }
     } catch (err) {
@@ -171,16 +178,42 @@ export function Preview() {
         })
       }
       toast.push('error', err instanceof Error ? err.message : 'Could not create wish')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  if (!editor.template) return <div className="p-10">No template selected.</div>
+  if (!editor.template) {
+    return (
+      <div className="mx-auto max-w-md p-12 text-center space-y-6">
+        <div className="w-20 h-20 rounded-full bg-brand/10 text-brand flex items-center justify-center mx-auto mb-4">
+          <Sparkles size={32} />
+        </div>
+        <h2 className="text-2xl font-heading font-black text-ink dark:text-white">No template selected</h2>
+        <p className="text-zinc-500 dark:text-zinc-400">
+          Please select a template from the collection to preview and customize your wish experience.
+        </p>
+        <Button onClick={() => navigate('/browse')} className="rounded-xl px-6">
+          Browse Collection
+        </Button>
+      </div>
+    )
+  }
   return (
     <section className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <LivePreview template={editor.template} data={data} />
-      <div className="flex items-center justify-between rounded-lg bg-white p-5 shadow-soft dark:border dark:border-white/10 dark:bg-[#181824] dark:text-white">
-        <p className="font-bold">{formatPrice(editor.template.price_paise)}</p>
-        <Button onClick={handleShare}>{editor.template.price_paise === 0 ? 'Create & Share' : `Pay ${formatPrice(editor.template.price_paise)} & Share`}</Button>
+      <div className="flex flex-col sm:flex-row items-center justify-between rounded-2xl bg-white p-6 shadow-premium border border-zinc-100 dark:border-white/10 dark:bg-ink dark:text-white gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-2 h-full bg-brand" />
+        <div className="pl-4 text-center sm:text-left">
+          <h3 className="font-heading font-black text-xl mb-1">Ready to share the magic?</h3>
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm">Your personalized {editor.template.name.toLowerCase()} experience is finalized and ready for {editor.recipientName}.</p>
+        </div>
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          {editor.template.price_paise > 0 && <p className="font-bold text-lg hidden sm:block">{formatPrice(editor.template.price_paise)}</p>}
+          <Button onClick={handleShare} size="lg" className="shadow-lg rounded-xl w-full sm:w-auto px-8" disabled={isSubmitting} loading={isSubmitting}>
+            {editor.template.price_paise === 0 ? 'Publish & Share' : `Pay ${formatPrice(editor.template.price_paise)} & Share`}
+          </Button>
+        </div>
       </div>
     </section>
   )

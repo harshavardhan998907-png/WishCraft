@@ -1,0 +1,10 @@
+{
+  "name": "Template Hub",
+  "short_name": "TemplateHub",
+  "description": "Turn greetings into cinematic memories. Bespoke animated celebration sites.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8ed",
+  "theme_color": "#6355d8",
+  "icons": []
+}

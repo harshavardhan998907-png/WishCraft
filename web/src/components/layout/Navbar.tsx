@@ -25,7 +25,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/70 bg-cream/85 backdrop-blur-xl transition-colors dark:border-white/10 dark:bg-[#10101a]/90">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3" aria-label="Main Navigation">
         <Link to="/" className="flex items-center gap-2 text-xl font-black tracking-normal text-ink transition-colors dark:text-white">
           <span className="grid h-9 w-9 place-items-center rounded-md bg-ink text-sm text-white shadow-soft dark:bg-white dark:text-ink">TH</span>
           Template Hub
@@ -41,8 +41,8 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <div className="hidden xl:block"><LanguageSwitcher /></div>
           <ThemeToggle />
-          {user && role === 'admin' ? <Button className="hidden sm:inline-flex" variant="secondary" onClick={() => navigate('/admin')}>Admin</Button> : null}
-          {user ? <Button className="hidden sm:inline-flex" variant="ghost" onClick={handleLogout}>Logout</Button> : <Button className="hidden sm:inline-flex" onClick={() => navigate('/auth')}>Login</Button>}
+          {user && role === 'admin' ? <Button className="hidden md:inline-flex" variant="secondary" onClick={() => navigate('/admin')}>Admin</Button> : null}
+          {user ? <Button className="hidden md:inline-flex" variant="ghost" onClick={handleLogout}>Logout</Button> : <Button className="hidden md:inline-flex" onClick={() => navigate('/auth')}>Login</Button>}
           <button
             type="button"
             className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-2xl font-black text-ink hover:bg-black/5 dark:text-white dark:hover:bg-white/10 md:hidden"

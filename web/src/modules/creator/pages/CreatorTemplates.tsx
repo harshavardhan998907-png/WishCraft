@@ -5,6 +5,7 @@ import { Card } from '../../../components/ui/Card'
 import { Input } from '../../../components/ui/Input'
 import { useAuth } from '../../../hooks/useAuth'
 import { useToastStore } from '../../../store/toastStore'
+import { Skeleton } from '../../../components/ui/Skeleton'
 import type { OccasionType, TemplateTier } from '../../../types'
 import { ensureCreatorProfile } from '../services/creatorProfile'
 import { archiveCreatorTemplate, createTemplateDraft, fetchCreatorTemplates, submitTemplateForReview, updateTemplateMetadata, uploadTemplateThumbnail } from '../services/creatorTemplates'
@@ -12,6 +13,7 @@ import { marketplaceSchemaMessage } from '../services/marketplaceSchema'
 import type { CreatorProfile, CreatorTemplate, CreatorTemplateInput } from '../types'
 import { CreatorAIAssistant } from '../../ai/components/CreatorAIAssistant'
 import { getRegisteredTemplateNames } from '../../../components/templates/registry'
+import { Sparkles } from 'lucide-react'
 
 const occasions: OccasionType[] = ['birthday', 'wedding', 'anniversary', 'festival', 'graduation', 'baby_shower', 'farewell', 'valentine', 'other']
 const tiers: TemplateTier[] = ['free', 'standard', 'premium']
@@ -150,7 +152,16 @@ export function CreatorTemplates() {
     }
   }
 
-  if (loading) return <Card className="text-sm font-semibold text-zinc-500">Loading creator templates...</Card>
+  if (loading) return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center"><Skeleton className="h-10 w-48" /><Skeleton className="h-10 w-32" /></div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Skeleton className="h-72 w-full rounded-2xl" />
+        <Skeleton className="h-72 w-full rounded-2xl" />
+        <Skeleton className="h-72 w-full rounded-2xl" />
+      </div>
+    </div>
+  )
   if (error) return <Card className="border-rose-200 bg-rose-50 text-rose-700">{error}</Card>
   if (!creatorProfile) {
     return (
@@ -239,7 +250,17 @@ export function CreatorTemplates() {
             </div>
           </Card>
         ))}
-        {templates.length === 0 ? <Card className="text-center font-semibold text-zinc-500">No creator templates found.</Card> : null}
+        {templates.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-zinc-200 dark:border-white/10 p-12 text-center bg-white/50 dark:bg-ink/50">
+            <div className="w-16 h-16 rounded-full bg-brand/10 text-brand flex items-center justify-center mx-auto mb-4">
+              <Sparkles size={24} />
+            </div>
+            <h3 className="text-xl font-black text-ink dark:text-white mb-1">No templates registered</h3>
+            <p className="text-zinc-500 max-w-sm mx-auto text-sm">
+              You haven't uploaded or drafted any templates yet. Fill out the form above to create your first design!
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   )
