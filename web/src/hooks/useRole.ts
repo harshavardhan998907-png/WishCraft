@@ -7,8 +7,6 @@ export function useRole() {
     role,
     loading,
     isAdmin: role === 'admin',
-    isModerator: role === 'moderator',
-    isCreator: role === 'creator',
     isUser: role === 'user',
   }
 }

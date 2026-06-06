@@ -1,6 +1,6 @@
 import type { Permission, UserRole } from '../types/roles'
 
-export const validRoles: readonly UserRole[] = ['user', 'admin', 'moderator', 'creator']
+export const validRoles: readonly UserRole[] = ['user', 'admin']
 
 export const defaultRole: UserRole = 'user'
 
@@ -26,8 +26,6 @@ export const permissionsByRole: Record<UserRole, readonly Permission[]> = {
     'creator_analytics:access',
     'creator_profile:manage',
   ],
-  moderator: ['dashboard:access', 'content:review', 'content:hide', 'reports:review'],
-  creator: ['wishes:create', 'wishes:manage_own', 'media:upload', 'dashboard:access', 'payments:create', 'creator_templates:manage', 'creator_analytics:access', 'creator_profile:manage', 'ecosystem_api:manage'],
 }
 
 export function normalizeRole(role: unknown): UserRole {

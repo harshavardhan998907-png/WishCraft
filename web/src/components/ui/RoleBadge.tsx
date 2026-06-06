@@ -4,8 +4,6 @@ import { Badge } from './Badge'
 const roleTones: Record<UserRole, 'purple' | 'blue' | 'gray' | 'green' | 'yellow' | 'red'> = {
   user: 'gray',
   admin: 'purple',
-  moderator: 'blue',
-  creator: 'green',
 }
 
 export function RoleBadge({ role }: { role: UserRole }) {

@@ -1,4 +1,4 @@
-export type UserRole = 'user' | 'admin' | 'moderator' | 'creator'
+export type UserRole = 'user' | 'admin'
 
 export type Permission =
   | 'wishes:create'

@@ -4,11 +4,6 @@ import { supabase } from '../lib/supabase'
 import { defaultRole, getPermissions, normalizeRole } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
 import type { Profile } from '../types'
-import type { UserRole } from '../types/roles'
-
-interface SignUpOptions {
-  adminInviteCode?: string
-}
 
 export function useAuth() {
   const { user, profile, role, permissions, setUser, setProfile } = useAuthStore()
@@ -50,14 +45,7 @@ export function useAuth() {
     }
   }, [fetchProfile, setUser])
 
-  async function claimAdminRole(inviteCode: string) {
-    const { error } = await supabase.rpc('claim_admin_role', { invite_code: inviteCode })
-    if (error) throw new Error(error.message)
-    const { data } = await supabase.auth.getUser()
-    await fetchProfile(data.user)
-  }
-
-  async function signUp(email: string, password: string, fullName: string, options: SignUpOptions = {}) {
+  async function signUp(email: string, password: string, fullName: string) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -71,17 +59,7 @@ export function useAuth() {
         console.error('[useAuth] profile upsert failed after signup', { userId: data.user.id, profileError })
         throw new Error(profileError.message)
       }
-      let assignedRole: UserRole = defaultRole
-      if (options.adminInviteCode) {
-        try {
-          await claimAdminRole(options.adminInviteCode)
-        } catch (err) {
-          console.warn('[useAuth] admin role claim failed', { userId: data.user.id, err })
-          throw err
-        }
-        assignedRole = 'admin'
-      }
-      setProfile({ ...profileRow, role: assignedRole, created_at: new Date().toISOString() })
+      setProfile({ ...profileRow, role: defaultRole, created_at: new Date().toISOString() })
     }
     return data
   }
@@ -89,6 +67,7 @@ export function useAuth() {
   async function signIn(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new Error(error.message)
+    await fetchProfile(data.user)
     return data
   }
 
@@ -99,5 +78,5 @@ export function useAuth() {
     setProfile(null)
   }
 
-  return { user, profile, role, permissions: permissions ?? getPermissions(role), signUp, signIn, signOut, claimAdminRole, loading }
+  return { user, profile, role, permissions: permissions ?? getPermissions(role), signUp, signIn, signOut, loading }
 }
