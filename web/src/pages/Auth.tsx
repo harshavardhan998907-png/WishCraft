@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui/Button'
@@ -19,7 +19,9 @@ export function Auth() {
   const [loading, setLoading] = useState(false)
   const { signIn, signUp, claimAdminRole } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const toast = useToastStore()
+  const redirectTo = searchParams.get('redirect')
 
   function friendlyAuthError(message: string) {
     const normalized = message.toLowerCase()
@@ -97,7 +99,8 @@ export function Auth() {
           await claimAdminRole(adminInviteCode.trim())
         }
       }
-      navigate(adminAccess ? '/admin' : '/dashboard')
+      const destination = redirectTo && redirectTo.startsWith('/') ? redirectTo : (adminAccess ? '/admin' : '/dashboard')
+      navigate(destination)
     } catch (err) {
       const message = err instanceof Error ? err.message : typeof err === 'object' && err && 'message' in err ? String(err.message) : 'Authentication failed'
       setError(friendlyAuthError(message))

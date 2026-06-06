@@ -49,7 +49,7 @@ export default function App() {
         <Suspense fallback={<div className="grid min-h-screen place-items-center font-bold">Loading...</div>}>
           <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/browse" element={<Browse />} />
+        <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/editor/:templateSlug" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
         <Route path="/preview" element={<ProtectedRoute><Preview /></ProtectedRoute>} />
