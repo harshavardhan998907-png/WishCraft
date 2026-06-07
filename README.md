@@ -56,6 +56,7 @@ template-hub/
 
 ## Documentation
 
+- [WishCraft UI/UX Rules](docs/00-wishcraft-ui-ux-rules.md)
 - [Project Overview](docs/01-project-overview.md)
 - [Architecture](docs/02-architecture.md)
 - [Frontend, Theme, and Templates](docs/03-frontend-theme-templates.md)

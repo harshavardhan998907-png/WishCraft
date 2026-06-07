@@ -1,5 +1,7 @@
 # Frontend, Theme, and Template System
 
+All frontend work must follow the global [WishCraft UI/UX Rules](00-wishcraft-ui-ux-rules.md). Treat WishCraft as an emotional celebration platform first: favor visual browsing, cinematic previews, simple navigation, meaningful whitespace, accessible controls, and responsive layouts over analytics density or technical metadata.
+
 ## Frontend Files
 
 | File/Folder | Purpose |

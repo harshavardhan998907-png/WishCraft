@@ -12,26 +12,13 @@ import type { OccasionType, Template, TemplateTier } from '../types'
 import { formatPrice } from '../lib/utils'
 import { FloatingRibbons, OrbitGlow } from '../components/ui/MotionDecor'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
-import { Flame, Star, Heart, Play, Sparkles, X, ChevronRight, Music } from 'lucide-react'
+import { Play, Sparkles, X, ChevronRight, Music } from 'lucide-react'
 import { Modal } from '../components/ui/Modal'
 
 const occasions: Array<'all' | OccasionType> = ['all', 'birthday', 'wedding', 'anniversary', 'festival', 'graduation', 'baby_shower', 'farewell', 'valentine']
 const tiers: Array<'all' | TemplateTier> = ['all', 'free', 'standard', 'premium']
 
 function TemplateCard({ template, onCustomize, onPreview }: { template: Template; onCustomize: () => void; onPreview: () => void }) {
-  // Randomly assign a popularity badge for demonstration
-  const badgeType = useMemo(() => {
-    const r = Math.random();
-    if (r > 0.8) return { icon: Flame, text: 'Trending Now', color: 'text-coral bg-coral/10' };
-    if (r > 0.6) return { icon: Star, text: 'Most Popular', color: 'text-sun bg-sun/10' };
-    if (template.occasion) return { icon: Heart, text: `Best for ${template.occasion}`, color: 'text-brand bg-brand/10' };
-    return null;
-  }, [template.occasion]);
-
-  // Mock trust metrics for conversion optimization
-  const trustScore = useMemo(() => (4.7 + Math.random() * 0.3).toFixed(1), []);
-  const uses = useMemo(() => Math.floor(800 + Math.random() * 5000), []);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
@@ -49,13 +36,6 @@ function TemplateCard({ template, onCustomize, onPreview }: { template: Template
             <TierBadge tier={template.tier} />
             <OccasionBadge occasion={template.occasion} />
           </div>
-
-          {badgeType && (
-            <div className={`absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md ${badgeType.color}`}>
-              <badgeType.icon size={14} fill="currentColor" />
-              <span className="capitalize">{badgeType.text.replace('_', ' ')}</span>
-            </div>
-          )}
 
           {/* Hover Overlay Actions */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-300 bg-black/55 backdrop-blur-[3px]">
@@ -88,13 +68,9 @@ function TemplateCard({ template, onCustomize, onPreview }: { template: Template
           </div>
         </div>
         
-        <div className="flex items-center justify-between p-5 mt-auto border-t border-zinc-100 dark:border-white/5 bg-white dark:bg-ink">
+        <div className="flex items-center justify-between gap-4 p-5 mt-auto border-t border-zinc-100 dark:border-white/5 bg-white dark:bg-ink">
           <div>
-            <div className="flex items-center gap-1 mb-1">
-              <Star size={12} fill="currentColor" className="text-sun" />
-              <span className="text-xs font-bold text-ink dark:text-white">{trustScore}</span>
-              <span className="text-xs text-zinc-400">({uses.toLocaleString()} used)</span>
-            </div>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-zinc-400">Ready to personalize</p>
             <p className="text-lg font-black text-ink dark:text-white mt-0.5">{formatPrice(template.price_paise)}</p>
           </div>
           <button 

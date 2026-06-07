@@ -1,20 +1,64 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
-import { getShareableUrl, getTimeRemaining } from '../lib/utils'
-import type { Wish } from '../types'
-import { Button } from '../components/ui/Button'
-import { StatusBadge } from '../components/ui/Badge'
+import { getShareableUrl } from '../lib/utils'
+import type { OccasionType, Wish } from '../types'
+import { Badge, StatusBadge } from '../components/ui/Badge'
 import { useToastStore } from '../store/toastStore'
-import { NotificationCenter } from '../modules/notifications/components/NotificationCenter'
-import { Sparkles, Copy, Trash2, Eye, Share2, Plus, Settings, CreditCard, Clock, Activity } from 'lucide-react'
+import {
+  ArrowRight,
+  CalendarHeart,
+  Clock,
+  Edit3,
+  Eye,
+  Gift,
+  Heart,
+  Image,
+  PartyPopper,
+  Share2,
+  Sparkles,
+} from 'lucide-react'
+
+const quickActions: Array<{ title: string; occasion: OccasionType; description: string; icon: typeof Gift; tone: string }> = [
+  {
+    title: 'Create Birthday Wish',
+    occasion: 'birthday',
+    description: 'Build a joyful surprise with photos, music, and a warm message.',
+    icon: Gift,
+    tone: 'bg-coral/10 text-coral',
+  },
+  {
+    title: 'Create Wedding Wish',
+    occasion: 'wedding',
+    description: 'Turn their love story into an elegant celebration page.',
+    icon: Heart,
+    tone: 'bg-brand/10 text-brand',
+  },
+  {
+    title: 'Create Anniversary Wish',
+    occasion: 'anniversary',
+    description: 'Collect memories into a romantic keepsake they can revisit.',
+    icon: CalendarHeart,
+    tone: 'bg-sun/15 text-amber-700 dark:text-sun',
+  },
+]
+
+function formatDate(value?: string | null) {
+  if (!value) return 'Not updated yet'
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value))
+}
+
+function displayTitle(wish: Wish) {
+  return wish.template?.name ? `${wish.template.name} for ${wish.recipient_name}` : `Wish for ${wish.recipient_name}`
+}
 
 export function Dashboard() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [wishes, setWishes] = useState<Wish[]>([])
   const toast = useToastStore()
+  const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   useEffect(() => {
     if (!user) return
@@ -27,187 +71,258 @@ export function Dashboard() {
       console.info('[Dashboard] loaded wishes', { count: data?.length ?? 0 })
       setWishes((data as Wish[]) ?? [])
     })
-  }, [user])
+  }, [toast, user])
 
   async function softDelete(id: string) {
-    const confirmDelete = window.confirm("Are you sure you want to delete this wish experience? This will deactivate the link permanently.")
+    const confirmDelete = window.confirm('Are you sure you want to delete this wish experience? This will deactivate the link permanently.')
     if (!confirmDelete) return
 
     const { error } = await supabase.from('wishes').update({ status: 'deleted' }).eq('id', id)
     if (error) {
       console.warn('[Dashboard] soft delete failed', { id, error })
       toast.push('error', error.message)
-    }
-    else {
+    } else {
       setWishes((items) => items.map((wish) => wish.id === id ? { ...wish, status: 'deleted' } : wish))
       toast.push('success', 'Wish experience successfully deleted.')
     }
   }
 
-  const handleCopy = (slug: string) => {
-    navigator.clipboard.writeText(getShareableUrl(slug)).then(() => toast.push('success', 'Link copied to clipboard!'))
+  const handleShare = (slug: string) => {
+    navigator.clipboard.writeText(getShareableUrl(slug)).then(() => toast.push('success', 'Wish link copied. Ready to share.'))
   }
 
-  // Calculate Mock Analytics
-  const activeWishes = useMemo(() => wishes.filter(w => w.status === 'active' && (!w.expires_at || new Date(w.expires_at) > new Date())), [wishes])
-  const totalViews = useMemo(() => wishes.reduce((acc, curr) => acc + Math.floor(Math.random() * 100), 0), [wishes]) // Mock views
-  
+  const visibleWishes = useMemo(() => wishes.filter((wish) => wish.status !== 'deleted'), [wishes])
+  const draftWishes = useMemo(() => visibleWishes.filter((wish) => wish.status === 'draft').slice(0, 3), [visibleWishes])
+  const recentWishes = useMemo(() => visibleWishes.slice(0, 6), [visibleWishes])
+  const recentlyShared = useMemo(() => visibleWishes.filter((wish) => wish.status === 'active').slice(0, 3), [visibleWishes])
+  const activeWishes = useMemo(() => visibleWishes.filter((wish) => wish.status === 'active'), [visibleWishes])
+  const draftWishCount = useMemo(() => visibleWishes.filter((wish) => wish.status === 'draft').length, [visibleWishes])
+
   return (
-    <div className="min-h-screen bg-soft-cream dark:bg-deep-navy pb-24">
-      {/* Dashboard Header */}
-      <header className="bg-ink dark:bg-rich-purple-black text-white px-6 py-12 relative overflow-hidden">
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(212,175,55,.1),transparent_40rem)]" />
-         <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-           <div>
-             <h1 className="text-3xl md:text-5xl font-heading font-black">Your Studio</h1>
-             <p className="text-white/60 mt-2 font-medium">Manage your magical moments and track their impact.</p>
-           </div>
-           <div className="flex flex-wrap items-center gap-3">
-             <Link to="/notifications/preferences">
-               <button className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors" title="Settings"><Settings size={20}/></button>
-             </Link>
-             <Link to="/payments">
-               <button className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors" title="Payments"><CreditCard size={20}/></button>
-             </Link>
-             <Link to="/browse">
-               <Button className="px-6 py-3 rounded-xl shadow-premium shadow-brand/20 flex items-center gap-2">
-                 <Plus size={20} /> Create New
-               </Button>
-             </Link>
-           </div>
-         </div>
+    <div className="min-h-screen overflow-x-hidden bg-soft-cream pb-24 dark:bg-deep-navy">
+      <header className="border-b border-black/5 bg-white/70 px-4 py-8 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 sm:px-6 lg:py-10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <Badge tone="yellow">Celebration workspace</Badge>
+            <h1 className="mt-4 text-3xl font-black tracking-normal text-ink dark:text-white sm:text-4xl lg:text-5xl">
+              Welcome back, {firstName}
+            </h1>
+            <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-zinc-600 dark:text-white/70">
+              Create, edit, and share heartfelt wish websites from one calm little studio.
+            </p>
+          </div>
+          <Link
+            to="/browse"
+            className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 font-black text-white shadow-premium shadow-brand/20 transition hover:bg-[#5244c4] sm:w-auto"
+          >
+            <Sparkles size={18} /> Create Wish
+          </Link>
+        </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 -mt-8 relative z-20 space-y-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-panel rounded-2xl p-6 shadow-soft bg-gradient-to-br from-white to-soft-cream dark:from-ink dark:to-rich-purple-black border border-white/40 dark:border-white/10">
-            <div className="w-12 h-12 rounded-xl bg-brand/10 text-brand flex items-center justify-center mb-4 shadow-inner"><Sparkles size={22}/></div>
-            <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Wishes Created</p>
-            <p className="text-4xl font-black mt-1 text-ink dark:text-white">{wishes.length}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-panel rounded-2xl p-6 shadow-soft bg-gradient-to-br from-white to-soft-cream dark:from-ink dark:to-rich-purple-black border border-white/40 dark:border-white/10">
-            <div className="w-12 h-12 rounded-xl bg-mint/10 text-mint flex items-center justify-center mb-4 shadow-inner"><Activity size={22}/></div>
-            <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Active Celebrations</p>
-            <p className="text-4xl font-black mt-1 text-ink dark:text-white">{activeWishes.length}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-panel rounded-2xl p-6 shadow-soft bg-gradient-to-br from-white to-soft-cream dark:from-ink dark:to-rich-purple-black border border-white/40 dark:border-white/10">
-            <div className="w-12 h-12 rounded-xl bg-sun/10 text-sun flex items-center justify-center mb-4 shadow-inner"><Eye size={22}/></div>
-            <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Total Views</p>
-            <p className="text-4xl font-black mt-1 text-ink dark:text-white">{totalViews}</p>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-panel rounded-2xl p-6 shadow-soft bg-gradient-to-br from-white to-soft-cream dark:from-ink dark:to-rich-purple-black border border-white/40 dark:border-white/10">
-            <div className="w-12 h-12 rounded-xl bg-coral/10 text-coral flex items-center justify-center mb-4 shadow-inner"><Share2 size={22}/></div>
-            <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Views Shared</p>
-            <p className="text-4xl font-black mt-1 text-ink dark:text-white">{Math.floor(totalViews * 0.4)}</p>
-          </motion.div>
-        </div>
+      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:py-10">
+        {draftWishes.length > 0 ? (
+          <section aria-labelledby="continue-editing-title" className="rounded-2xl border border-brand/15 bg-brand/5 p-5 dark:bg-brand/10 sm:p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand text-white">
+                <Edit3 size={18} />
+              </span>
+              <div>
+                <h2 id="continue-editing-title" className="text-2xl font-black text-ink dark:text-white">Continue Editing</h2>
+                <p className="text-sm font-semibold text-zinc-500">Unfinished wishes waiting for their final sparkle.</p>
+              </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {draftWishes.map((wish) => (
+                <Link key={wish.id} to={wish.template?.slug ? `/editor/${wish.template.slug}` : '/browse'} className="focus-ring flex min-h-24 items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm transition hover:shadow-soft dark:bg-[#181824]">
+                  <span className="min-w-0">
+                    <span className="block truncate font-black text-ink dark:text-white">{displayTitle(wish)}</span>
+                    <span className="mt-1 flex items-center gap-1 text-xs font-bold text-zinc-500"><Clock size={13} /> Updated {formatDate(wish.created_at)}</span>
+                  </span>
+                  <ArrowRight size={18} className="shrink-0 text-brand" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
-        <div className="mt-8">
-           <NotificationCenter />
-        </div>
+        <section aria-labelledby="quick-actions-title">
+          <div className="mb-4 flex flex-col gap-1">
+            <h2 id="quick-actions-title" className="text-2xl font-black text-ink dark:text-white">Quick Actions</h2>
+            <p className="text-sm font-semibold text-zinc-500">Start with the moments people remember most.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {quickActions.map((action, index) => {
+              const Icon = action.icon
+              return (
+                <motion.div
+                  key={action.title}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Link
+                    to="/browse"
+                    className="focus-ring group flex h-full min-h-[12rem] flex-col justify-between rounded-2xl border border-black/10 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-premium dark:border-white/10 dark:bg-[#181824]"
+                    aria-label={`${action.title}. Browse ${action.occasion} templates.`}
+                  >
+                    <span className={`grid h-12 w-12 place-items-center rounded-xl ${action.tone}`}>
+                      <Icon size={22} />
+                    </span>
+                    <span>
+                      <span className="block text-xl font-black text-ink dark:text-white">{action.title}</span>
+                      <span className="mt-2 block text-sm font-medium leading-6 text-zinc-600 dark:text-white/68">{action.description}</span>
+                    </span>
+                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-brand">
+                      Choose template <ArrowRight size={16} className="transition group-hover:translate-x-1" />
+                    </span>
+                  </Link>
+                </motion.div>
+              )
+            })}
+          </div>
+        </section>
 
-        {/* Recent Wishes */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-heading font-black flex items-center gap-2 text-ink dark:text-white">
-              Recent Celebrations
-            </h2>
+        <section id="wishes" aria-labelledby="my-wishes-title" className="scroll-mt-24">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 id="my-wishes-title" className="text-2xl font-black text-ink dark:text-white">My Wishes</h2>
+              <p className="text-sm font-semibold text-zinc-500">Your latest celebration websites, ready to preview, edit, and share.</p>
+            </div>
+            <Link to="/browse" className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-black text-ink transition hover:bg-black/5 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+              <Sparkles size={16} /> New Wish
+            </Link>
           </div>
 
-          {wishes.length === 0 ? (
-            <div className="glass-panel rounded-3xl p-8 md:p-12 bg-white/60 dark:bg-ink/60 border border-zinc-200 dark:border-white/10 shadow-premium overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent pointer-events-none" />
-              <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-                <div className="flex-1 text-center md:text-left">
-                  <div className="w-16 h-16 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mb-6 shadow-inner mx-auto md:mx-0"><Sparkles size={28}/></div>
-                  <h3 className="text-3xl font-heading font-black text-ink dark:text-white mb-3">Welcome to your studio</h3>
-                  <p className="text-zinc-500 max-w-md mx-auto md:mx-0 mb-8 text-lg">Your dashboard is waiting for its first moment of magic. Ready to make someone's day?</p>
-                  <Link to="/browse">
-                    <Button size="lg" className="rounded-xl px-8 shadow-premium shadow-brand/30 w-full md:w-auto">Start Creating</Button>
-                  </Link>
+          {visibleWishes.length === 0 ? (
+            <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-soft dark:border-white/10 dark:bg-[#181824] sm:p-8">
+              <div className="grid gap-6 md:grid-cols-[1fr_16rem] md:items-center">
+                <div>
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand/10 text-brand">
+                    <PartyPopper size={26} />
+                  </div>
+                  <h3 className="mt-5 text-2xl font-black text-ink dark:text-white">Your first wish starts here</h3>
+                  <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-zinc-600 dark:text-white/68">
+                    Pick a template, add your message and memories, then share a private celebration link.
+                  </p>
                 </div>
-                <div className="flex-1 w-full space-y-4">
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-white/80 dark:bg-white/5 border border-white/20 shadow-sm">
-                    <div className="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center shrink-0 font-bold">1</div>
-                    <div>
-                      <h4 className="font-bold text-ink dark:text-white">Choose a template</h4>
-                      <p className="text-sm text-zinc-500">Pick from our premium collection of animated experiences.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-white/80 dark:bg-white/5 border border-white/20 shadow-sm">
-                    <div className="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center shrink-0 font-bold">2</div>
-                    <div>
-                      <h4 className="font-bold text-ink dark:text-white">Personalize it</h4>
-                      <p className="text-sm text-zinc-500">Add photos, music, and a heartfelt message.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-white/80 dark:bg-white/5 border border-white/20 shadow-sm">
-                    <div className="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center shrink-0 font-bold">3</div>
-                    <div>
-                      <h4 className="font-bold text-ink dark:text-white">Share the magic</h4>
-                      <p className="text-sm text-zinc-500">Send the private link and watch them smile.</p>
-                    </div>
-                  </div>
-                </div>
+                <Link to="/browse" className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3 font-black text-white transition hover:bg-black dark:bg-white dark:text-ink dark:hover:bg-white/85">
+                  Start Creating <ArrowRight size={18} />
+                </Link>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {wishes.map((wish, index) => (
-                <motion.div 
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {recentWishes.map((wish, index) => (
+                <motion.article
                   key={wish.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="group glass-panel rounded-2xl overflow-hidden shadow-soft hover:shadow-premium bg-white dark:bg-ink transition-all flex flex-col"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                  className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-soft dark:border-white/10 dark:bg-[#181824]"
                 >
-                  {/* Thumbnail Area */}
-                  <div className="relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
-                    <img src={wish.template?.thumbnail_url ?? ''} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent opacity-60" />
-                    <div className="absolute top-3 left-3">
-                      <StatusBadge status={wish.status} />
-                    </div>
-                    {wish.status !== 'deleted' && (
-                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 z-10">
-                         <button 
-                           onClick={() => handleCopy(wish.slug)}
-                           className="w-10 h-10 rounded-full bg-white text-ink flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
-                           title="Copy Link"
-                         ><Copy size={18} /></button>
-                         <button 
-                           onClick={() => softDelete(wish.id)}
-                           className="w-10 h-10 rounded-full bg-white text-coral flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
-                           title="Delete"
-                         ><Trash2 size={18} /></button>
+                  <div className="relative aspect-[16/10] bg-zinc-100 dark:bg-white/5">
+                    {wish.template?.thumbnail_url ? (
+                      <img src={wish.template.thumbnail_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-brand">
+                        <Image size={38} aria-hidden="true" />
                       </div>
                     )}
-                    <div className="absolute bottom-3 left-3 right-3 text-white">
-                       <h3 className="text-xl font-heading font-black truncate drop-shadow-md">For {wish.recipient_name}</h3>
+                    <div className="absolute left-3 top-3">
+                      <StatusBadge status={wish.status} />
                     </div>
                   </div>
-                  
-                  {/* Details Area */}
-                  <div className="p-4 flex flex-col flex-1 bg-white dark:bg-ink">
-                     <p className="text-xs text-zinc-500 flex items-center gap-1.5 font-medium mb-3">
-                       <Clock size={14} /> {wish.expires_at ? getTimeRemaining(wish.expires_at) : 'Draft'}
-                     </p>
-                     <div className="mt-auto">
-                        <Button 
-                          variant="secondary" 
-                          className="w-full justify-center bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-xs py-2"
-                          onClick={() => handleCopy(wish.slug)}
-                          disabled={wish.status === 'deleted'}
-                        >
-                          <Copy size={14} className="mr-1.5" /> Copy Wish Link
-                        </Button>
-                     </div>
+                  <div className="space-y-4 p-4">
+                    <div>
+                      <h3 className="line-clamp-2 text-lg font-black text-ink dark:text-white">{displayTitle(wish)}</h3>
+                      <p className="mt-1 text-sm font-semibold text-zinc-500">Last updated {formatDate(wish.activated_at ?? wish.created_at)}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-zinc-500">
+                      {wish.template?.occasion ? <span className="rounded-full bg-brand/10 px-2.5 py-1 capitalize text-brand">{wish.template.occasion.replace('_', ' ')}</span> : null}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Link to={`/w/${wish.slug}`} className="focus-ring inline-flex min-h-10 items-center justify-center gap-1 rounded-xl bg-zinc-100 px-2 text-sm font-black text-ink transition hover:bg-zinc-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+                        <Eye size={15} /> Preview
+                      </Link>
+                      <Link to={wish.template?.slug ? `/editor/${wish.template.slug}` : '/browse'} className="focus-ring inline-flex min-h-10 items-center justify-center gap-1 rounded-xl bg-zinc-100 px-2 text-sm font-black text-ink transition hover:bg-zinc-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+                        <Edit3 size={15} /> Edit
+                      </Link>
+                      <button
+                        type="button"
+                        className="focus-ring inline-flex min-h-10 items-center justify-center gap-1 rounded-xl bg-brand px-2 text-sm font-black text-white transition hover:bg-[#5244c4]"
+                        onClick={() => handleShare(wish.slug)}
+                      >
+                        <Share2 size={15} /> Share
+                      </button>
+                    </div>
+                    {wish.status === 'deleted' ? null : (
+                      <button type="button" className="text-xs font-bold text-zinc-400 underline-offset-4 hover:text-coral hover:underline" onClick={() => softDelete(wish.id)}>
+                        Deactivate wish
+                      </button>
+                    )}
                   </div>
-                </motion.div>
+                </motion.article>
               ))}
             </div>
           )}
-        </div>
+        </section>
+
+        <section aria-labelledby="activity-title" className="grid gap-5 lg:grid-cols-2">
+          <div className="rounded-2xl border border-black/10 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-[#181824]">
+            <h2 id="activity-title" className="text-xl font-black text-ink dark:text-white">Recent Activity</h2>
+            <div className="mt-4 space-y-3">
+              {recentWishes.slice(0, 4).map((wish) => (
+                <div key={wish.id} className="flex items-start gap-3 rounded-xl bg-zinc-50 p-3 dark:bg-white/5">
+                  <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sun/15 text-amber-700 dark:text-sun">
+                    <Clock size={15} />
+                  </span>
+                  <p className="min-w-0 text-sm font-semibold leading-6 text-zinc-600 dark:text-white/68">
+                    Recently edited <span className="font-black text-ink dark:text-white">{displayTitle(wish)}</span>
+                  </p>
+                </div>
+              ))}
+              {recentWishes.length === 0 ? <p className="text-sm font-semibold text-zinc-500">No recent edits yet.</p> : null}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-black/10 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-[#181824]">
+            <h2 className="text-xl font-black text-ink dark:text-white">Recently Shared Wishes</h2>
+            <div className="mt-4 space-y-3">
+              {recentlyShared.map((wish) => (
+                <button
+                  key={wish.id}
+                  type="button"
+                  className="focus-ring flex w-full items-center justify-between gap-3 rounded-xl bg-zinc-50 p-3 text-left transition hover:bg-zinc-100 dark:bg-white/5 dark:hover:bg-white/10"
+                  onClick={() => handleShare(wish.slug)}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-black text-ink dark:text-white">{displayTitle(wish)}</span>
+                    <span className="text-xs font-bold text-zinc-500">Copy share link</span>
+                  </span>
+                  <Share2 size={16} className="shrink-0 text-brand" />
+                </button>
+              ))}
+              {recentlyShared.length === 0 ? <p className="text-sm font-semibold text-zinc-500">Share an active wish and it will appear here.</p> : null}
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="stats-title" className="opacity-80">
+          <h2 id="stats-title" className="mb-4 text-base font-black text-zinc-500 dark:text-white/60">Studio Snapshot</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              ['Total Wishes', visibleWishes.length],
+              ['Active Wishes', activeWishes.length],
+              ['Drafts', draftWishCount],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-black/5 bg-white/70 p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-black uppercase tracking-wide text-zinc-400">{label}</p>
+                <p className="mt-1 text-2xl font-black text-ink dark:text-white">{value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   )

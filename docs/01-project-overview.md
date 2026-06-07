@@ -64,6 +64,8 @@ Template Hub solves this by turning a template selection into a hosted, animated
 
 ## Design Philosophy
 
+All product surfaces must follow the global [WishCraft UI/UX Rules](00-wishcraft-ui-ux-rules.md).
+
 The UI uses a "celebration studio" design language:
 
 - Warm cream backgrounds in light mode.
@@ -109,4 +111,3 @@ The application treats each wish as a mini-scene. Templates are not just skins; 
 - Anniversary: hearts, romance, soft particles
 - Festival: lamps, sparks, warm color
 - Graduation: stars, caps, bright celebration
-

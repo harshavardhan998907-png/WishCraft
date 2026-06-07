@@ -112,7 +112,7 @@ export function Auth() {
 
   return (
     <section className="grid min-h-[calc(100vh-70px)] place-items-center overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
-      <form onSubmit={submit} className="w-full max-w-[min(100%,28rem)] rounded-2xl border border-black/5 bg-white/95 p-5 shadow-soft transition-colors dark:border-white/10 dark:bg-[#181824]/95 dark:text-white sm:p-7">
+      <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-black/5 bg-white/95 p-5 shadow-soft transition-colors dark:border-white/10 dark:bg-[#181824]/95 dark:text-white sm:p-7">
         {mode === 'forgot_password' ? (
           <div className="space-y-5">
             <div className="space-y-2 text-center">
@@ -134,7 +134,7 @@ export function Auth() {
               </div>
               <h1 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h1>
               <p className="text-sm leading-6 text-zinc-500 dark:text-white/60">
-                {mode === 'signup' ? 'Start crafting polished wishes in a few seconds.' : 'Continue to your Template Hub workspace.'}
+                {mode === 'signup' ? 'Start crafting polished wishes in a few seconds.' : 'Continue to your WishCraft workspace.'}
               </p>
             </div>
             <div className="grid grid-cols-2 rounded-xl bg-zinc-100 p-1 dark:bg-white/10" role="tablist" aria-label="Authentication mode">
