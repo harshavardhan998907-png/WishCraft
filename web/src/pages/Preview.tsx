@@ -11,6 +11,7 @@ import type { Template } from '../types'
 import { markPaymentFailed, startPayment, verifyPayment } from '../modules/payments/services/paymentService'
 import { linkMediaAssetsToWish } from '../modules/media/services/mediaService'
 import { createSelfNotification, enqueueScheduledJob } from '../modules/notifications/services/notificationService'
+import { getTemplate, legacyWishDataToFormData, validateWishBeforePublish } from '../template-engine'
 import { Sparkles } from 'lucide-react'
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -23,6 +24,15 @@ export function Preview() {
   const toast = useToastStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const data = { recipientName: editor.recipientName, senderName: editor.senderName, customMessage: editor.customMessage, photoUrls: editor.photoUrls, musicUrl: editor.musicUrl }
+  const formData = {
+    ...legacyWishDataToFormData(data),
+    ...editor.formData,
+    recipient_name: editor.recipientName,
+    sender_name: editor.senderName,
+    message: editor.customMessage,
+    photos: editor.photoUrls,
+    music: editor.musicUrl,
+  }
 
   async function ensureProfileExists() {
     if (!user) throw new Error('You must be signed in before creating a wish')
@@ -80,6 +90,11 @@ export function Preview() {
     if (!user) throw new Error('You must be signed in before creating a wish')
     await ensureProfileExists()
     const template = await resolveDatabaseTemplate()
+    const validation = validateWishBeforePublish({ template, formData })
+    if (!validation.valid) {
+      throw new Error(validation.issues.map((item) => item.message).join(' '))
+    }
+    const registeredTemplate = getTemplate(template.slug) ?? getTemplate(template.component_key) ?? getTemplate(template.component_name)
     let slug = generateWishSlug()
     for (let i = 0; i < 3; i += 1) {
       const { data: existing } = await supabase.from('wishes').select('id').eq('slug', slug).maybeSingle()
@@ -89,6 +104,10 @@ export function Preview() {
     const row = {
       user_id: user.id,
       template_id: template.id,
+      template_slug: template.slug,
+      template_version: registeredTemplate?.manifest.version ?? '1.0.0',
+      occasion: template.occasion,
+      form_data: formData,
       slug,
       recipient_name: editor.recipientName,
       sender_name: editor.senderName,

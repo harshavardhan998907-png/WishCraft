@@ -1,6 +1,21 @@
 import type { ComponentType, LazyExoticComponent } from 'react'
 import type { OccasionType, Template, TemplateStatus, TemplateTier, WishData } from '../types'
 
+export type FormFieldType = 'text' | 'textarea' | 'gallery' | 'music' | 'date' | 'url'
+
+export interface FormFieldDefinition {
+  id: string
+  label: string
+  type: FormFieldType
+  required?: boolean
+  placeholder?: string
+  helper?: string
+  maxLength?: number
+  maxItems?: number
+}
+
+export type FormSchema = FormFieldDefinition[]
+
 export type TemplateFeature =
   | 'animation'
   | 'music'
@@ -41,6 +56,8 @@ export interface TemplateManifest {
   authorType: TemplateAuthorType
   thumbnailUrl: string
   previewVideoUrl?: string
+  schema?: FormSchema
+  extensionSchema?: FormSchema
   editableFields: TemplateEditableField[]
   supportedFeatures: TemplateFeature[]
   price: number

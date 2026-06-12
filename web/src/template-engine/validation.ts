@@ -1,4 +1,7 @@
-import type { TemplateManifest, TemplateValidationIssue, TemplateValidationResult } from './types'
+import type { Template } from '../types'
+import type { FormSchema, TemplateManifest, TemplateValidationIssue, TemplateValidationResult } from './types'
+import { getTemplate } from './registry'
+import { getTemplateSchema } from './schema'
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const semverPattern = /^\d+\.\d+\.\d+(?:[-+][a-z0-9.-]+)?$/i
@@ -32,4 +35,42 @@ export function assertValidTemplateManifest(manifest: TemplateManifest): void {
     const details = result.issues.map((item) => `${item.field}: ${item.message}`).join(' ')
     throw new Error(`Invalid template manifest "${manifest.slug}": ${details}`)
   }
+}
+
+export interface WishPublishValidationInput {
+  template: Template
+  formData: Record<string, unknown>
+}
+
+export function validateFormData(schema: FormSchema, formData: Record<string, unknown>): TemplateValidationResult {
+  const issues: TemplateValidationIssue[] = []
+
+  schema.forEach((field) => {
+    const value = formData[field.id]
+    if (field.required && (value === null || value === undefined || String(value).trim() === '')) {
+      issues.push(issue(field.id, `${field.label} is required.`))
+    }
+    if (field.type === 'gallery' && value !== undefined && (!Array.isArray(value) || value.some((item) => typeof item !== 'string'))) {
+      issues.push(issue(field.id, `${field.label} must be a list of uploaded asset URLs.`))
+    }
+    if (field.maxLength && typeof value === 'string' && value.length > field.maxLength) {
+      issues.push(issue(field.id, `${field.label} must be ${field.maxLength} characters or fewer.`))
+    }
+  })
+
+  return { valid: issues.length === 0, issues }
+}
+
+export function validateWishBeforePublish({ template, formData }: WishPublishValidationInput): TemplateValidationResult {
+  const issues: TemplateValidationIssue[] = []
+  const registeredTemplate = getTemplate(template.slug) ?? getTemplate(template.component_key) ?? getTemplate(template.component_name)
+
+  if (!registeredTemplate) {
+    issues.push(issue('template', `Template "${template.slug}" is not registered in the renderer.`))
+  }
+
+  const formResult = validateFormData(getTemplateSchema(template), formData)
+  issues.push(...formResult.issues)
+
+  return { valid: issues.length === 0, issues }
 }

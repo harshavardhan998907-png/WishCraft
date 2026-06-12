@@ -1,5 +1,7 @@
 export * from './registry'
+export * from './schema'
 export * from './storage'
 export * from './TemplateRenderer'
+export * from './WishRenderer'
 export * from './types'
 export * from './validation'

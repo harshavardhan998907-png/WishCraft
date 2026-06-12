@@ -48,6 +48,10 @@ export interface Wish {
   id: string
   user_id: string
   template_id: string
+  template_slug?: string | null
+  template_version?: string | null
+  occasion?: OccasionType | null
+  form_data?: Record<string, unknown> | null
   slug: string
   recipient_name: string
   sender_name: string
@@ -82,6 +86,7 @@ export interface EditorState {
   customMessage: string
   photoUrls: string[]
   musicUrl: string | null
+  formData: Record<string, unknown>
   useCustomMusic: boolean
 }
 

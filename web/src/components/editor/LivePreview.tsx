@@ -9,7 +9,8 @@ export function LivePreview({ template, data }: { template: Template | null; dat
   return (
     <motion.div className="overflow-hidden rounded-xl border border-white/70 bg-white shadow-premium dark:border-white/10 dark:bg-[#10101a]" animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity }}>
       <TemplateRenderer
-        componentKey={template.component_name}
+        templateId={template.slug}
+        componentKey={template.component_key ?? template.component_name}
         slug={template.slug}
         props={wishDataToTemplateProps(data, true)}
       />

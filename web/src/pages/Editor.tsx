@@ -8,6 +8,7 @@ import { Input } from '../components/ui/Input'
 import { Textarea } from '../components/ui/Textarea'
 import { ImageUpload } from '../components/ui/ImageUpload'
 import { LivePreview } from '../components/editor/LivePreview'
+import { DynamicFormRenderer } from '../components/editor/DynamicFormRenderer'
 import { useToastStore } from '../store/toastStore'
 import { Modal } from '../components/ui/Modal'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -15,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MusicUploadManager } from '../modules/media/components/MusicUploadManager'
 import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
 import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
+import { getTemplateSchema } from '../template-engine'
 import { Image as ImageIcon, Music, MessageSquare, UserCircle, Palette, Sparkles, Monitor, Smartphone, ChevronRight, ChevronLeft } from 'lucide-react'
 import type { Template } from '../types'
 
@@ -34,8 +36,10 @@ type StoreSnapshot = {
   customMessage: string
   photoUrls: string[]
   musicUrl: string | null
+  formData: Record<string, unknown>
   useCustomMusic: boolean
   template: Template | null
+  setFieldValue: (fieldId: string, value: unknown) => void
   setRecipientName: (v: string) => void
   setSenderName: (v: string) => void
   setCustomMessage: (v: string) => void
@@ -48,10 +52,22 @@ type StoreSnapshot = {
 function ContentEditor({ store, onToast }: { store: StoreSnapshot; onToast: (msg: string) => void }) {
   const selectedTemplate = store.template
   const [showGuide, setShowGuide] = useState(true)
+  const schema = selectedTemplate ? getTemplateSchema(selectedTemplate) : []
 
   const isDetailsComplete = store.recipientName.trim().length > 0 && store.senderName.trim().length > 0
   const isMessageComplete = store.customMessage.trim().length > 0
   const isMediaComplete = store.photoUrls.length > 0 || store.musicUrl !== null
+  const handleSchemaChange = (fieldId: string, value: unknown) => {
+    store.setFieldValue(fieldId, value)
+    if (fieldId === 'recipient_name') store.setRecipientName(String(value ?? ''))
+    if (fieldId === 'sender_name') store.setSenderName(String(value ?? ''))
+    if (fieldId === 'message') store.setCustomMessage(String(value ?? ''))
+    if (fieldId === 'photos' && Array.isArray(value)) {
+      store.photoUrls.forEach(store.removePhoto)
+      value.filter((item): item is string => typeof item === 'string').forEach(store.addPhoto)
+    }
+    if (fieldId === 'music') store.setMusicUrl(typeof value === 'string' ? value : null)
+  }
 
   return (
     <div className="space-y-8 p-6 glass-panel rounded-2xl h-full overflow-y-auto">
@@ -75,12 +91,12 @@ function ContentEditor({ store, onToast }: { store: StoreSnapshot; onToast: (msg
         </div>
       )}
 
-      {/* Section 1: Basic Details */}
+      {/* Schema-driven fields */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-heading font-bold flex items-center gap-2">
             <UserCircle className="text-brand" size={24} />
-            Basic Details
+            Template Details
           </h2>
           {isDetailsComplete ? (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-mint/10 text-mint border border-mint/20">Done</span>
@@ -88,101 +104,22 @@ function ContentEditor({ store, onToast }: { store: StoreSnapshot; onToast: (msg
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">Required</span>
           )}
         </div>
-        <div className="space-y-4">
-          <Input 
-            label="Recipient's Name (Required)" 
-            placeholder="e.g. Jessica"
-            value={store.recipientName} 
-            onChange={(e) => store.setRecipientName(e.target.value)} 
-            helper="The special person receiving this customized wish."
-            required 
-          />
-          <Input 
-            label="Your Name / Sender (Required)" 
-            placeholder="e.g. David"
-            value={store.senderName} 
-            onChange={(e) => store.setSenderName(e.target.value)} 
-            helper="Your name, so they know who sent them the magic."
-            required 
-          />
-        </div>
+        <DynamicFormRenderer
+          schema={schema}
+          values={{
+            recipient_name: store.recipientName,
+            sender_name: store.senderName,
+            message: store.customMessage,
+            photos: store.photoUrls,
+            music: store.musicUrl,
+            ...store.formData,
+          }}
+          templateId={selectedTemplate?.id ?? null}
+          allowMusic={selectedTemplate?.tier !== 'free'}
+          onChange={handleSchemaChange}
+        />
       </div>
-
-      {/* Section 2: Personal Message */}
-      <div className="pt-6 border-t border-zinc-200 dark:border-white/10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-heading font-bold flex items-center gap-2">
-            <MessageSquare className="text-brand" size={24} />
-            Personal Message
-          </h2>
-          {isMessageComplete ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-mint/10 text-mint border border-mint/20">Done</span>
-          ) : (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-500/10 text-zinc-400 border border-zinc-500/10">Optional</span>
-          )}
-        </div>
-        <div className="space-y-4">
-          <Textarea 
-            label="Heartfelt Message (Optional)" 
-            placeholder="Write something sweet, or use the AI generator below to inspire you..."
-            maxLength={300} 
-            value={store.customMessage} 
-            onChange={(e) => store.setCustomMessage(e.target.value)} 
-          />
-          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 -mt-2">
-            Let the recipient know how much they mean to you. Keep it sweet and short.
-          </p>
-          <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
-        </div>
-      </div>
-
-      {/* Section 3: Memories & Music */}
-      <div className="pt-6 border-t border-zinc-200 dark:border-white/10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-heading font-bold flex items-center gap-2">
-            <ImageIcon className="text-brand" size={24} />
-            Memories & Music
-          </h2>
-          {isMediaComplete ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-mint/10 text-mint border border-mint/20">Done</span>
-          ) : (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-500/10 text-zinc-400 border border-zinc-500/10">Optional</span>
-          )}
-        </div>
-        <div className="space-y-6">
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-ink dark:text-white/90">Upload Photos (Optional)</label>
-            <ImageUpload urls={store.photoUrls} onUploaded={store.addPhoto} onRemove={store.removePhoto} templateId={selectedTemplate?.id ?? null} />
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-              Upload up to 5 memorable pictures to embed inside the wish slides.
-            </p>
-          </div>
-          {selectedTemplate && selectedTemplate.tier !== 'free' && (
-            <div className="space-y-3">
-              <label className="block space-y-1.5">
-                <span className="text-sm font-semibold flex items-center gap-2"><Music size={16} /> Background Music (Optional)</span>
-                <select
-                  className="w-full rounded-md border p-3 bg-white dark:bg-ink focus-ring text-sm"
-                  value={store.useCustomMusic ? '' : store.musicUrl ?? ''}
-                  onChange={(e) => { store.setUseCustomMusic(false); store.setMusicUrl(e.target.value || null) }}
-                >
-                  <option value="">No music</option>
-                  {musicTracks.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </label>
-              {selectedTemplate.tier === 'premium' && (
-                <div className="space-y-1.5">
-                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Or Upload Custom Soundtrack</span>
-                  <MusicUploadManager
-                    templateId={selectedTemplate.id}
-                    onUploaded={(url) => { store.setMusicUrl(url); store.setUseCustomMusic(true); onToast('Custom music uploaded') }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
       <AITemplateRecommendations occasion={selectedTemplate?.occasion} />
     </div>
   )
@@ -462,8 +399,10 @@ export function Editor() {
     customMessage: store.customMessage,
     photoUrls: store.photoUrls,
     musicUrl: store.musicUrl,
+    formData: store.formData,
     useCustomMusic: store.useCustomMusic,
     template: selectedTemplate,
+    setFieldValue: store.setFieldValue,
     setRecipientName: store.setRecipientName,
     setSenderName: store.setSenderName,
     setCustomMessage: store.setCustomMessage,
