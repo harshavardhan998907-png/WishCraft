@@ -44,25 +44,8 @@ export const baseSchemas: Record<OccasionType, FormSchema> = {
   other: [],
 }
 
-export const templateExtensionSchemas: Record<string, FormSchema> = {
-  'birthday-glow': [
-    { id: 'timeline', label: 'Timeline Moments', type: 'textarea', helper: 'Add one memory per line.' },
-    { id: 'surprise_note', label: 'Surprise Note', type: 'textarea', maxLength: 240 },
-    { id: 'star_messages', label: 'Star Messages', type: 'textarea', helper: 'Short glowing notes for the reveal.' },
-  ],
-  'wedding-elegant': [
-    { id: 'love_story', label: 'Love Story', type: 'textarea', maxLength: 500 },
-    { id: 'video_gallery', label: 'Video Gallery URL', type: 'url' },
-  ],
-  'anniversary-romantic': [
-    { id: 'love_story', label: 'Love Story', type: 'textarea', maxLength: 500 },
-    { id: 'surprise_note', label: 'Private Note', type: 'textarea', maxLength: 240 },
-  ],
-  'graduation-celebration': [
-    { id: 'achievement', label: 'Achievement', type: 'text', placeholder: 'e.g. Class of 2026' },
-    { id: 'future_note', label: 'Future Note', type: 'textarea', maxLength: 240 },
-  ],
-}
+export const templateExtensionSchemas: Record<string, FormSchema> = {}
+
 
 function mergeSchemas(base: FormSchema, extension: FormSchema): FormSchema {
   const fields = new Map<string, FormFieldDefinition>()

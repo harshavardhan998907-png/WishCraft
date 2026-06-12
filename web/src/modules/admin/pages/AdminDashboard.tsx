@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../../components/ui/Card'
-import { ResponsiveGrid } from '../../../components/responsive/ResponsiveGrid'
 import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
 import { fetchAdminMetrics } from '../services/adminMetrics'
 import type { AdminMetrics } from '../types'

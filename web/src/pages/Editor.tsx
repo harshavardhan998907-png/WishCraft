@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { demoTemplates } from '../hooks/useTemplates'
 import { useEditorStore } from '../store/editorStore'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/Button'
@@ -13,7 +12,6 @@ import { useToastStore } from '../store/toastStore'
 import { Modal } from '../components/ui/Modal'
 import { Skeleton } from '../components/ui/Skeleton'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MusicUploadManager } from '../modules/media/components/MusicUploadManager'
 import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
 import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
 import { getTemplateSchema } from '../template-engine'
@@ -49,14 +47,12 @@ type StoreSnapshot = {
   setUseCustomMusic: (v: boolean) => void
 }
 
-function ContentEditor({ store, onToast }: { store: StoreSnapshot; onToast: (msg: string) => void }) {
+function ContentEditor({ store }: { store: StoreSnapshot }) {
   const selectedTemplate = store.template
   const [showGuide, setShowGuide] = useState(true)
   const schema = selectedTemplate ? getTemplateSchema(selectedTemplate) : []
 
   const isDetailsComplete = store.recipientName.trim().length > 0 && store.senderName.trim().length > 0
-  const isMessageComplete = store.customMessage.trim().length > 0
-  const isMediaComplete = store.photoUrls.length > 0 || store.musicUrl !== null
   const handleSchemaChange = (fieldId: string, value: unknown) => {
     store.setFieldValue(fieldId, value)
     if (fieldId === 'recipient_name') store.setRecipientName(String(value ?? ''))
@@ -185,13 +181,11 @@ function MobileWizard({
   mobileStepIndex,
   onNext,
   onBack,
-  onToast,
 }: {
   store: StoreSnapshot
   mobileStepIndex: number
   onNext: () => void
   onBack: () => void
-  onToast: (msg: string) => void
 }) {
   const selectedTemplate = store.template
   return (
@@ -338,8 +332,6 @@ export function Editor() {
   const selectedTemplate = store.template
 
   useEffect(() => {
-    const local = demoTemplates.find((t) => t.slug === templateSlug)
-    if (local) store.setTemplate(local)
     supabase
       .from('templates')
       .select('*')
@@ -350,7 +342,7 @@ export function Editor() {
       .then(({ data, error }) => {
         console.info('[Editor] template lookup result', { templateSlug, found: Boolean(data), error })
         if (data) store.setTemplate(data)
-        if (error) console.warn('[Editor] using local fallback template because database lookup failed', error)
+        if (error) console.error('[Editor] template lookup failed', error)
       })
   }, [templateSlug])
 
@@ -419,7 +411,7 @@ export function Editor() {
       <div className="h-full max-w-[1600px] mx-auto p-4 lg:p-6 hidden lg:grid lg:grid-cols-[380px_1fr_320px] lg:gap-6">
 
         {/* Column 1: Content Controls */}
-        <ContentEditor store={storeSnapshot} onToast={(msg) => toast.push('success', msg)} />
+        <ContentEditor store={storeSnapshot} />
 
         {/* Column 2: Dominant Live Preview */}
         <div className="relative h-full flex flex-col glass-panel rounded-2xl overflow-hidden">
@@ -462,7 +454,6 @@ export function Editor() {
           mobileStepIndex={mobileStepIndex}
           onNext={handleNext}
           onBack={handleBack}
-          onToast={(msg) => toast.push('success', msg)}
         />
       </div>
 
