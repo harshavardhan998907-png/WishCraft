@@ -15,8 +15,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
 import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
 import { getTemplateSchema } from '../template-engine'
-import { Image as ImageIcon, Music, MessageSquare, UserCircle, Palette, Sparkles, Monitor, Smartphone, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Image as ImageIcon, Music, MessageSquare, UserCircle, Palette, Sparkles, Monitor, Smartphone, ChevronRight, ChevronLeft, Trash2, Plus, BookOpen, History, Lock, Calendar, CheckCircle } from 'lucide-react'
 import type { Template } from '../types'
+import { uploadOptimizedImage } from '../modules/media/services/mediaService'
 
 const musicTracks = ['Gentle Piano', 'Warm Celebration', 'Soft Romance', 'Festival Lights', 'Bright Future']
 
@@ -321,6 +322,7 @@ function SceneNavigator({ store }: { store: StoreSnapshot }) {
 
 export function Editor() {
   const { templateSlug } = useParams()
+  const isBirthdayTemplate = templateSlug === 'birthday-letter-in-light'
   const navigate = useNavigate()
   const toast = useToastStore()
   const store = useEditorStore()
@@ -352,7 +354,8 @@ export function Editor() {
     customMessage: store.customMessage,
     photoUrls: store.photoUrls,
     musicUrl: store.musicUrl,
-  }), [store.recipientName, store.senderName, store.customMessage, store.photoUrls, store.musicUrl])
+    customData: store.formData,
+  }), [store.recipientName, store.senderName, store.customMessage, store.photoUrls, store.musicUrl, store.formData])
 
   if (!selectedTemplate) {
     return (
@@ -402,6 +405,16 @@ export function Editor() {
     removePhoto: store.removePhoto,
     setMusicUrl: store.setMusicUrl,
     setUseCustomMusic: store.setUseCustomMusic,
+  }
+
+  if (isBirthdayTemplate) {
+    return (
+      <BirthdayEditorLayout
+        store={storeSnapshot}
+        goPreview={goPreview}
+        previewData={previewData}
+      />
+    )
   }
 
   return (
@@ -469,5 +482,902 @@ export function Editor() {
         </div>
       </Modal>
     </section>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOM BIRTHDAY LETTER IN LIGHT WIZARD COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface BirthdayEditorLayoutProps {
+  store: StoreSnapshot
+  goPreview: () => void
+  previewData: {
+    recipientName: string
+    senderName: string
+    customMessage: string
+    photoUrls: string[]
+    musicUrl: string | null
+  }
+}
+
+export function BirthdayEditorLayout({ store, goPreview, previewData }: BirthdayEditorLayoutProps) {
+  const [activeStep, setActiveStep] = useState(0)
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  const steps = [
+    { id: 'basic', label: 'Basic Info', icon: UserCircle, desc: 'Names & date' },
+    { id: 'hero', label: 'Hero Section', icon: Sparkles, desc: 'Intro tagline & message' },
+    { id: 'gallery', label: 'Memory Gallery', icon: ImageIcon, desc: 'Photos & captions' },
+    { id: 'journey', label: 'Timeline & Stars', icon: Calendar, desc: 'Milestones & constellation' },
+    { id: 'messages', label: 'Letters & Secrets', icon: BookOpen, desc: 'Letter & surprise' },
+    { id: 'preview', label: 'Publish', icon: CheckCircle, desc: 'Review & finish' },
+  ]
+
+  // Validation checks for step navigation
+  const canGoNext = () => {
+    if (activeStep === 0) {
+      return store.recipientName.trim().length > 0 && 
+             store.senderName.trim().length > 0 &&
+             String(store.formData.birthday_date || '').trim().length > 0
+    }
+    return true
+  }
+
+  const handleNext = () => {
+    if (activeStep < steps.length - 1) {
+      setActiveStep(activeStep + 1)
+    } else {
+      goPreview()
+    }
+  }
+
+  const handleBack = () => {
+    if (activeStep > 0) {
+      setActiveStep(activeStep - 1)
+    }
+  }
+
+  // Pre-populates default timeline/constellation/gallery details when entering custom modes
+  const handleToggleChange = (fieldId: string, value: boolean) => {
+    store.setFieldValue(fieldId, value)
+    
+    // Auto populate custom arrays with template defaults if they are blank/undefined
+    if (!value) {
+      if (fieldId === 'useDefaultTimeline' && !store.formData.timeline_events) {
+        const defaultTimeline = [
+          { year: "2012", title: "We met", description: "A rainy library, two wrong books, one right friendship." },
+          { year: "2015", title: "First road trip", description: "Three states, one mixtape, infinite singing." },
+          { year: "2018", title: "The big move", description: "New city, same window, still calling at midnight." },
+          { year: "2021", title: "Your first show", description: "Front row. I cried twice. Don't tell anyone." },
+          { year: "2024", title: "And here we are", description: "Another year of being insufferably proud of you." }
+        ]
+        store.setFieldValue('timeline_events', defaultTimeline)
+      }
+      if (fieldId === 'useDefaultConstellation' && !store.formData.constellation_messages) {
+        const defaultConstellation = [
+          { title: "First coffee", message: "You ordered something impossible. The barista loved you." },
+          { title: "Rainy walk", message: "We made up a language. We still use three words from it." },
+          { title: "The proposal", message: "You said yes to being my person, in a noisy bar, over pasta." },
+          { title: "Sunday calls", message: "Forty‑seven minutes average. The world's longest voicemail." },
+          { title: "Your laugh", message: "A small public hazard. A national treasure." },
+          { title: "Tonight", message: "A page made of you. Click everything. Stay a while." }
+        ]
+        store.setFieldValue('constellation_messages', defaultConstellation)
+      }
+      if (fieldId === 'useDefaultMemories' && (!store.photoUrls || store.photoUrls.length === 0)) {
+        store.setFieldValue('memory_captions', [])
+      }
+    }
+  }
+
+  const handleFiles = async (files: FileList) => {
+    setUploadError(null)
+    setUploading(true)
+    const maxFiles = 10
+    const remaining = Math.max(0, maxFiles - store.photoUrls.length)
+    
+    for (const file of Array.from(files).slice(0, remaining)) {
+      try {
+        setUploadProgress(`Optimizing ${file.name}...`)
+        const result = await uploadOptimizedImage(file, {
+          templateId: store.template?.id ?? null,
+          onProgress: (value) => setUploadProgress(`Optimizing ${file.name}: ${value}%`),
+        })
+        
+        store.addPhoto(result.url)
+        
+        const currentCaptions = Array.isArray(store.formData.memory_captions) 
+          ? [...store.formData.memory_captions] 
+          : []
+        currentCaptions.push({ caption: '' })
+        store.setFieldValue('memory_captions', currentCaptions)
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : 'Image upload failed')
+      }
+    }
+    setUploading(false)
+    setUploadProgress(null)
+  }
+
+  return (
+    <section className="h-[calc(100vh-80px)] overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+      <div className="h-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-6 lg:p-6 p-0">
+        
+        <div className="h-full flex flex-col bg-white dark:bg-zinc-900 shadow-soft lg:rounded-2xl overflow-hidden relative border border-zinc-200/50 dark:border-white/5">
+          
+          <div className="p-4 lg:p-6 border-b border-zinc-100 dark:border-white/5 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md sticky top-0 z-20">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h1 className="text-lg lg:text-xl font-heading font-black text-ink dark:text-white flex items-center gap-2">
+                  <Sparkles className="text-brand animate-pulse" size={20} />
+                  Birthday Light Customizer
+                </h1>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Step {activeStep + 1} of {steps.length}: {steps[activeStep].label}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand/10 text-brand border border-brand/20 hover:bg-brand/20 transition-all"
+              >
+                <Smartphone size={14} /> Preview
+              </button>
+            </div>
+            
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {steps.map((s, idx) => {
+                const Icon = s.icon
+                const isCompleted = idx < activeStep
+                const isActive = idx === activeStep
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      if (idx < activeStep || (idx > activeStep && canGoNext())) {
+                        setActiveStep(idx)
+                      }
+                    }}
+                    disabled={idx > activeStep && !canGoNext()}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold whitespace-nowrap transition-all ${
+                      isActive 
+                        ? 'bg-brand text-white border-brand shadow-sm' 
+                        : isCompleted
+                        ? 'bg-zinc-100 dark:bg-zinc-800 text-brand border-zinc-200/50 dark:border-zinc-700/50'
+                        : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-500 border-zinc-100 dark:border-zinc-800/80 cursor-not-allowed'
+                    }`}
+                  >
+                    <Icon size={14} className={isActive ? 'animate-pulse' : ''} />
+                    <span>{s.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-24">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeStep}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.15 }}
+                className="space-y-6"
+              >
+                {activeStep === 0 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                      <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Recipient & Sender Info</h2>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Enter the essential details for the birthday card greeting.</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="Recipient's Name (Required)"
+                        value={store.recipientName}
+                        onChange={(e) => store.setRecipientName(e.target.value)}
+                        placeholder="e.g. Amelia"
+                        required
+                      />
+                      <Input
+                        label="Birthday Date (Required)"
+                        value={String(store.formData.birthday_date || '')}
+                        onChange={(e) => store.setFieldValue('birthday_date', e.target.value)}
+                        placeholder="e.g. December 4th"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="Your Name (Required)"
+                        value={store.senderName}
+                        onChange={(e) => store.setSenderName(e.target.value)}
+                        placeholder="e.g. Daniel"
+                        required
+                      />
+                      <Input
+                        label="Nickname (Optional)"
+                        value={String(store.formData.nickname || '')}
+                        onChange={(e) => store.setFieldValue('nickname', e.target.value)}
+                        placeholder="e.g. Mia"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {activeStep === 1 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                      <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Hero Section Message</h2>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Poetic one-liner and core message that flashes when they open the page.</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Textarea
+                          label="Hero Tagline"
+                          value={String(store.formData.tagline ?? '')}
+                          onChange={(e) => store.setFieldValue('tagline', e.target.value)}
+                          placeholder="A quiet love letter, written in light."
+                          maxLength={200}
+                        />
+                        <span className="text-[10px] text-zinc-400 block -mt-2">Poetic tagline displayed beneath the name.</span>
+                      </div>
+
+                      <div>
+                        <Textarea
+                          label="Main Birthday Message (Required)"
+                          value={store.customMessage}
+                          onChange={(e) => store.setCustomMessage(e.target.value)}
+                          placeholder="Today the world feels a little brighter — because the day it learned your name is the day everything began to glow..."
+                          maxLength={300}
+                          rows={4}
+                        />
+                        <span className="text-[10px] text-zinc-400 block -mt-2">The core birthday greeting. Revealed word-by-word.</span>
+                      </div>
+
+                      <div className="pt-2">
+                        <AIWishGenerator
+                          initialOccasion="birthday"
+                          onApply={store.setCustomMessage}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeStep === 2 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                      <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Memory Gallery</h2>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Share your favorite photos. Each photo can have an inline caption.</p>
+                    </div>
+
+                    <SegmentedToggle
+                      value={store.formData.useDefaultMemories !== false}
+                      onChange={(val) => handleToggleChange('useDefaultMemories', val)}
+                    />
+
+                    {store.formData.useDefaultMemories !== false ? (
+                      <DefaultContentBanner
+                        message="Rendering template standard memories (6 beautiful aesthetic placeholders with default captions)."
+                      />
+                    ) : (
+                      <div className="space-y-4">
+                        <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 p-4 text-center hover:border-brand/40 transition-colors">
+                          <ImageIcon size={28} className="text-zinc-400 dark:text-zinc-500 mb-1.5" />
+                          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Upload photos (max 10)</span>
+                          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Optimized web formats (JPEG, PNG, WebP)</span>
+                          <input
+                            className="sr-only"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            multiple
+                            disabled={uploading}
+                            onChange={(e) => e.target.files && handleFiles(e.target.files)}
+                          />
+                        </label>
+
+                        {uploadProgress && (
+                          <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-xs text-brand animate-pulse">
+                            {uploadProgress}
+                          </div>
+                        )}
+
+                        {uploadError && (
+                          <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-500">
+                            {uploadError}
+                          </div>
+                        )}
+
+                        <BirthdayGalleryManager store={store} />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeStep === 3 && (
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                        <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Timeline Milestones</h2>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">Map out the major moments and years in your friendship journey.</p>
+                      </div>
+
+                      <SegmentedToggle
+                        value={store.formData.useDefaultTimeline !== false}
+                        onChange={(val) => handleToggleChange('useDefaultTimeline', val)}
+                      />
+
+                      {store.formData.useDefaultTimeline !== false ? (
+                        <DefaultContentBanner
+                          message="Showing the default aesthetic friendship timeline (5 major historical events with dates & notes)."
+                        />
+                      ) : (
+                        <BirthdayRepeaterTimeline store={store} />
+                      )}
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5">
+                      <div className="pb-2">
+                        <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Memory Constellation Star Messages</h2>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">Each event shows up as a shining star in an interactive constellation map.</p>
+                      </div>
+
+                      <SegmentedToggle
+                        value={store.formData.useDefaultConstellation !== false}
+                        onChange={(val) => handleToggleChange('useDefaultConstellation', val)}
+                      />
+
+                      {store.formData.useDefaultConstellation !== false ? (
+                        <DefaultContentBanner
+                          message="Using standard starry constellation containing 6 default celestial coordinate points."
+                        />
+                      ) : (
+                        <BirthdayRepeaterConstellation store={store} />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeStep === 4 && (
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                        <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Poetic Quote</h2>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">A structured quote displayed as a separate divider layout.</p>
+                      </div>
+
+                      <SegmentedToggle
+                        value={store.formData.useDefaultQuote !== false}
+                        onChange={(val) => handleToggleChange('useDefaultQuote', val)}
+                      />
+
+                      {store.formData.useDefaultQuote !== false ? (
+                        <DefaultContentBanner
+                          message="Displays William Arthur Ward quote: 'Count not the candles… see the lights they give. Count not the years, but the life you live.'"
+                        />
+                      ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                          <Textarea
+                            label="Quote Content"
+                            value={String(store.formData.quote_text ?? '')}
+                            onChange={(e) => store.setFieldValue('quote_text', e.target.value)}
+                            placeholder="Type a inspiring or emotional quote..."
+                            maxLength={300}
+                          />
+                          <Input
+                            label="Author attribution"
+                            value={String(store.formData.quote_author ?? '')}
+                            onChange={(e) => store.setFieldValue('quote_author', e.target.value)}
+                            placeholder="e.g. William Arthur Ward"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5">
+                      <div className="pb-2">
+                        <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Personal Love Letter</h2>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">A long-form personal letter revealed as they scroll down the layout.</p>
+                      </div>
+
+                      <SegmentedToggle
+                        value={store.formData.useDefaultLetter !== false}
+                        onChange={(val) => handleToggleChange('useDefaultLetter', val)}
+                      />
+
+                      {store.formData.useDefaultLetter !== false ? (
+                        <DefaultContentBanner
+                          message="Displays standard heartfelt template letter: 'There is a particular kind of magic in knowing someone...'"
+                        />
+                      ) : (
+                        <div>
+                          <Textarea
+                            label="Letter Content"
+                            value={String(store.formData.letter_content ?? '')}
+                            onChange={(e) => store.setFieldValue('letter_content', e.target.value)}
+                            placeholder="Dearest..., Write a multi-paragraph personalized message here..."
+                            maxLength={2000}
+                            rows={8}
+                          />
+                          <span className="text-[10px] text-zinc-400 block -mt-2">Rich scroll block. Supports line breaks.</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5">
+                      <div className="pb-2">
+                        <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Secret Envelope Surprise</h2>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">An interactive locked envelope requiring a click to open and read.</p>
+                      </div>
+
+                      <SegmentedToggle
+                        value={store.formData.useDefaultSecret !== false}
+                        onChange={(val) => handleToggleChange('useDefaultSecret', val)}
+                      />
+
+                      {store.formData.useDefaultSecret !== false ? (
+                        <DefaultContentBanner
+                          message="Displays default envelope hint: 'Look out your window at 8:47pm tonight. I sent something into the sky...'"
+                        />
+                      ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                          <Input
+                            label="Secret Title"
+                            value={String(store.formData.secret_title ?? '')}
+                            onChange={(e) => store.setFieldValue('secret_title', e.target.value)}
+                            placeholder="e.g. There is one more thing..."
+                          />
+                          <Textarea
+                            label="Secret Message Body"
+                            value={String(store.formData.secret_message ?? '')}
+                            onChange={(e) => store.setFieldValue('secret_message', e.target.value)}
+                            placeholder="e.g. Look out your window at 8:47pm tonight..."
+                            maxLength={500}
+                            rows={3}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeStep === 5 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                      <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Configuration Check</h2>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Quick status check of your customized birthday card details.</p>
+                    </div>
+
+                    <div className="rounded-xl border border-zinc-200/60 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-800/10 overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+                      <div className="p-3.5 flex items-center justify-between">
+                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Basic Information</span>
+                        <div className="flex items-center gap-1.5 text-mint font-semibold text-xs">
+                          <CheckCircle size={14} /> Complete
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 flex items-center justify-between">
+                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Memory Gallery</span>
+                        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                          {store.formData.useDefaultMemories !== false 
+                            ? 'Default Template Content' 
+                            : `Custom (${store.photoUrls.length} photos uploaded)`
+                          }
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 flex items-center justify-between">
+                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Timeline & Star Journey</span>
+                        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                          {store.formData.useDefaultTimeline !== false ? 'Default Timeline' : 'Custom Timeline'} / {store.formData.useDefaultConstellation !== false ? 'Default Stars' : 'Custom Stars'}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 flex items-center justify-between">
+                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Special Letter & Secret Envelope</span>
+                        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                          {store.formData.useDefaultLetter !== false ? 'Default Letter' : 'Custom Letter'} / {store.formData.useDefaultSecret !== false ? 'Default Secret' : 'Custom Secret'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-brand/10 to-brand/5 border border-brand/20 flex items-start gap-4">
+                      <div className="p-3 bg-brand/10 text-brand rounded-xl">
+                        <Sparkles size={24} className="animate-spin-slow" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-black text-sm text-brand mb-1">
+                          You're all set!
+                        </h3>
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                          Your custom birthday wish for <strong className="text-ink dark:text-white">{store.recipientName}</strong> is ready. Please review the live view on the right to make sure everything looks perfect.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="absolute bottom-0 inset-x-0 p-4 border-t border-zinc-100 dark:border-white/5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md flex gap-3 z-20">
+            {activeStep > 0 && (
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={handleBack}
+                className="flex-1 py-3 text-xs lg:text-sm font-bold border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              >
+                <ChevronLeft size={16} className="mr-1" /> Back
+              </Button>
+            )}
+            <Button
+              onClick={handleNext}
+              disabled={!canGoNext()}
+              className="flex-[2] py-3 text-xs lg:text-sm font-bold shadow-premium bg-brand text-white"
+            >
+              {activeStep === steps.length - 1 ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  Publish Wish <Sparkles size={16} />
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-1.5">
+                  Next Step <ChevronRight size={16} />
+                </span>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="h-full hidden lg:flex flex-col bg-zinc-100/50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200/50 dark:border-white/5 overflow-hidden relative min-h-[500px]">
+          
+          <div className="p-4 border-b border-zinc-200/40 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md flex items-center justify-between absolute top-0 inset-x-0 z-10 pointer-events-none">
+            <span className="font-heading font-black text-xs uppercase tracking-widest text-zinc-400 dark:text-zinc-500 pl-2">
+              Live Preview
+            </span>
+            <div className="flex gap-1.5 pointer-events-auto bg-white/70 dark:bg-zinc-800/80 backdrop-blur-md rounded-full p-1 border border-zinc-200/50 dark:border-zinc-700/50">
+              <button
+                type="button"
+                onClick={() => setPreviewMode('desktop')}
+                className={`p-1.5 rounded-full transition-all ${
+                  previewMode === 'desktop'
+                    ? 'bg-zinc-100 dark:bg-zinc-700 text-brand shadow-sm'
+                    : 'text-zinc-400 dark:text-zinc-500 hover:text-brand'
+                }`}
+                title="Desktop view"
+              >
+                <Monitor size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewMode('mobile')}
+                className={`p-1.5 rounded-full transition-all ${
+                  previewMode === 'mobile'
+                    ? 'bg-zinc-100 dark:bg-zinc-700 text-brand shadow-sm'
+                    : 'text-zinc-400 dark:text-zinc-500 hover:text-brand'
+                }`}
+                title="Mobile view"
+              >
+                <Smartphone size={14} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center p-6 pt-16">
+            <div className={`transition-all duration-500 ease-in-out h-full w-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-zinc-900 ${
+              previewMode === 'mobile' ? 'max-w-[375px] aspect-[9/19] h-auto max-h-[780px]' : ''
+            }`}>
+              <LivePreview template={store.template} data={previewData} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Modal open={previewOpen} title="Live Preview" onClose={() => setPreviewOpen(false)}>
+        <div className="h-[75vh] w-full overflow-hidden rounded-xl bg-white dark:bg-zinc-900 relative">
+          <LivePreview template={store.template} data={previewData} />
+          <div className="absolute bottom-4 inset-x-4">
+            <Button onClick={() => setPreviewOpen(false)} className="w-full py-3 text-sm">
+              Close Preview
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </section>
+  )
+}
+
+function SegmentedToggle({
+  value,
+  onChange,
+  leftLabel = 'Use Template Content',
+  rightLabel = 'Customize Content'
+}: {
+  value: boolean
+  onChange: (val: boolean) => void
+  leftLabel?: string
+  rightLabel?: string
+}) {
+  return (
+    <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 relative">
+      <button
+        type="button"
+        onClick={() => onChange(true)}
+        className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all z-10 ${
+          value 
+            ? 'bg-white dark:bg-zinc-700 text-brand shadow-sm' 
+            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+        }`}
+      >
+        {leftLabel}
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(false)}
+        className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all z-10 ${
+          !value 
+            ? 'bg-white dark:bg-zinc-700 text-brand shadow-sm' 
+            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+        }`}
+      >
+        {rightLabel}
+      </button>
+    </div>
+  )
+}
+
+function DefaultContentBanner({ message }: { message: string }) {
+  return (
+    <div className="bg-zinc-50 dark:bg-zinc-800/30 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-xs text-zinc-500 dark:text-zinc-400 italic leading-relaxed">
+      ℹ️ {message}
+    </div>
+  )
+}
+
+function BirthdayGalleryManager({ store }: { store: StoreSnapshot }) {
+  const captions = Array.isArray(store.formData.memory_captions) 
+    ? (store.formData.memory_captions as Array<{ caption: string }>)
+    : []
+
+  const updateCaption = (idx: number, text: string) => {
+    const current = [...captions]
+    while (current.length <= idx) {
+      current.push({ caption: '' })
+    }
+    current[idx] = { caption: text }
+    store.setFieldValue('memory_captions', current)
+  }
+
+  const handleRemove = (url: string, idx: number) => {
+    store.removePhoto(url)
+    const current = [...captions]
+    if (idx < current.length) {
+      current.splice(idx, 1)
+      store.setFieldValue('memory_captions', current)
+    }
+  }
+
+  if (store.photoUrls.length === 0) {
+    return (
+      <div className="text-center py-6 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/10">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 font-medium">No custom photos uploaded yet. Upload images above to build your gallery.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3 mt-4">
+      {store.photoUrls.map((url, idx) => {
+        const cap = captions[idx]?.caption || ''
+        return (
+          <div 
+            key={url + idx}
+            className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200/60 dark:border-zinc-800/80 rounded-xl group hover:shadow-soft transition-all"
+          >
+            <div className="w-14 h-14 rounded-lg overflow-hidden border border-zinc-200/50 dark:border-zinc-700/50 relative flex-shrink-0 bg-zinc-100 dark:bg-zinc-800">
+              <img src={url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+            </div>
+            
+            <div className="flex-1">
+              <input
+                type="text"
+                value={cap}
+                onChange={(e) => updateCaption(idx, e.target.value)}
+                placeholder={`Caption for photo #${idx + 1}...`}
+                className="w-full bg-transparent outline-none border-b border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 focus:border-brand transition-all text-xs font-medium text-zinc-700 dark:text-zinc-300 py-1"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleRemove(url, idx)}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+              title="Remove photo"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function BirthdayRepeaterTimeline({ store }: { store: StoreSnapshot }) {
+  const events = Array.isArray(store.formData.timeline_events)
+    ? (store.formData.timeline_events as Array<{ year: string; title: string; description: string }>)
+    : []
+
+  const updateEvent = (idx: number, field: 'year' | 'title' | 'description', value: string) => {
+    const current = [...events]
+    if (current[idx]) {
+      current[idx] = { ...current[idx], [field]: value }
+      store.setFieldValue('timeline_events', current)
+    }
+  }
+
+  const addEvent = () => {
+    const current = [...events, { year: '', title: '', description: '' }]
+    store.setFieldValue('timeline_events', current)
+  }
+
+  const removeEvent = (idx: number) => {
+    const current = [...events]
+    current.splice(idx, 1)
+    store.setFieldValue('timeline_events', current)
+  }
+
+  return (
+    <div className="space-y-4">
+      {events.map((evt, idx) => (
+        <div 
+          key={idx}
+          className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-800 bg-white dark:bg-zinc-800/10 space-y-3 relative group hover:shadow-soft transition-all"
+        >
+          <div className="absolute top-3 right-3">
+            <button
+              type="button"
+              onClick={() => removeEvent(idx)}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+              title="Remove event"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+
+          <div className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+            Timeline Milestone #{idx + 1}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-1">
+              <input
+                type="text"
+                value={evt.year}
+                onChange={(e) => updateEvent(idx, 'year', e.target.value)}
+                placeholder="Year (e.g. 2020)"
+                className="w-full text-xs font-semibold rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 p-2.5 bg-white dark:bg-zinc-800/30 focus-ring"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <input
+                type="text"
+                value={evt.title}
+                onChange={(e) => updateEvent(idx, 'title', e.target.value)}
+                placeholder="Milestone title (e.g. We met)"
+                className="w-full text-xs font-semibold rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 p-2.5 bg-white dark:bg-zinc-800/30 focus-ring"
+              />
+            </div>
+          </div>
+
+          <div>
+            <textarea
+              value={evt.description}
+              onChange={(e) => updateEvent(idx, 'description', e.target.value)}
+              placeholder="Describe the milestone..."
+              maxLength={200}
+              rows={2}
+              className="w-full text-xs font-semibold rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 p-2.5 bg-white dark:bg-zinc-800/30 focus-ring"
+            />
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={addEvent}
+        className="w-full flex items-center justify-center gap-1.5 py-3 border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-brand/40 hover:text-brand transition-colors rounded-xl text-xs font-bold text-zinc-500"
+      >
+        <Plus size={14} /> Add Timeline Event
+      </button>
+    </div>
+  )
+}
+
+function BirthdayRepeaterConstellation({ store }: { store: StoreSnapshot }) {
+  const stars = Array.isArray(store.formData.constellation_messages)
+    ? (store.formData.constellation_messages as Array<{ title: string; message: string }>)
+    : []
+
+  const updateStar = (idx: number, field: 'title' | 'message', value: string) => {
+    const current = [...stars]
+    if (current[idx]) {
+      current[idx] = { ...current[idx], [field]: value }
+      store.setFieldValue('constellation_messages', current)
+    }
+  }
+
+  const addStar = () => {
+    const current = [...stars, { title: '', message: '' }]
+    store.setFieldValue('constellation_messages', current)
+  }
+
+  const removeStar = (idx: number) => {
+    const current = [...stars]
+    current.splice(idx, 1)
+    store.setFieldValue('constellation_messages', current)
+  }
+
+  return (
+    <div className="space-y-4">
+      {stars.map((star, idx) => (
+        <div 
+          key={idx}
+          className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-800 bg-white dark:bg-zinc-800/10 space-y-3 relative group hover:shadow-soft transition-all"
+        >
+          <div className="absolute top-3 right-3">
+            <button
+              type="button"
+              onClick={() => removeStar(idx)}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+              title="Remove star"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+
+          <div className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+            Star Node #{idx + 1}
+          </div>
+
+          <div>
+            <input
+              type="text"
+              value={star.title}
+              onChange={(e) => updateStar(idx, 'title', e.target.value)}
+              placeholder="Star name/title (e.g. First coffee)"
+              className="w-full text-xs font-semibold rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 p-2.5 bg-white dark:bg-zinc-800/30 focus-ring"
+            />
+          </div>
+
+          <div>
+            <textarea
+              value={star.message}
+              onChange={(e) => updateStar(idx, 'message', e.target.value)}
+              placeholder="Star memory message description..."
+              maxLength={200}
+              rows={2}
+              className="w-full text-xs font-semibold rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 p-2.5 bg-white dark:bg-zinc-800/30 focus-ring"
+            />
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={addStar}
+        className="w-full flex items-center justify-center gap-1.5 py-3 border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-brand/40 hover:text-brand transition-colors rounded-xl text-xs font-bold text-zinc-500"
+      >
+        <Plus size={14} /> Add Star Memory
+      </button>
+    </div>
   )
 }

@@ -102,4 +102,5 @@ export interface WishData {
   customMessage: string | null
   photoUrls: string[]
   musicUrl: string | null
+  customData?: Record<string, unknown>
 }

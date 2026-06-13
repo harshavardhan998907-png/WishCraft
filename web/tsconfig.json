@@ -1,4 +1,5 @@
 {
+  // Trigger TS reload
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -14,8 +15,24 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/templates/Birthday-template/src/*"]
+    }
   },
   "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "src/templates/Birthday-template/src/components/ui",
+    "src/templates/Birthday-template/src/lib/api",
+    "src/templates/Birthday-template/src/routes",
+    "src/templates/Birthday-template/src/router.tsx",
+    "src/templates/Birthday-template/src/server.ts",
+    "src/templates/Birthday-template/src/start.ts",
+    "src/templates/Birthday-template/src/routeTree.gen.ts",
+    "src/templates/Birthday-template/src/lib/config.server.ts",
+    "src/templates/Birthday-template/src/lib/utils.ts"
+  ],
   "references": []
 }

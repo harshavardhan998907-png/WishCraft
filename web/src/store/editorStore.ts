@@ -36,7 +36,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
     return { customMessage: value, formData: { ...state.formData, message: value } }
   }),
   addPhoto: (url) => set((state) => {
-    const photoUrls = [...state.photoUrls, url].slice(0, 5)
+    const photoUrls = [...state.photoUrls, url].slice(0, 10)
     return { photoUrls, formData: { ...state.formData, photos: photoUrls } }
   }),
   removePhoto: (url) => set((state) => {

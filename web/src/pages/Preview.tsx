@@ -23,7 +23,14 @@ export function Preview() {
   const navigate = useNavigate()
   const toast = useToastStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const data = { recipientName: editor.recipientName, senderName: editor.senderName, customMessage: editor.customMessage, photoUrls: editor.photoUrls, musicUrl: editor.musicUrl }
+  const data = {
+    recipientName: editor.recipientName,
+    senderName: editor.senderName,
+    customMessage: editor.customMessage,
+    photoUrls: editor.photoUrls,
+    musicUrl: editor.musicUrl,
+    customData: editor.formData,
+  }
   const formData = {
     ...legacyWishDataToFormData(data),
     ...editor.formData,

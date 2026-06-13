@@ -1,7 +1,7 @@
 import type { ComponentType, LazyExoticComponent } from 'react'
 import type { OccasionType, Template, TemplateStatus, TemplateTier, WishData } from '../types'
 
-export type FormFieldType = 'text' | 'textarea' | 'gallery' | 'music' | 'date' | 'url'
+export type FormFieldType = 'text' | 'textarea' | 'gallery' | 'music' | 'date' | 'url' | 'toggle' | 'repeater' | 'section'
 
 export interface FormFieldDefinition {
   id: string
@@ -12,6 +12,9 @@ export interface FormFieldDefinition {
   helper?: string
   maxLength?: number
   maxItems?: number
+  defaultValue?: unknown
+  subFields?: FormFieldDefinition[]
+  dependsOn?: { field: string; value: unknown }
 }
 
 export type FormSchema = FormFieldDefinition[]
@@ -107,6 +110,7 @@ export function wishDataToTemplateProps(data: WishData, previewMode = false): Te
     photos: data.photoUrls,
     musicUrl: data.musicUrl ?? undefined,
     previewMode,
+    customData: data.customData,
   }
 }
 
