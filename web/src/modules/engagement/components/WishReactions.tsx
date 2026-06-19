@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '../../../components/ui/Button'
 import { addWishReaction, fetchWishReactionSummary, reactionOptions, reactionSymbol } from '../services/engagementService'
 import type { ReactionType, WishReactionSummary } from '../types'
@@ -8,17 +8,17 @@ export function WishReactions({ wishId, templateId }: { wishId: string; template
   const [loadingType, setLoadingType] = useState<ReactionType | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function loadSummary() {
+  const loadSummary = useCallback(async () => {
     try {
       setSummary(await fetchWishReactionSummary(wishId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load reactions')
     }
-  }
+  }, [wishId])
 
   useEffect(() => {
     void loadSummary()
-  }, [wishId])
+  }, [loadSummary])
 
   async function react(reactionType: ReactionType) {
     setLoadingType(reactionType)

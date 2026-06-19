@@ -8,6 +8,7 @@ export function SecretSurprise({ title, body }: { title: string; body: string })
 
   return (
     <Section
+      id="secret"
       eyebrow="Tap me"
       title={<>A small <em className="font-display italic text-gradient-gold">secret</em></>}
       subtitle="Something I've been saving for the end of the page."

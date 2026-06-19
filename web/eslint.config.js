@@ -23,4 +23,10 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    files: ['src/scripts/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 )

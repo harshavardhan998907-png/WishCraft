@@ -1,9 +1,8 @@
-import { useState } from 'react'
 import { Input } from '../ui/Input'
 import { Textarea } from '../ui/Textarea'
 import { ImageUpload } from '../ui/ImageUpload'
 import type { FormFieldDefinition, FormSchema } from '../../template-engine'
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 
 interface DynamicFormRendererProps {
   schema: FormSchema

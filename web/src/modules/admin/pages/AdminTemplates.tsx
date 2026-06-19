@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { fetchAdminTemplates, setTemplateActive, createTemplateMetadataFromPlugin, updateTemplateStatus, deleteTemplate } from '../services/adminTemplates'
 import type { AdminTemplate } from '../types'
@@ -6,31 +6,31 @@ import { Card } from '../../../components/ui/Card'
 import { Button } from '../../../components/ui/Button'
 import { useToastStore } from '../../../store/toastStore'
 import { useAuth } from '../../../hooks/useAuth'
-import { Sparkles, Eye, EyeOff, Trash2, Plus, Check, Loader2 } from 'lucide-react'
+import { Sparkles, Eye, EyeOff, Trash2, Plus, Loader2 } from 'lucide-react'
 
 export function AdminTemplates() {
   const { user } = useAuth()
-  const toast = useToastStore()
+  const pushToast = useToastStore((state) => state.push)
   const [templates, setTemplates] = useState<AdminTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
-  const loadTemplates = async () => {
+  const loadTemplates = useCallback(async () => {
     try {
       setLoading(true)
       const data = await fetchAdminTemplates(search)
       setTemplates(data)
     } catch (err) {
-      toast.push('error', err instanceof Error ? err.message : 'Failed to load templates')
+      pushToast('error', err instanceof Error ? err.message : 'Failed to load templates')
     } finally {
       setLoading(false)
     }
-  }
+  }, [pushToast, search])
 
   useEffect(() => {
     loadTemplates()
-  }, [search])
+  }, [loadTemplates])
 
   const handleToggleActive = async (template: AdminTemplate) => {
     if (!template.id) return
@@ -39,10 +39,10 @@ export function AdminTemplates() {
     try {
       setActionLoading(actionId)
       await setTemplateActive(template.id, targetState, user?.id || '')
-      toast.push('success', `Template ${targetState ? 'enabled' : 'disabled'} successfully`)
+      pushToast('success', `Template ${targetState ? 'enabled' : 'disabled'} successfully`)
       await loadTemplates()
     } catch (err) {
-      toast.push('error', err instanceof Error ? err.message : 'Failed to update template status')
+      pushToast('error', err instanceof Error ? err.message : 'Failed to update template status')
     } finally {
       setActionLoading(null)
     }
@@ -54,10 +54,10 @@ export function AdminTemplates() {
     try {
       setActionLoading(actionId)
       await updateTemplateStatus(template.id, status, user?.id || '')
-      toast.push('success', `Status updated to ${status}`)
+      pushToast('success', `Status updated to ${status}`)
       await loadTemplates()
     } catch (err) {
-      toast.push('error', err instanceof Error ? err.message : 'Failed to update status')
+      pushToast('error', err instanceof Error ? err.message : 'Failed to update status')
     } finally {
       setActionLoading(null)
     }
@@ -68,10 +68,10 @@ export function AdminTemplates() {
     try {
       setActionLoading(actionId)
       await createTemplateMetadataFromPlugin(template, user?.id || '')
-      toast.push('success', 'Template imported into database successfully!')
+      pushToast('success', 'Template imported into database successfully!')
       await loadTemplates()
     } catch (err) {
-      toast.push('error', err instanceof Error ? err.message : 'Failed to import template')
+      pushToast('error', err instanceof Error ? err.message : 'Failed to import template')
     } finally {
       setActionLoading(null)
     }
@@ -83,10 +83,10 @@ export function AdminTemplates() {
     try {
       setActionLoading(actionId)
       await deleteTemplate(templateId, user?.id || '')
-      toast.push('success', 'Template metadata deleted from database')
+      pushToast('success', 'Template metadata deleted from database')
       await loadTemplates()
     } catch (err) {
-      toast.push('error', err instanceof Error ? err.message : 'Failed to delete template')
+      pushToast('error', err instanceof Error ? err.message : 'Failed to delete template')
     } finally {
       setActionLoading(null)
     }

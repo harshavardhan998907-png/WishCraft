@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { Button } from '../../../components/ui/Button'
 import { Input } from '../../../components/ui/Input'
 import { Textarea } from '../../../components/ui/Textarea'
@@ -13,7 +13,7 @@ export function WishMessages({ wishId, templateId }: { wishId: string; templateI
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function loadMessages() {
+  const loadMessages = useCallback(async () => {
     setLoading(true)
     try {
       setMessages(await fetchWishMessages(wishId))
@@ -22,11 +22,11 @@ export function WishMessages({ wishId, templateId }: { wishId: string; templateI
     } finally {
       setLoading(false)
     }
-  }
+  }, [wishId])
 
   useEffect(() => {
     void loadMessages()
-  }, [wishId])
+  }, [loadMessages])
 
   async function submitMessage(event: FormEvent) {
     event.preventDefault()

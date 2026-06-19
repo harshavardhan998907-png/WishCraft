@@ -3,7 +3,7 @@ import { Quote as QuoteIcon } from "lucide-react";
 
 export function Quote({ text, author }: { text: string; author: string }) {
   return (
-    <section className="relative py-20 sm:py-24 md:py-32 px-5 md:px-10 overflow-hidden">
+    <section id="quote" className="relative py-20 sm:py-24 md:py-32 px-5 md:px-10 overflow-hidden">
       <div className="absolute inset-0 bg-aurora opacity-40 pointer-events-none" />
       <motion.figure
         initial={{ opacity: 0, y: 30 }}

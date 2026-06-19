@@ -1,0 +1,442 @@
+﻿diff --git a/web/src/pages/Editor.tsx b/web/src/pages/Editor.tsx
+index e6749eac..766d843a 100644
+--- a/web/src/pages/Editor.tsx
++++ b/web/src/pages/Editor.tsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useMemo, useState } from 'react'
++import { useEffect, useMemo, useRef, useState } from 'react'
+ import { useNavigate, useParams } from 'react-router-dom'
+ import { useEditorStore } from '../store/editorStore'
+ import { supabase } from '../lib/supabase'
+@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion'
+ import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
+ import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
+ import { getTemplateSchema } from '../template-engine'
+-import { Image as ImageIcon, Music, MessageSquare, UserCircle, Palette, Sparkles, Monitor, Smartphone, ChevronRight, ChevronLeft, Trash2, Plus, BookOpen, History, Lock, Calendar, CheckCircle } from 'lucide-react'
++import { Image as ImageIcon, Music, MessageSquare, UserCircle, Palette, Sparkles, Monitor, Smartphone, ChevronRight, ChevronLeft, Trash2, Plus, BookOpen, Calendar, CheckCircle } from 'lucide-react'
+ import type { Template } from '../types'
+ import { uploadOptimizedImage } from '../modules/media/services/mediaService'
+ 
+@@ -326,6 +326,7 @@ export function Editor() {
+   const navigate = useNavigate()
+   const toast = useToastStore()
+   const store = useEditorStore()
++  const setTemplate = useEditorStore((state) => state.setTemplate)
+ 
+   const [mobileStepIndex, setMobileStepIndex] = useState(0)
+   const [previewOpen, setPreviewOpen] = useState(false)
+@@ -343,10 +344,10 @@ export function Editor() {
+       .single()
+       .then(({ data, error }) => {
+         console.info('[Editor] template lookup result', { templateSlug, found: Boolean(data), error })
+-        if (data) store.setTemplate(data)
++        if (data) setTemplate(data)
+         if (error) console.error('[Editor] template lookup failed', error)
+       })
+-  }, [templateSlug])
++  }, [setTemplate, templateSlug])
+ 
+   const previewData = useMemo(() => ({
+     recipientName: store.recipientName,
+@@ -502,44 +503,21 @@ interface BirthdayEditorLayoutProps {
+ }
+ 
+ export function BirthdayEditorLayout({ store, goPreview, previewData }: BirthdayEditorLayoutProps) {
+-  const [activeStep, setActiveStep] = useState(0)
+   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
+   const [previewOpen, setPreviewOpen] = useState(false)
+   const [uploading, setUploading] = useState(false)
+   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
+   const [uploadError, setUploadError] = useState<string | null>(null)
++  const previewShellRef = useRef<HTMLDivElement | null>(null)
+ 
+-  const steps = [
+-    { id: 'basic', label: 'Basic Info', icon: UserCircle, desc: 'Names & date' },
+-    { id: 'hero', label: 'Hero Section', icon: Sparkles, desc: 'Intro tagline & message' },
+-    { id: 'gallery', label: 'Memory Gallery', icon: ImageIcon, desc: 'Photos & captions' },
+-    { id: 'journey', label: 'Timeline & Stars', icon: Calendar, desc: 'Milestones & constellation' },
+-    { id: 'messages', label: 'Letters & Secrets', icon: BookOpen, desc: 'Letter & surprise' },
+-    { id: 'preview', label: 'Publish', icon: CheckCircle, desc: 'Review & finish' },
+-  ]
+-
+-  // Validation checks for step navigation
+-  const canGoNext = () => {
+-    if (activeStep === 0) {
+-      return store.recipientName.trim().length > 0 && 
+-             store.senderName.trim().length > 0 &&
+-             String(store.formData.birthday_date || '').trim().length > 0
+-    }
+-    return true
+-  }
+-
+-  const handleNext = () => {
+-    if (activeStep < steps.length - 1) {
+-      setActiveStep(activeStep + 1)
+-    } else {
+-      goPreview()
+-    }
+-  }
++  const canPublish =
++    store.recipientName.trim().length > 0 &&
++    store.senderName.trim().length > 0 &&
++    String(store.formData.birthday_date || '').trim().length > 0
+ 
+-  const handleBack = () => {
+-    if (activeStep > 0) {
+-      setActiveStep(activeStep - 1)
+-    }
++  const scrollPreviewTo = (targetId: string) => {
++    const target = previewShellRef.current?.querySelector<HTMLElement>(`#${targetId}`)
++    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+   }
+ 
+   // Pre-populates default timeline/constellation/gallery details when entering custom modes
+@@ -605,19 +583,19 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+   }
+ 
+   return (
+-    <section className="h-[calc(100vh-80px)] overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+-      <div className="h-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-6 lg:p-6 p-0">
++    <section className="min-h-[calc(100vh-80px)] bg-zinc-50 dark:bg-zinc-950">
++      <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-start gap-6 p-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(520px,1.05fr)] lg:p-6">
+         
+-        <div className="h-full flex flex-col bg-white dark:bg-zinc-900 shadow-soft lg:rounded-2xl overflow-hidden relative border border-zinc-200/50 dark:border-white/5">
++        <div className="bg-white dark:bg-zinc-900 shadow-soft lg:rounded-2xl overflow-hidden relative border border-zinc-200/50 dark:border-white/5">
+           
+           <div className="p-4 lg:p-6 border-b border-zinc-100 dark:border-white/5 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md sticky top-0 z-20">
+-            <div className="flex justify-between items-center mb-4">
++            <div className="flex justify-between items-center gap-4">
+               <div>
+                 <h1 className="text-lg lg:text-xl font-heading font-black text-ink dark:text-white flex items-center gap-2">
+                   <Sparkles className="text-brand animate-pulse" size={20} />
+                   Birthday Light Customizer
+                 </h1>
+-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Step {activeStep + 1} of {steps.length}: {steps[activeStep].label}</p>
++                <p className="text-xs text-zinc-500 dark:text-zinc-400">Single-page builder with live preview sync</p>
+               </div>
+               <button
+                 type="button"
+@@ -627,50 +605,20 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                 <Smartphone size={14} /> Preview
+               </button>
+             </div>
+-            
+-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+-              {steps.map((s, idx) => {
+-                const Icon = s.icon
+-                const isCompleted = idx < activeStep
+-                const isActive = idx === activeStep
+-                return (
+-                  <button
+-                    key={s.id}
+-                    type="button"
+-                    onClick={() => {
+-                      if (idx < activeStep || (idx > activeStep && canGoNext())) {
+-                        setActiveStep(idx)
+-                      }
+-                    }}
+-                    disabled={idx > activeStep && !canGoNext()}
+-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold whitespace-nowrap transition-all ${
+-                      isActive 
+-                        ? 'bg-brand text-white border-brand shadow-sm' 
+-                        : isCompleted
+-                        ? 'bg-zinc-100 dark:bg-zinc-800 text-brand border-zinc-200/50 dark:border-zinc-700/50'
+-                        : 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-500 border-zinc-100 dark:border-zinc-800/80 cursor-not-allowed'
+-                    }`}
+-                  >
+-                    <Icon size={14} className={isActive ? 'animate-pulse' : ''} />
+-                    <span>{s.label}</span>
+-                  </button>
+-                )
+-              })}
+-            </div>
+           </div>
+ 
+-          <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-24">
+-            <AnimatePresence mode="wait">
+-              <motion.div
+-                key={activeStep}
+-                initial={{ opacity: 0, y: 10 }}
+-                animate={{ opacity: 1, y: 0 }}
+-                exit={{ opacity: 0, y: -10 }}
+-                transition={{ duration: 0.15 }}
+-                className="space-y-6"
+-              >
+-                {activeStep === 0 && (
+-                  <div className="space-y-6">
++          <div className="p-4 lg:p-6 space-y-6">
++            <motion.div
++              initial={{ opacity: 0, y: 10 }}
++              animate={{ opacity: 1, y: 0 }}
++              transition={{ duration: 0.15 }}
++              className="space-y-6"
++            >
++                  <article
++                    className="space-y-6 rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-zinc-900/70 lg:p-5"
++                    onFocusCapture={() => scrollPreviewTo('top')}
++                    onMouseEnter={() => scrollPreviewTo('top')}
++                  >
+                     <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                       <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Recipient & Sender Info</h2>
+                       <p className="text-xs text-zinc-500 dark:text-zinc-400">Enter the essential details for the birthday card greeting.</p>
+@@ -708,11 +656,13 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                         placeholder="e.g. Mia"
+                       />
+                     </div>
+-                  </div>
+-                )}
++                  </article>
+ 
+-                {activeStep === 1 && (
+-                  <div className="space-y-6">
++                  <article
++                    className="space-y-6 rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-zinc-900/70 lg:p-5"
++                    onFocusCapture={() => scrollPreviewTo('wish')}
++                    onMouseEnter={() => scrollPreviewTo('wish')}
++                  >
+                     <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                       <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Hero Section Message</h2>
+                       <p className="text-xs text-zinc-500 dark:text-zinc-400">Poetic one-liner and core message that flashes when they open the page.</p>
+@@ -749,11 +699,13 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                         />
+                       </div>
+                     </div>
+-                  </div>
+-                )}
++                  </article>
+ 
+-                {activeStep === 2 && (
+-                  <div className="space-y-6">
++                  <article
++                    className="space-y-6 rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-zinc-900/70 lg:p-5"
++                    onFocusCapture={() => scrollPreviewTo('memories')}
++                    onMouseEnter={() => scrollPreviewTo('memories')}
++                  >
+                     <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                       <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Memory Gallery</h2>
+                       <p className="text-xs text-zinc-500 dark:text-zinc-400">Share your favorite photos. Each photo can have an inline caption.</p>
+@@ -764,6 +716,31 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                       onChange={(val) => handleToggleChange('useDefaultMemories', val)}
+                     />
+ 
++                    {store.formData.useDefaultMemories !== false ? (
++                      <DefaultContentBanner
++                        message="Rendering template standard memories (6 beautiful aesthetic placeholders with default captions)."
++                      />
++                    ) : (
++                      <div className="space-y-4">
++                        <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 p-4 text-center hover:border-brand/40 transition-colors">
++                          <ImageIcon size={28} className="text-zinc-400 dark:text-zinc-500 mb-1.5" />
++                          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Upload photos (max 10)</span>
++                          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Optimized web formats (JPEG, PNG, WebP)</span>
++                          <input
++                            className="sr-only"
++                            type="file"
++                            accept="image/jpeg,image/png,image/webp,image/gif"
++                            multiple
++                            disabled={uploading}
++                            onChange={(e) => e.target.files && handleFiles(e.target.files)}
++                          />
++                    </div>
++
++                    <SegmentedToggle
++                      value={store.formData.useDefaultMemories !== false}
++                      onChange={(val) => handleToggleChange('useDefaultMemories', val)}
++                    />
++
+                     {store.formData.useDefaultMemories !== false ? (
+                       <DefaultContentBanner
+                         message="Rendering template standard memories (6 beautiful aesthetic placeholders with default captions)."
+@@ -799,12 +776,16 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                         <BirthdayGalleryManager store={store} />
+                       </div>
+                     )}
+-                  </div>
+-                )}
++                  </article>
+ 
+-                {activeStep === 3 && (
+-                  <div className="space-y-8">
+-                    <div className="space-y-4">
++                  <article
++                    className="space-y-8 rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-zinc-900/70 lg:p-5"
++                  >
++                    <div
++                      className="space-y-4"
++                      onFocusCapture={() => scrollPreviewTo('journey')}
++                      onMouseEnter={() => scrollPreviewTo('journey')}
++                    >
+                       <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                         <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Timeline Milestones</h2>
+                         <p className="text-xs text-zinc-500 dark:text-zinc-400">Map out the major moments and years in your friendship journey.</p>
+@@ -824,7 +805,11 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                       )}
+                     </div>
+ 
+-                    <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5">
++                    <div
++                      className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5"
++                      onFocusCapture={() => scrollPreviewTo('stars')}
++                      onMouseEnter={() => scrollPreviewTo('stars')}
++                    >
+                       <div className="pb-2">
+                         <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Memory Constellation Star Messages</h2>
+                         <p className="text-xs text-zinc-500 dark:text-zinc-400">Each event shows up as a shining star in an interactive constellation map.</p>
+@@ -843,12 +828,16 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                         <BirthdayRepeaterConstellation store={store} />
+                       )}
+                     </div>
+-                  </div>
+-                )}
++                  </article>
+ 
+-                {activeStep === 4 && (
+-                  <div className="space-y-8">
+-                    <div className="space-y-4">
++                  <article
++                    className="space-y-8 rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-zinc-900/70 lg:p-5"
++                  >
++                    <div
++                      className="space-y-4"
++                      onFocusCapture={() => scrollPreviewTo('quote')}
++                      onMouseEnter={() => scrollPreviewTo('quote')}
++                    >
+                       <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+                         <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Poetic Quote</h2>
+                         <p className="text-xs text-zinc-500 dark:text-zinc-400">A structured quote displayed as a separate divider layout.</p>
+@@ -882,7 +871,11 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                       )}
+                     </div>
+ 
+-                    <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5">
++                    <div
++                      className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5"
++                      onFocusCapture={() => scrollPreviewTo('letter')}
++                      onMouseEnter={() => scrollPreviewTo('letter')}
++                    >
+                       <div className="pb-2">
+                         <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Personal Love Letter</h2>
+                         <p className="text-xs text-zinc-500 dark:text-zinc-400">A long-form personal letter revealed as they scroll down the layout.</p>
+@@ -912,7 +905,11 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                       )}
+                     </div>
+ 
+-                    <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5">
++                    <div
++                      className="space-y-4 pt-4 border-t border-zinc-100 dark:border-white/5"
++                      onFocusCapture={() => scrollPreviewTo('secret')}
++                      onMouseEnter={() => scrollPreviewTo('secret')}
++                    >
+                       <div className="pb-2">
+                         <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Secret Envelope Surprise</h2>
+                         <p className="text-xs text-zinc-500 dark:text-zinc-400">An interactive locked envelope requiring a click to open and read.</p>
+@@ -946,13 +943,40 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                         </div>
+                       )}
+                     </div>
+-                  </div>
+-                )}
++                  </article>
++
++                  <article
++                    className="space-y-4 rounded-2xl border border-zinc-200/70 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-zinc-900/70 lg:p-5"
++                    onFocusCapture={() => scrollPreviewTo('celebrate')}
++                    onMouseEnter={() => scrollPreviewTo('celebrate')}
++                  >
++                    <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
++                      <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Music</h2>
++                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Choose the existing background music value used by the wish state.</p>
++                    </div>
++
++                    <label className="block space-y-1.5">
++                      <span className="text-sm font-semibold flex items-center gap-2 text-zinc-800 dark:text-zinc-100">
++                        <Music size={16} /> Background Music
++                      </span>
++                      <select
++                        className="w-full rounded-xl border border-zinc-200/80 dark:border-zinc-700/80 p-3 bg-white dark:bg-zinc-800/30 focus-ring"
++                        value={store.useCustomMusic ? '' : store.musicUrl ?? ''}
++                        onChange={(e) => { store.setUseCustomMusic(false); store.setMusicUrl(e.target.value || null) }}
++                      >
++                        <option value="">No music</option>
++                        {musicTracks.map((track) => <option key={track} value={track}>{track}</option>)}
++                      </select>
++                    </label>
++                  </article>
+ 
+-                {activeStep === 5 && (
+-                  <div className="space-y-6">
++                  <article
++                    className="space-y-6 rounded-2xl border border-brand/20 bg-brand/5 p-4 shadow-sm dark:border-brand/20 dark:bg-brand/10 lg:p-5"
++                    onFocusCapture={() => scrollPreviewTo('celebrate')}
++                    onMouseEnter={() => scrollPreviewTo('celebrate')}
++                  >
+                     <div className="border-b border-zinc-100 dark:border-white/5 pb-2">
+-                      <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Configuration Check</h2>
++                      <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-100">Review & Publish</h2>
+                       <p className="text-xs text-zinc-500 dark:text-zinc-400">Quick status check of your customized birthday card details.</p>
+                     </div>
+ 
+@@ -1002,42 +1026,22 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+                         </p>
+                       </div>
+                     </div>
+-                  </div>
+-                )}
+-              </motion.div>
+-            </AnimatePresence>
+-          </div>
+ 
+-          <div className="absolute bottom-0 inset-x-0 p-4 border-t border-zinc-100 dark:border-white/5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md flex gap-3 z-20">
+-            {activeStep > 0 && (
+-              <Button
+-                variant="secondary"
+-                type="button"
+-                onClick={handleBack}
+-                className="flex-1 py-3 text-xs lg:text-sm font-bold border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+-              >
+-                <ChevronLeft size={16} className="mr-1" /> Back
+-              </Button>
+-            )}
+-            <Button
+-              onClick={handleNext}
+-              disabled={!canGoNext()}
+-              className="flex-[2] py-3 text-xs lg:text-sm font-bold shadow-premium bg-brand text-white"
+-            >
+-              {activeStep === steps.length - 1 ? (
+-                <span className="flex items-center justify-center gap-1.5">
+-                  Publish Wish <Sparkles size={16} />
+-                </span>
+-              ) : (
+-                <span className="flex items-center justify-center gap-1.5">
+-                  Next Step <ChevronRight size={16} />
+-                </span>
+-              )}
+-            </Button>
++                    <Button
++                      onClick={goPreview}
++                      disabled={!canPublish}
++                      className="w-full py-3 text-xs lg:text-sm font-bold shadow-premium bg-brand text-white"
++                    >
++                      <span className="flex items-center justify-center gap-1.5">
++                        Publish Wish <Sparkles size={16} />
++                      </span>
++                    </Button>
++                  </article>
++            </motion.div>
+           </div>
+         </div>
+ 
+-        <div className="h-full hidden lg:flex flex-col bg-zinc-100/50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200/50 dark:border-white/5 overflow-hidden relative min-h-[500px]">
++        <div className="sticky top-6 hidden h-[calc(100vh-128px)] min-h-[560px] lg:flex flex-col bg-zinc-100/50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200/50 dark:border-white/5 overflow-hidden relative">
+           
+           <div className="p-4 border-b border-zinc-200/40 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md flex items-center justify-between absolute top-0 inset-x-0 z-10 pointer-events-none">
+             <span className="font-heading font-black text-xs uppercase tracking-widest text-zinc-400 dark:text-zinc-500 pl-2">
+@@ -1072,7 +1076,7 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
+           </div>
+ 
+           <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center p-6 pt-16">
+-            <div className={`transition-all duration-500 ease-in-out h-full w-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-zinc-900 ${
++            <div ref={previewShellRef} className={`transition-all duration-500 ease-in-out h-full w-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-zinc-900 ${
+               previewMode === 'mobile' ? 'max-w-[375px] aspect-[9/19] h-auto max-h-[780px]' : ''
+             }`}>
+               <LivePreview template={store.template} data={previewData} />
