@@ -8,6 +8,7 @@ import { Expired } from './Expired'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
 import { preloadMedia } from '../modules/media/services/mediaService'
 import { TemplateNotFound, WishRenderer } from '../template-engine'
+import { WishReferralFooter } from '../components/layout/WishReferralFooter'
 
 const WishReactions = lazy(() => import('../modules/engagement/components/WishReactions').then((module) => ({ default: module.WishReactions })))
 const WishMessages = lazy(() => import('../modules/engagement/components/WishMessages').then((module) => ({ default: module.WishMessages })))
@@ -87,6 +88,8 @@ export function WishPage() {
           </a>
         </div>
       </div>
+
+      {templateIdentity ? <WishReferralFooter wishId={data.wish.id} templateSlug={templateIdentity} /> : null}
     </>
   )
 }
