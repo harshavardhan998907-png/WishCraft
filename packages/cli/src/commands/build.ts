@@ -16,6 +16,7 @@ export async function runBuildCommand(projectRoot = process.cwd()): Promise<void
     bundle: true,
     format: 'iife',
     globalName: 'WishCraftTemplate',
+    
     jsx: 'automatic',
     external: ['react', 'react-dom'],
     minify: true,

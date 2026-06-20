@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 const primaryLinks = [
   { to: '/admin', label: 'Dashboard', end: true },
   { to: '/admin/templates', label: 'Templates' },
+  { to: '/admin/submissions', label: 'Submissions' },
   { to: '/admin/users', label: 'Users' },
   { to: '/admin/orders', label: 'Orders' },
   { to: '/admin/analytics', label: 'Analytics' },
