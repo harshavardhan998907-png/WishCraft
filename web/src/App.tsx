@@ -35,6 +35,7 @@ const AdminProductionDashboard = lazy(() => import('./modules/admin/pages/AdminP
 const AdminSettings = lazy(() => import('./modules/admin/pages/AdminSettings').then((module) => ({ default: module.AdminSettings })))
 const AdminStorageDashboard = lazy(() => import('./modules/admin/pages/AdminStorageDashboard').then((module) => ({ default: module.AdminStorageDashboard })))
 const AdminTemplates = lazy(() => import('./modules/admin/pages/AdminTemplates').then((module) => ({ default: module.AdminTemplates })))
+const AdminSubmissions = lazy(() => import('./modules/admin/pages/AdminSubmissions').then((module) => ({ default: module.AdminSubmissions })))
 const AdminUsers = lazy(() => import('./modules/admin/pages/AdminUsers').then((module) => ({ default: module.AdminUsers })))
 const CreatorLayout = lazy(() => import('./modules/creator/layouts/CreatorLayout').then((module) => ({ default: module.CreatorLayout })))
 const CreatorDashboard = lazy(() => import('./modules/creator/pages/CreatorDashboard').then((module) => ({ default: module.CreatorDashboard })))
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="production" element={<AdminProductionDashboard />} />
           <Route path="engagement" element={<AdminEngagementModeration />} />
           <Route path="templates" element={<AdminTemplates />} />
+          <Route path="submissions" element={<AdminSubmissions />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="payments" element={<AdminPayments />} />
