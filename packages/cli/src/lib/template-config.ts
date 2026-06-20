@@ -29,7 +29,11 @@ export interface FormFieldDefinition {
 export type FormSchema = FormFieldDefinition[]
 
 export interface TemplateTheme {
-  [colorName: string]: string
+  primaryColor: string
+  backgroundColor: string
+  surfaceColor: string
+  textColor: string
+  fontHeading: string
 }
 
 export interface TemplateProjectConfig {
@@ -75,7 +79,11 @@ export const templateProjectConfigSchema: z.ZodType<TemplateProjectConfig> = z.o
   }),
   sdkVersion: z.string().regex(semverPattern, 'config.json.sdkVersion must be a semver string.'),
   fields: z.array(formFieldSchema),
-  theme: z.object({}).catchall(hexColorSchema).refine((value) => Object.keys(value).length > 0, {
-    message: 'config.json.theme must include at least one hex color.',
+  theme: z.object({
+    primaryColor: hexColorSchema,
+    backgroundColor: hexColorSchema,
+    surfaceColor: hexColorSchema,
+    textColor: hexColorSchema,
+    fontHeading: z.string().min(1, 'config.json.theme.fontHeading must be a non-empty string.'),
   }),
 }).strict()

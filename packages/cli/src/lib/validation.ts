@@ -56,11 +56,17 @@ function validateSlug(config: import('./template-config').TemplateProjectConfig,
   }
 }
 
+const themeColorFields = ['primaryColor', 'backgroundColor', 'surfaceColor', 'textColor'] as const
+
 function validateThemeColors(config: import('./template-config').TemplateProjectConfig, issues: ValidationIssue[]): void {
-  for (const [colorName, colorValue] of Object.entries(config.theme)) {
-    if (!hexColorPattern.test(colorValue)) {
+  for (const colorName of themeColorFields) {
+    if (!hexColorPattern.test(config.theme[colorName])) {
       pushIssue(issues, `config.json.theme.${colorName}`, 'Theme colors must be valid hex values.')
     }
+  }
+
+  if (typeof config.theme.fontHeading !== 'string' || config.theme.fontHeading.trim().length === 0) {
+    pushIssue(issues, 'config.json.theme.fontHeading', 'fontHeading must be a non-empty string.')
   }
 }
 
