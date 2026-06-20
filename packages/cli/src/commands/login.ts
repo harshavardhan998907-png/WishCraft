@@ -45,7 +45,7 @@ export async function runLoginCommand(): Promise<void> {
     },
   ])
 
-  const response = await fetch('https://wish-craft-ten.vercel.app/api/auth/creator-login', {
+  const response = await fetch('https://pgwfnlyrbkbwxklziieo.supabase.co/functions/v1/creator-login', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
