@@ -75,7 +75,7 @@ export async function runSubmitCommand(projectRoot = process.cwd()): Promise<voi
     contentType: 'image/png',
   })
 
-  const response = await fetch('https://wish-craft-ten.vercel.app/api/templates/submit', {
+  const response = await fetch('https://pgwfnlyrbkbwxklziieo.supabase.co/functions/v1/template-submit', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
