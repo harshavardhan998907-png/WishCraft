@@ -31,6 +31,10 @@ export interface Template {
   component_name: string
   renderer_type?: TemplateRendererType
   component_key?: string | null
+  // External (creator-submitted) templates ship as a JS bundle rather than a
+  // registered in-app component. See ExternalTemplateRenderer.
+  is_external?: boolean
+  bundle_url?: string | null
   manifest_json?: Record<string, unknown> | null
   description?: string | null
   preview_video_url?: string | null

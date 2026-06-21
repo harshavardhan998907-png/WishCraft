@@ -27,8 +27,8 @@ function templateIndexSource(templateName: string): string {
 export type TemplateProps = {
   recipientName: string
   senderName: string
-  customMessage: string
-  photoUrls: string[]
+  message: string
+  photos: string[]
   musicUrl?: string
   previewMode?: boolean
 }
@@ -57,8 +57,8 @@ const cardStyles: CSSProperties = {
 export default function ${safeFunctionName}({
   recipientName,
   senderName,
-  customMessage,
-  photoUrls,
+  message,
+  photos,
   previewMode,
 }: TemplateProps) {
   const heading = recipientName || 'Someone special'
@@ -74,14 +74,14 @@ export default function ${safeFunctionName}({
           {heading}
         </h1>
         <p style={{ margin: 0, fontSize: 18, lineHeight: 1.7, maxWidth: 620, color: 'rgba(248, 247, 244, 0.82)' }}>
-          {customMessage || 'Start here by telling a story with images, motion, and a little magic.'}
+          {message || 'Start here by telling a story with images, motion, and a little magic.'}
         </p>
         <div style={{ marginTop: 28, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
           <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(255, 122, 94, 0.16)', border: '1px solid rgba(255, 122, 94, 0.32)' }}>
             {subheading}
           </span>
           <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(73, 199, 164, 0.16)', border: '1px solid rgba(73, 199, 164, 0.32)' }}>
-            {photoUrls.length} photo{photoUrls.length === 1 ? '' : 's'}
+            {photos.length} photo{photos.length === 1 ? '' : 's'}
           </span>
           {previewMode ? (
             <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
