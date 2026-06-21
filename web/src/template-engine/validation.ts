@@ -63,10 +63,15 @@ export function validateFormData(schema: FormSchema, formData: Record<string, un
 
 export function validateWishBeforePublish({ template, formData }: WishPublishValidationInput): TemplateValidationResult {
   const issues: TemplateValidationIssue[] = []
-  const registeredTemplate = getTemplate(template.slug) ?? getTemplate(template.component_key) ?? getTemplate(template.component_name)
 
-  if (!registeredTemplate) {
-    issues.push(issue('template', `Template "${template.slug}" is not registered in the renderer.`))
+  // External (creator-submitted) templates render from their bundle_url via
+  // ExternalTemplateRenderer, not the in-app registry — so the registry check
+  // only applies to internal templates.
+  if (!template.is_external) {
+    const registeredTemplate = getTemplate(template.slug) ?? getTemplate(template.component_key) ?? getTemplate(template.component_name)
+    if (!registeredTemplate) {
+      issues.push(issue('template', `Template "${template.slug}" is not registered in the renderer.`))
+    }
   }
 
   const formResult = validateFormData(getTemplateSchema(template), formData)

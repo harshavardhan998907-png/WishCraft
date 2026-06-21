@@ -182,6 +182,9 @@ serve(async (req) => {
         // templates has no `price` column — store the submitted price in price_paise.
         price_paise: typeof config.price === 'number' ? config.price : 0,
         component_name: config.slug,
+        // component_key is NOT NULL with no default (migration 023) and must be
+        // unique. The slug is unique per template, so it doubles as the key.
+        component_key: config.slug,
         bundle_url: bundleUrl,
         thumbnail_url: thumbnailUrl,
         status: 'published',

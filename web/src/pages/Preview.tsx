@@ -143,7 +143,7 @@ export function Preview() {
       title: status === 'active' ? 'Wish created' : 'Wish draft created',
       message: status === 'active' ? 'Your wish is live and ready to share.' : 'Your wish draft is ready. Finish payment to activate it.',
       metadata: { wish_id: data.id, slug, template_id: template.id },
-    })
+    }).catch(() => undefined)
     if (status === 'active') {
       void enqueueScheduledJob({
         jobType: 'wish_expiry_reminder',

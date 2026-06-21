@@ -34,6 +34,8 @@ export function WishRenderer({ wish, template, previewMode = false, fallback }: 
       templateId={templateSlug}
       slug={templateSlug}
       componentKey={componentKey}
+      bundleUrl={template?.bundle_url}
+      isExternal={template?.is_external}
       props={formDataToTemplateProps(formData, previewMode)}
       fallback={fallback}
       errorFallback={<TemplateNotFound templateId={templateSlug ?? wish.template_id} />}

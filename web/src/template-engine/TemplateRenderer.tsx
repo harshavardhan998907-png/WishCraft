@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import type { ReactNode } from 'react'
 import { registerFounderTemplates } from '../templates/founder/registerFounderTemplates'
+import { ExternalTemplateRenderer } from './ExternalTemplateRenderer'
 import { getTemplate, getTemplateByComponentKey } from './registry'
 import { TemplateRenderErrorBoundary } from './TemplateRenderErrorBoundary'
 import type { TemplateProps } from './types'
@@ -13,6 +14,8 @@ interface TemplateRendererProps {
   className?: string
   fallback?: ReactNode
   errorFallback?: ReactNode
+  bundleUrl?: string | null
+  isExternal?: boolean
 }
 
 export function TemplateRenderer({
@@ -23,7 +26,23 @@ export function TemplateRenderer({
   className,
   fallback,
   errorFallback,
+  bundleUrl,
+  isExternal,
 }: TemplateRendererProps) {
+  // External (creator-submitted) templates render from a JS bundle in a
+  // sandboxed iframe instead of a registry-looked-up component.
+  if (isExternal && bundleUrl) {
+    return (
+      <ExternalTemplateRenderer
+        bundleUrl={bundleUrl}
+        props={props}
+        className={className}
+        fallback={fallback}
+        errorFallback={errorFallback}
+      />
+    )
+  }
+
   registerFounderTemplates()
   const entry = getTemplate(templateId) ?? getTemplate(slug) ?? getTemplateByComponentKey(componentKey)
 

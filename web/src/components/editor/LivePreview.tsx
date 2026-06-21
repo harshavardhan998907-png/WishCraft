@@ -12,6 +12,8 @@ export function LivePreview({ template, data }: { template: Template | null; dat
         templateId={template.slug}
         componentKey={template.component_key ?? template.component_name}
         slug={template.slug}
+        bundleUrl={template.bundle_url}
+        isExternal={template.is_external}
         props={wishDataToTemplateProps(data, true)}
       />
     </motion.div>
