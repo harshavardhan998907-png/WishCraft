@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { LivePreview } from '../components/editor/LivePreview'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
-import { addDays, formatPrice, generateWishSlug } from '../lib/utils'
+import { addDays, generateWishSlug } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import { useEditorStore } from '../store/editorStore'
 import { useToastStore } from '../store/toastStore'
 import type { Template } from '../types'
-import { markPaymentFailed, startPayment, verifyPayment } from '../modules/payments/services/paymentService'
 import { linkMediaAssetsToWish } from '../modules/media/services/mediaService'
 import { createSelfNotification, enqueueScheduledJob } from '../modules/notifications/services/notificationService'
 import { getTemplate, legacyWishDataToFormData, validateWishBeforePublish } from '../template-engine'
@@ -168,41 +167,16 @@ export function Preview() {
       console.info('[Preview] share submit started', {
         templateId: editor.template.id,
         templateSlug: editor.template.slug,
-        pricePaise: editor.template.price_paise,
         userId: user?.id,
         hasSession: Boolean(user),
       })
-      const template = await resolveDatabaseTemplate()
-      if (template.price_paise === 0) {
-        const wish = await createWish('active', false)
-        console.info('[Preview] free wish created', wish)
-        toast.push('success', 'Wish published successfully!')
-        navigate(`/share/${wish.slug}`)
-      }
-      else {
-        const wish = await createWish('draft', false)
-        console.info('[Preview] draft wish created, opening payment', wish)
-        const payment = await startPayment({
-          amount: template.price_paise,
-          wishId: wish.id,
-          templateId: template.id,
-          userName: profile?.full_name ?? editor.senderName,
-          userEmail: user?.email ?? '',
-        })
-        console.info('[Preview] Razorpay payment success callback', { paymentId: payment.paymentId, orderId: payment.orderId, dbOrderId: payment.dbOrderId, wishId: wish.id })
-        await verifyPayment({ ...payment, wishId: wish.id, templateId: template.id })
-        toast.push('success', 'Wish published successfully!')
-        navigate(`/share/${wish.slug}`)
-      }
+      // MVP: all templates are free — publish immediately, no payment.
+      const wish = await createWish('active', false)
+      console.info('[Preview] free wish created', wish)
+      toast.push('success', 'Wish published successfully!')
+      navigate(`/share/${wish.slug}`)
     } catch (err) {
       console.error('[Preview] create/share failed', err)
-      if (editor.template) {
-        await markPaymentFailed({
-          wishId: undefined,
-          templateId: editor.template.id,
-          reason: err instanceof Error ? err.message : 'Payment failed',
-        })
-      }
       toast.push('error', err instanceof Error ? err.message : 'Could not create wish')
     } finally {
       setIsSubmitting(false)
@@ -235,9 +209,9 @@ export function Preview() {
           <p className="text-zinc-500 dark:text-zinc-400 text-sm">Your personalized {editor.template.name.toLowerCase()} experience is finalized and ready for {editor.recipientName}.</p>
         </div>
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          {editor.template.price_paise > 0 && <p className="font-bold text-lg hidden sm:block">{formatPrice(editor.template.price_paise)}</p>}
+          <p className="font-bold text-lg hidden sm:block">Free</p>
           <Button onClick={handleShare} size="lg" className="shadow-lg rounded-xl w-full sm:w-auto px-8" disabled={isSubmitting} loading={isSubmitting}>
-            {editor.template.price_paise === 0 ? 'Publish & Share' : `Pay ${formatPrice(editor.template.price_paise)} & Share`}
+            Publish & Share
           </Button>
         </div>
       </div>
