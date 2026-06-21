@@ -236,7 +236,7 @@ export function ExternalTemplateRenderer({
   }
 
   return (
-    <div className={className} style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div className={className} style={{ position: 'relative', minHeight: '100vh', height: '100%', width: '100%' }}>
       {status === 'loading' || !blobUrl ? (
         fallback ?? (
           <div className="grid min-h-[520px] place-items-center bg-cream font-bold text-zinc-500 dark:bg-[#10101a] dark:text-white/60">
@@ -250,7 +250,7 @@ export function ExternalTemplateRenderer({
           title="Template preview"
           sandbox="allow-scripts"
           className="h-full w-full border-0"
-          style={{ display: 'block', height: '100%', width: '100%', border: 0 }}
+          style={{ display: 'block', minHeight: '100vh', height: '100%', width: '100%', border: 0 }}
         />
       )}
     </div>

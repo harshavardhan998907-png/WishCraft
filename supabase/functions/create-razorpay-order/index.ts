@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import Razorpay from 'npm:razorpay'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
 
@@ -57,16 +56,30 @@ serve(async (req) => {
       return jsonResponse({ error: 'Payment amount does not match template price' }, { status: 400 })
     }
 
-    const razorpay = new Razorpay({
-      key_id: Deno.env.get('RAZORPAY_KEY_ID'),
-      key_secret: Deno.env.get('RAZORPAY_KEY_SECRET'),
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')!
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')!
+    const razorpayAuth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`)
+
+    const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${razorpayAuth}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount,
+        currency: 'INR',
+        receipt: wishId,
+      }),
     })
 
-    const order = await razorpay.orders.create({
-      amount,
-      currency: 'INR',
-      receipt: wishId,
-    })
+    if (!razorpayResponse.ok) {
+      const errorBody = await razorpayResponse.text()
+      console.error('[create-razorpay-order] Razorpay API error', { status: razorpayResponse.status, errorBody })
+      return jsonResponse({ error: 'Failed to create Razorpay order' }, { status: 502 })
+    }
+
+    const order = await razorpayResponse.json()
     console.info('[create-razorpay-order] Razorpay order created', { razorpayOrderId: order.id })
 
     const { data: dbOrder, error: orderError } = await supabase.from('orders').insert({

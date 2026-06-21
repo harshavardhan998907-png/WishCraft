@@ -117,7 +117,7 @@ export function Browse() {
 
                   <div className="pt-4 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between">
                     <span className="text-sm font-black text-zinc-400">
-                      {template.price_paise === 0 ? 'FREE' : `₹${(template.price_paise / 100).toFixed(2)}`}
+                      Free
                     </span>
                     <Button
                       onClick={() => navigate(`/editor/${template.slug}`)}

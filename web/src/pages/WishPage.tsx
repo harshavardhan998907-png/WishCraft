@@ -71,25 +71,27 @@ export function WishPage() {
         />
       )}
 
-      <div className="relative z-10 mx-auto grid max-w-5xl gap-4 px-4 py-12 lg:grid-cols-[360px_1fr]">
-        <Suspense fallback={<div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/50">Loading reactions...</div>}>
-          <WishReactions wishId={data.wish.id} templateId={data.template.id} />
-          <WishMessages wishId={data.wish.id} templateId={data.template.id} />
-        </Suspense>
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-2xl px-4 pb-24 text-center">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-lg shadow-premium">
-          <Sparkles size={32} className="mx-auto mb-4 text-gold-accent" />
-          <h3 className="mb-3 text-2xl font-heading font-black">Make Someone's Day</h3>
-          <p className="mb-6 text-white/70">Create a magical, unforgettable memory for someone you care about.</p>
-          <a className="inline-flex rounded-full bg-white px-8 py-3 font-bold text-ink shadow-lg" href="/">
-            Create Your Own Wish
-          </a>
+      <div className="relative z-10 bg-ink text-white">
+        <div className="mx-auto grid max-w-5xl gap-4 px-4 pt-20 pb-12 lg:grid-cols-[360px_1fr]">
+          <Suspense fallback={<div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/50">Loading reactions...</div>}>
+            <WishReactions wishId={data.wish.id} templateId={data.template.id} />
+            <WishMessages wishId={data.wish.id} templateId={data.template.id} />
+          </Suspense>
         </div>
-      </div>
 
-      {templateIdentity ? <WishReferralFooter wishId={data.wish.id} templateSlug={templateIdentity} /> : null}
+        <div className="mx-auto max-w-2xl px-4 pb-24 text-center">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-lg shadow-premium">
+            <Sparkles size={32} className="mx-auto mb-4 text-gold-accent" />
+            <h3 className="mb-3 text-2xl font-heading font-black">Make Someone's Day</h3>
+            <p className="mb-6 text-white/70">Create a magical, unforgettable memory for someone you care about.</p>
+            <a className="inline-flex rounded-full bg-white px-8 py-3 font-bold text-ink shadow-lg" href="/">
+              Create Your Own Wish
+            </a>
+          </div>
+        </div>
+
+        {templateIdentity ? <WishReferralFooter wishId={data.wish.id} templateSlug={templateIdentity} /> : null}
+      </div>
     </>
   )
 }
