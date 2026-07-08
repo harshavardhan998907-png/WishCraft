@@ -5,6 +5,7 @@ import fetch from 'node-fetch'
 import FormData from 'form-data'
 import { WishCraftError } from '../lib/errors'
 import { getAuthPaths, getProjectPaths } from '../lib/paths'
+import { WISHCRAFT_ENDPOINTS } from '../lib/api'
 
 interface AuthConfig {
   token?: string
@@ -75,7 +76,7 @@ export async function runSubmitCommand(projectRoot = process.cwd()): Promise<voi
     contentType: 'image/png',
   })
 
-  const response = await fetch('https://pgwfnlyrbkbwxklziieo.supabase.co/functions/v1/template-submit', {
+  const response = await fetch(WISHCRAFT_ENDPOINTS.submit, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
