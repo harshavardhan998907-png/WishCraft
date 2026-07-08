@@ -8,7 +8,7 @@
     "node": ">=18"
   },
   "bin": {
-    "wishcraft": "./dist/cli.js"
+    "wishcraft": "dist/cli.js"
   },
   "files": [
     "dist"
