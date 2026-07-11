@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
+import { Skeleton } from '../../../components/ui/Skeleton'
 import { useToastStore } from '../../../store/toastStore'
 import { requestAccountDeletion, requestDataExport } from '../services/governanceService'
 import { useSecurityOverview } from '../hooks/useSecurityOverview'
@@ -63,10 +64,47 @@ export function SecuritySettings() {
       </div>
 
       {error ? <Card className="mb-6 border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
-      {loading ? <Card className="mb-6 text-sm font-semibold text-zinc-500">Loading security settings...</Card> : null}
+      {loading ? (
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px] animate-in fade-in duration-500">
+          <div className="space-y-6">
+            <Card>
+              <div className="flex flex-col gap-4">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-full max-w-md" />
+                <div className="mt-4 grid gap-3">
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              </div>
+            </Card>
+            <Card>
+              <Skeleton className="h-7 w-48 mb-4" />
+              <div className="grid gap-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            </Card>
+          </div>
+          <div className="space-y-6">
+            <Card>
+              <Skeleton className="h-7 w-32 mb-2" />
+              <Skeleton className="h-4 w-full mb-4" />
+              <Skeleton className="h-10 w-full mb-4 rounded-full" />
+              <div className="grid gap-3">
+                <Skeleton className="h-16 w-full" />
+              </div>
+            </Card>
+            <Card>
+              <Skeleton className="h-7 w-40 mb-2" />
+              <Skeleton className="h-4 w-full mb-4" />
+              <Skeleton className="h-10 w-full mb-4 rounded-full" />
+            </Card>
+          </div>
+        </div>
+      ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
+      {!loading && (
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="space-y-6">
           <Card>
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div>
@@ -140,8 +178,9 @@ export function SecuritySettings() {
               ))}
             </div>
           </Card>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   )
 }

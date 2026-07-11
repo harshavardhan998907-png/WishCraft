@@ -3,6 +3,7 @@ import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Input } from '../../../components/ui/Input'
+import { Skeleton } from '../../../components/ui/Skeleton'
 import { useToastStore } from '../../../store/toastStore'
 import { createDeveloperApiKey, fetchDeveloperApiKeys, fetchDeveloperApiUsage, revokeDeveloperApiKey } from '../services/ecosystemService'
 import type { ApiScope, EcosystemApiKey, EcosystemApiUsageEvent } from '../services/ecosystemService'
@@ -65,10 +66,44 @@ export function DeveloperAPIKeys() {
       </div>
 
       {error ? <Card className="mb-6 border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
-      {loading ? <Card className="mb-6 text-sm font-semibold text-zinc-500">Loading developer access...</Card> : null}
+      {loading ? (
+        <div className="grid gap-6 lg:grid-cols-[380px_1fr] animate-in fade-in duration-500">
+          <Card>
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <div>
+                <Skeleton className="h-5 w-16 mb-2" />
+                <div className="grid gap-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              </div>
+              <Skeleton className="h-10 w-full rounded-full" />
+            </div>
+          </Card>
+          <div className="space-y-6">
+            <Card>
+              <Skeleton className="h-7 w-16 mb-4" />
+              <div className="grid gap-3">
+                <Skeleton className="h-28 w-full" />
+                <Skeleton className="h-28 w-full" />
+              </div>
+            </Card>
+            <Card>
+              <Skeleton className="h-7 w-20 mb-4" />
+              <div className="grid gap-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            </Card>
+          </div>
+        </div>
+      ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <Card>
+      {!loading && (
+        <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+          <Card>
           <form className="space-y-4" onSubmit={createKey}>
             <Input label="Key name" value={keyName} onChange={(event) => setKeyName(event.target.value)} />
             <div>
@@ -127,11 +162,12 @@ export function DeveloperAPIKeys() {
                   <p className="mt-1 text-xs text-zinc-500">{new Date(event.created_at).toLocaleString()}</p>
                 </div>
               ))}
-              {!loading && usage.length === 0 ? <p className="text-sm text-zinc-500">No integration usage yet.</p> : null}
+              {usage.length === 0 ? <p className="text-sm text-zinc-500">No integration usage yet.</p> : null}
             </div>
           </Card>
         </div>
       </div>
+      )}
     </section>
   )
 }

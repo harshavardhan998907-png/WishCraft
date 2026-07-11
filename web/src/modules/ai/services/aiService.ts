@@ -3,7 +3,6 @@ import { trackEvent } from '../../analytics/services/analyticsService'
 import { getCached } from '../../performance/services/cacheService'
 import { withCircuitBreaker, withRetry } from '../../performance/services/loggerService'
 import { logSecurityAudit, recordRateLimitEvent } from '../../security/services/governanceService'
-import { getStoredLocalePreference } from '../../i18n/services/localeService'
 import type { AIGenerationLog, AITemplateRecommendation, AIUsageMetrics, AIWishContext, AIWishResponse, CreatorMetadataInput } from '../types'
 import { getCsrfToken } from '../../../lib/csrf'
 
@@ -12,18 +11,18 @@ function sanitize(value: string) {
 }
 
 async function invokeAI<T>(action: string, context: Record<string, unknown>): Promise<T> {
-  const localePreference = getStoredLocalePreference()
+  const localePreference = { locale: 'en-US', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }
   const localizedContext = {
     ...context,
-    preferred_locale: localePreference.preferred_locale,
-    preferred_timezone: localePreference.preferred_timezone,
+    preferred_locale: localePreference.locale,
+    preferred_timezone: localePreference.timezone,
   }
 
   void recordRateLimitEvent({
     key: action,
     action: `ai:${action}`,
     blocked: false,
-    metadata: { context_keys: Object.keys(localizedContext).slice(0, 12), locale: localePreference.preferred_locale },
+    metadata: { context_keys: Object.keys(localizedContext).slice(0, 12), locale: localePreference.locale },
   }).catch((error) => console.warn('[Governance] AI rate event failed', error))
 
   try {

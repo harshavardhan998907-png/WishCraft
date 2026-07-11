@@ -1,21 +1,11 @@
 import { Link } from 'react-router-dom'
-import { motion, useScroll, useTransform } from 'framer-motion'
-import { useRef } from 'react'
+import { motion } from 'framer-motion'
 import { Footer } from '../components/layout/Footer'
 import { Button } from '../components/ui/Button'
 import { FloatingRibbons, OrbitGlow } from '../components/ui/MotionDecor'
 import { Sparkles, Image as ImageIcon, Music, Link as LinkIcon, Heart, Star, Layout, Play } from 'lucide-react'
 
 export function Home() {
-  const scrollRef = useRef(null)
-  const { scrollYProgress } = useScroll({
-    target: scrollRef,
-    offset: ["start end", "end start"]
-  })
-
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -100])
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, 100])
-
   return (
     <div className="bg-soft-cream dark:bg-deep-navy overflow-hidden">
       {/* Hero Section */}
@@ -65,7 +55,7 @@ export function Home() {
           >
             <Link to="/browse">
               <Button size="lg" className="px-8 py-4 text-lg rounded-full shadow-premium hover:shadow-[0_24px_54px_rgba(125,114,222,0.4)] transition-all">
-                Start Crafting <Sparkles size={18} className="ml-2" />
+                Create Wish <Sparkles size={18} className="ml-2" />
               </Button>
             </Link>
             <a href="#how-it-works">
@@ -85,9 +75,12 @@ export function Home() {
             <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto">See how a simple template becomes an emotional journey.</p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8 items-center" ref={scrollRef}>
+          <div className="grid lg:grid-cols-3 gap-8 items-center relative">
+            {/* Subtle connecting line for desktop */}
+            <div className="hidden lg:block absolute top-1/2 left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-brand/20 to-transparent -translate-y-1/2 pointer-events-none" />
+
             {/* Template Phase */}
-            <motion.div style={{ y: y1 }} className="relative">
+            <motion.div className="relative z-10 lg:-translate-y-16 transition-transform">
               <div className="glass-panel p-6 rounded-3xl h-[500px] flex flex-col items-center justify-center text-center space-y-6 shadow-soft group hover:shadow-premium transition-all">
                 <div className="w-24 h-24 rounded-2xl bg-zinc-100 dark:bg-white/5 flex items-center justify-center text-brand">
                   <Layout size={40} />
@@ -103,7 +96,7 @@ export function Home() {
             </motion.div>
 
             {/* Customization Phase */}
-            <motion.div className="relative z-10">
+            <motion.div className="relative z-10 transition-transform">
               <div className="glass-panel p-6 rounded-3xl h-[550px] flex flex-col items-center justify-center text-center space-y-6 shadow-premium ring-2 ring-brand/20 bg-white/80 dark:bg-ink/80 backdrop-blur-xl">
                 <div className="w-24 h-24 rounded-2xl bg-sun/20 flex items-center justify-center text-sun">
                   <Star size={40} fill="currentColor" />
@@ -124,7 +117,7 @@ export function Home() {
             </motion.div>
 
             {/* Recipient Experience Phase */}
-            <motion.div style={{ y: y2 }} className="relative">
+            <motion.div className="relative z-10 lg:translate-y-16 transition-transform">
                <div className="glass-panel p-6 rounded-3xl h-[500px] flex flex-col items-center justify-center text-center space-y-6 shadow-soft bg-gradient-to-br from-brand/5 to-plum/5 border-none">
                 <div className="w-24 h-24 rounded-2xl bg-brand flex items-center justify-center text-white shadow-lg shadow-brand/30">
                   <Sparkles size={40} />
@@ -188,15 +181,20 @@ export function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-32 px-6 text-center relative z-10 bg-celebration-light dark:bg-celebration-dark">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <h2 className="text-4xl md:text-5xl font-heading font-black text-ink dark:text-white">Ready to make someone smile?</h2>
-          <p className="text-xl text-zinc-500 dark:text-zinc-400">Join thousands who have turned standard wishes into premium experiences.</p>
-          <Link to="/browse">
-             <Button size="lg" className="px-10 py-5 text-xl rounded-full shadow-premium">
-               Create a Wish Now <Sparkles size={20} className="ml-2" />
-             </Button>
-          </Link>
+      <section className="py-24 px-6 relative z-10">
+        <div className="max-w-5xl mx-auto glass-panel p-12 md:p-20 rounded-[3rem] text-center shadow-premium relative overflow-hidden bg-white/80 dark:bg-ink/80 border-none">
+          <div className="absolute inset-0 bg-celebration-light dark:bg-celebration-dark opacity-50 -z-10" />
+          <div className="relative z-10 space-y-8">
+            <h2 className="text-4xl md:text-5xl font-heading font-black text-ink dark:text-white">Ready to make someone smile?</h2>
+            <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">Join thousands who have turned standard wishes into premium experiences.</p>
+            <div className="flex justify-center">
+              <Link to="/browse">
+                 <Button size="lg" className="px-10 py-4 text-lg rounded-full shadow-premium hover:shadow-[0_24px_54px_rgba(125,114,222,0.4)] transition-all">
+                   Browse Templates <Sparkles size={18} className="ml-2" />
+                 </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

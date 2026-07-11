@@ -656,8 +656,9 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
                         </label>
 
                         {uploadProgress && (
-                          <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-xs text-brand animate-pulse">
-                            {uploadProgress}
+                          <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-xs text-brand flex items-center gap-2">
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                            <span className="animate-pulse">{uploadProgress}</span>
                           </div>
                         )}
 

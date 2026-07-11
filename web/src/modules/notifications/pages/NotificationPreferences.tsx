@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
+import { Skeleton } from '../../../components/ui/Skeleton'
 import { useToastStore } from '../../../store/toastStore'
 import { fetchNotificationPreferences, updateNotificationPreferences } from '../services/notificationService'
 import type { NotificationPreferences as NotificationPreferencesType } from '../types'
@@ -56,9 +57,18 @@ export function NotificationPreferences() {
         </div>
 
         {error ? <p className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-200">{error}</p> : null}
-        {loading ? <p className="mt-4 text-sm font-semibold text-zinc-500">Loading preferences...</p> : null}
+        {loading ? (
+          <div className="mt-6 grid gap-3 animate-in fade-in duration-500">
+            <Skeleton className="h-[52px] w-full" />
+            <Skeleton className="h-[52px] w-full" />
+            <Skeleton className="h-[52px] w-full" />
+            <Skeleton className="h-[52px] w-full" />
+            <Skeleton className="h-[52px] w-full" />
+            <Skeleton className="h-11 w-full rounded-full mt-2" />
+          </div>
+        ) : null}
 
-        {preferences ? (
+        {!loading && preferences ? (
           <form className="mt-6 grid gap-3" onSubmit={save}>
             {preferenceLabels.map(([key, label]) => (
               <label key={key} className="flex items-center justify-between rounded-md bg-zinc-100 p-3 font-semibold dark:bg-white/10">

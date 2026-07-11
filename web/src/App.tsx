@@ -47,7 +47,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <PageWrapper>
-        <Suspense fallback={<div className="grid min-h-screen place-items-center font-bold">Loading...</div>}>
+        <Suspense fallback={<div>Loading...</div>}>
           <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
