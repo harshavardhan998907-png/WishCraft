@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { PageHeader } from '../components/layout/PageHeader'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useEditorStore } from '../store/editorStore'
 import { supabase } from '../lib/supabase'
@@ -10,8 +11,8 @@ import { LivePreview } from '../components/editor/LivePreview'
 import { DynamicFormRenderer } from '../components/editor/DynamicFormRenderer'
 import { useToastStore } from '../store/toastStore'
 import { Modal } from '../components/ui/Modal'
-import { Skeleton } from '../components/ui/Skeleton'
-import { motion } from 'framer-motion'
+import { Loader } from '../components/ui/Loader'
+import { motion, AnimatePresence } from 'framer-motion'
 import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
 import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
 import { getTemplateSchema } from '../template-engine'
@@ -304,13 +305,7 @@ export function Editor() {
   }), [store.recipientName, store.senderName, store.customMessage, store.photoUrls, store.musicUrl, store.formData])
 
   if (!selectedTemplate) {
-    return (
-      <div className="h-[calc(100vh-80px)] max-w-[1600px] mx-auto p-4 lg:p-6 grid lg:grid-cols-[380px_1fr_320px] gap-6">
-        <Skeleton className="h-full w-full rounded-2xl" />
-        <Skeleton className="h-full w-full rounded-2xl hidden lg:block" />
-        <Skeleton className="h-full w-full rounded-2xl hidden lg:block" />
-      </div>
-    )
+    return <Loader variant="fullPage" />
   }
 
   function goPreview() {
@@ -352,10 +347,13 @@ export function Editor() {
   }
 
   return (
-    <section className="h-[calc(100vh-80px)] overflow-hidden bg-soft-cream dark:bg-deep-navy">
+    <section className="h-[calc(100vh-80px)] overflow-hidden bg-soft-cream dark:bg-deep-navy flex flex-col">
+      <div className="px-4 pt-4 lg:px-6 lg:pt-6 pb-2 shrink-0 max-w-[1600px] w-full mx-auto">
+        <PageHeader title="Wish Studio" backTo="/browse" />
+      </div>
 
       {/* ── Desktop 3-Column Layout (lg+) ── */}
-      <div className="h-full max-w-[1600px] mx-auto p-4 lg:p-6 hidden lg:grid lg:grid-cols-[380px_1fr_320px] lg:gap-6">
+      <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 pb-4 lg:px-6 lg:pb-6 lg:pt-0 hidden lg:grid lg:grid-cols-[380px_1fr_320px] lg:gap-6 overflow-hidden">
 
         {/* Column 1: Content Controls */}
         <ContentEditor store={storeSnapshot} />
@@ -395,7 +393,7 @@ export function Editor() {
       </div>
 
       {/* ── Mobile Wizard (< lg) ── */}
-      <div className="h-full p-4 lg:hidden">
+      <div className="flex-1 w-full p-4 lg:hidden overflow-hidden">
         <MobileWizard
           store={storeSnapshot}
           onPreview={() => setPreviewOpen(true)}
@@ -508,8 +506,11 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
   }
 
   return (
-    <section className="min-h-[calc(100vh-80px)] bg-zinc-50 dark:bg-zinc-950">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-start gap-6 p-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(520px,1.05fr)] lg:p-6">
+    <section className="min-h-[calc(100vh-80px)] bg-zinc-50 dark:bg-zinc-950 flex flex-col">
+      <div className="px-4 pt-4 lg:px-6 lg:pt-6 pb-2 shrink-0 max-w-[1600px] w-full mx-auto">
+        <PageHeader title="" backTo="/browse" />
+      </div>
+      <div className="mx-auto w-full grid max-w-[1600px] grid-cols-1 items-start gap-6 p-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(520px,1.05fr)] lg:px-6 lg:pb-6 lg:pt-0">
         
         <div className="bg-white dark:bg-zinc-900 shadow-soft lg:rounded-2xl overflow-hidden relative border border-zinc-200/50 dark:border-white/5">
           
@@ -657,7 +658,7 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
 
                         {uploadProgress && (
                           <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-xs text-brand flex items-center gap-2">
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                            <Loader variant="spinner" size="sm" />
                             <span className="animate-pulse">{uploadProgress}</span>
                           </div>
                         )}

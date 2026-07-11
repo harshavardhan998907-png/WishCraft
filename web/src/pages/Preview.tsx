@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PageHeader } from '../components/layout/PageHeader'
 import { LivePreview } from '../components/editor/LivePreview'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
@@ -201,6 +202,11 @@ export function Preview() {
   }
   return (
     <section className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+      <PageHeader 
+        title="Experience Preview" 
+        subtitle="Review your wish before publishing and sharing."
+        backTo={`/editor/${editor.template.slug}`}
+      />
       <LivePreview template={editor.template} data={data} />
       <div className="flex flex-col sm:flex-row items-center justify-between rounded-2xl bg-white p-6 shadow-premium border border-zinc-100 dark:border-white/10 dark:bg-ink dark:text-white gap-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-2 h-full bg-brand" />

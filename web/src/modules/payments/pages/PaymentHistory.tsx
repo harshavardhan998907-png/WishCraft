@@ -1,11 +1,14 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Input } from '../../../components/ui/Input'
 import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
+import { Skeleton } from '../../../components/ui/Skeleton'
 import { useAuth } from '../../../hooks/useAuth'
+import { useDeferredLoading } from '../../../hooks/useDeferredLoading'
 import { fetchPaymentHistory, markPaymentFailed, requestRefund, startPayment, verifyPayment } from '../services/paymentService'
 import type { PaymentHistoryItem } from '../types'
 import { CreditCard } from 'lucide-react'
@@ -27,6 +30,7 @@ export function PaymentHistory() {
   const [refundReason, setRefundReason] = useState('')
   const [retryOrderId, setRetryOrderId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const deferredLoading = useDeferredLoading(loading)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { user, profile } = useAuth()
@@ -93,16 +97,23 @@ export function PaymentHistory() {
 
   return (
     <section className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <div>
-        <h1 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Payment history</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-white/70 sm:text-base">Your orders, payment status, and refund requests.</p>
-      </div>
+      <PageHeader 
+        title="Payment history" 
+        subtitle="Your orders, payment status, and refund requests."
+        backTo="/dashboard"
+      />
 
       {error ? <Card className="border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
-      {loading ? <Card className="text-sm font-semibold text-zinc-500">Loading payments...</Card> : null}
+      {deferredLoading ? (
+        <div className="grid gap-4">
+          <Skeleton variant="card" />
+          <Skeleton variant="card" />
+          <Skeleton variant="card" />
+        </div>
+      ) : null}
 
       <div className="grid gap-4">
-        {payments.map((payment) => {
+        {!deferredLoading && payments.map((payment) => {
           const refund = payment.refund_requests?.[0]
           return (
             <ResponsiveCard key={payment.id} className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -129,7 +140,7 @@ export function PaymentHistory() {
             </ResponsiveCard>
           )
         })}
-        {!loading && payments.length === 0 ? (
+        {!deferredLoading && payments.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-zinc-200 dark:border-white/10 p-12 text-center bg-white/50 dark:bg-ink/50 mt-4">
             <div className="w-16 h-16 rounded-full bg-brand/10 text-brand flex items-center justify-center mx-auto mb-4">
               <CreditCard size={24} />

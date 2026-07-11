@@ -1,7 +1,8 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '../ui/Button'
 import { useAuth } from '../../hooks/useAuth'
+import { useNavigationStore } from '../../store/navigationStore'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { ChevronDown, LogOut, Menu, Shield, Sparkles, UserCircle, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,6 +10,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 export function Navbar() {
   const { user, profile, role, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const activeSection = useNavigationStore(state => state.activeSection)
+  const scrollToSection = useNavigationStore(state => state.scrollToSection)
+  
   const [menuOpen, setMenuOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement | null>(null)
@@ -26,11 +31,31 @@ export function Navbar() {
     setMenuOpen(false)
   }
 
+  function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, path: string, sectionId: string) {
+    if (location.pathname === path) {
+      e.preventDefault()
+      scrollToSection(sectionId)
+      closeMenu()
+    } else {
+      closeMenu()
+    }
+  }
+
   function handleCreateWish() {
     if (user) {
-      navigate('/browse')
+      if (location.pathname === '/browse') {
+        const el = document.getElementById('templates-gallery')
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+          // Add a brief highlight class to the gallery to indicate focus
+          el.classList.add('ring-4', 'ring-brand/50', 'rounded-3xl', 'transition-all', 'duration-500')
+          setTimeout(() => el.classList.remove('ring-4', 'ring-brand/50'), 1000)
+        }
+      } else {
+        navigate('/browse#templates-gallery')
+      }
     } else {
-      navigate('/auth?redirect=/browse')
+      navigate('/auth?redirect=/browse#templates-gallery')
     }
   }
 
@@ -90,9 +115,31 @@ export function Navbar() {
         <div className="hidden items-center gap-6 md:flex">
           {user ? (
             <>
-              <NavLink to="/dashboard" className={navLinkClass}>Dashboard</NavLink>
-              <a href="/dashboard#wishes" className={navLinkClass}>My Wishes</a>
-              <NavLink to="/browse" className={navLinkClass}>Templates</NavLink>
+              {[
+                { id: 'overview', label: 'Dashboard', path: '/dashboard#overview', basePath: '/dashboard' },
+                { id: 'wishes', label: 'My Wishes', path: '/dashboard#wishes', basePath: '/dashboard' },
+                { id: 'templates', label: 'Templates', path: '/dashboard#templates', basePath: '/dashboard' }
+              ].map(link => {
+                const isActive = location.pathname === link.basePath && (activeSection === link.id || (!activeSection && link.id === 'overview'))
+                return (
+                  <Link 
+                    key={link.id}
+                    to={link.path} 
+                    onClick={(e) => handleNavClick(e, link.basePath, link.id)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`relative font-semibold transition-colors hover:text-ink dark:hover:text-white px-2 py-1 ${isActive ? 'text-brand dark:text-brand' : 'text-zinc-700 dark:text-white/70'}`}
+                  >
+                    {link.label}
+                    {isActive && (
+                      <motion.div
+                        layoutId="navbar-indicator"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-full"
+                        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                )
+              })}
             </>
           ) : (
             <>
@@ -201,9 +248,9 @@ export function Navbar() {
               <nav className="flex flex-col gap-6 text-center">
                 {user ? (
                   <>
-                    <NavLink onClick={closeMenu} to="/dashboard" className={mobileLinkClass}>Dashboard</NavLink>
-                    <a onClick={closeMenu} href="/dashboard#wishes" className={mobileLinkClass}>My Wishes</a>
-                    <NavLink onClick={closeMenu} to="/browse" className={mobileLinkClass}>Templates</NavLink>
+                    <Link onClick={(e) => handleNavClick(e, '/dashboard', 'overview')} to="/dashboard#overview" className={mobileLinkClass}>Dashboard</Link>
+                    <Link onClick={(e) => handleNavClick(e, '/dashboard', 'wishes')} to="/dashboard#wishes" className={mobileLinkClass}>My Wishes</Link>
+                    <Link onClick={(e) => handleNavClick(e, '/dashboard', 'templates')} to="/dashboard#templates" className={mobileLinkClass}>Templates</Link>
                   </>
                 ) : (
                   <>

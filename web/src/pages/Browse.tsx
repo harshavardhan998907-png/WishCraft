@@ -1,14 +1,31 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '../components/ui/Button'
 import { FloatingRibbons, OrbitGlow } from '../components/ui/MotionDecor'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { useTemplates } from '../hooks/useTemplates'
 import { Skeleton } from '../components/ui/Skeleton'
+import { useDeferredLoading } from '../hooks/useDeferredLoading'
 
 export function Browse() {
   const navigate = useNavigate()
   const { templates, loading, error } = useTemplates()
+  const deferredLoading = useDeferredLoading(loading)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.hash === '#templates-gallery' && !loading) {
+      const el = document.getElementById('templates-gallery')
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth' })
+          el.classList.add('ring-4', 'ring-brand/50', 'rounded-3xl', 'transition-all', 'duration-500')
+          setTimeout(() => el.classList.remove('ring-4', 'ring-brand/50'), 1500)
+        }, 100)
+      }
+    }
+  }, [location.hash, loading])
 
   return (
     <section className="min-h-screen bg-soft-cream dark:bg-deep-navy pb-20">
@@ -34,8 +51,8 @@ export function Browse() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 mt-12">
-        {loading ? (
+      <div id="templates-gallery" className="max-w-7xl mx-auto px-6 sm:px-10 mt-12 p-2">
+        {deferredLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-[420px] w-full rounded-3xl" />

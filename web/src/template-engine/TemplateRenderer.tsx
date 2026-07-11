@@ -4,6 +4,7 @@ import { registerFounderTemplates } from '../templates/founder/registerFounderTe
 import { ExternalTemplateRenderer } from './ExternalTemplateRenderer'
 import { getTemplate, getTemplateByComponentKey } from './registry'
 import { TemplateRenderErrorBoundary } from './TemplateRenderErrorBoundary'
+import { Loader } from '../components/ui/Loader'
 import type { TemplateProps } from './types'
 
 interface TemplateRendererProps {
@@ -59,7 +60,7 @@ export function TemplateRenderer({
   return (
     <TemplateRenderErrorBoundary fallback={errorFallback}>
       <div className={className}>
-        <Suspense fallback={fallback ?? <div className="grid min-h-[520px] place-items-center bg-cream font-bold text-zinc-500 dark:bg-[#10101a] dark:text-white/60">Loading template...</div>}>
+        <Suspense fallback={fallback ?? <Loader variant="fullPage" />}>
           <Component {...props} />
         </Suspense>
       </div>
