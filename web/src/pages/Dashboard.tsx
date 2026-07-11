@@ -23,7 +23,7 @@ export function Dashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <main id="wishes" className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

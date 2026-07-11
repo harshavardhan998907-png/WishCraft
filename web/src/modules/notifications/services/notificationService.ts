@@ -2,7 +2,6 @@ import { supabase } from '../../../lib/supabase'
 import { trackEvent } from '../../analytics/services/analyticsService'
 import { withRetry } from '../../performance/services/loggerService'
 import { logSecurityAudit } from '../../security/services/governanceService'
-import { getStoredLocalePreference } from '../../i18n/services/localeService'
 import type { AutomationLog, NotificationItem, NotificationMetrics, NotificationPreferences, ScheduledJob } from '../types'
 
 function clean(value: string, maxLength = 600) {
@@ -45,14 +44,12 @@ export async function createSelfNotification(input: { type: string; title: strin
   const { data: userData } = await supabase.auth.getUser()
   const userId = userData.user?.id
   if (!userId) return null
-  const localePreference = getStoredLocalePreference()
-
   const { data, error } = await withRetry(async () => supabase.rpc('create_notification', {
     target_user_id: userId,
     target_notification_type: clean(input.type, 80),
     target_title: clean(input.title, 140),
     target_message: clean(input.message, 600),
-    target_metadata: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.metadata ?? {}) },
+    target_metadata: { locale: 'en-US', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(input.metadata ?? {}) },
   }), { serviceName: 'notifications', operationName: 'create_self_notification', attempts: 2 })
 
   if (error) {
@@ -64,14 +61,13 @@ export async function createSelfNotification(input: { type: string; title: strin
 }
 
 export async function notifyUser(input: { userId: string; type: string; title: string; message: string; metadata?: Record<string, unknown> }) {
-  const localePreference = getStoredLocalePreference()
-  const { data, error } = await withRetry(async () => supabase.rpc('create_notification', {
+  const { data, error } = await withRetry(async () => supabase.rpc('create_admin_notification', {
     target_user_id: input.userId,
     target_notification_type: clean(input.type, 80),
     target_title: clean(input.title, 140),
     target_message: clean(input.message, 600),
-    target_metadata: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.metadata ?? {}) },
-  }), { serviceName: 'notifications', operationName: 'notify_user', attempts: 2 })
+    target_metadata: { locale: 'en-US', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(input.metadata ?? {}) },
+  }), { serviceName: 'notifications', operationName: 'create_admin_notification', attempts: 2 })
   if (error) {
     console.warn('[Notifications] notify user failed', error)
     return null
@@ -81,13 +77,12 @@ export async function notifyUser(input: { userId: string; type: string; title: s
 }
 
 export async function notifyWishOwner(input: { wishId: string; type: string; title: string; message: string; metadata?: Record<string, unknown> }) {
-  const localePreference = getStoredLocalePreference()
   const { data, error } = await withRetry(async () => supabase.rpc('notify_wish_owner', {
     target_wish_id: input.wishId,
     target_notification_type: clean(input.type, 80),
     target_title: clean(input.title, 140),
     target_message: clean(input.message, 600),
-    target_metadata: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.metadata ?? {}) },
+    target_metadata: { locale: 'en-US', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(input.metadata ?? {}) },
   }), { serviceName: 'notifications', operationName: 'notify_wish_owner', attempts: 2 })
   if (error) {
     console.warn('[Notifications] notify wish owner failed', error)
@@ -142,10 +137,9 @@ export async function updateNotificationPreferences(input: Partial<Omit<Notifica
 }
 
 export async function enqueueScheduledJob(input: { jobType: string; payload?: Record<string, unknown>; scheduledFor?: string }) {
-  const localePreference = getStoredLocalePreference()
   const { data, error } = await withRetry(async () => supabase.rpc('enqueue_scheduled_job', {
     target_job_type: input.jobType,
-    target_payload: { locale: localePreference.preferred_locale, timezone: localePreference.preferred_timezone, ...(input.payload ?? {}) },
+    target_payload: { locale: 'en-US', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(input.payload ?? {}) },
     target_scheduled_for: input.scheduledFor ?? new Date().toISOString(),
   }), { serviceName: 'automation', operationName: 'enqueue_scheduled_job', attempts: 2 })
   if (error) throw new Error(error.message)

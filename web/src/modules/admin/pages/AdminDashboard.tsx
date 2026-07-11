@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../../components/ui/Card'
+import { Skeleton } from '../../../components/ui/Skeleton'
 import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
 import { fetchAdminMetrics } from '../services/adminMetrics'
 import type { AdminMetrics } from '../types'
@@ -41,7 +42,28 @@ export function AdminDashboard() {
       </div>
 
       {error ? <Card className="border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
-      {loading ? <Card className="text-sm font-semibold text-zinc-500 bg-white/50 animate-pulse">Loading admin metrics...</Card> : null}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map(i => (
+            <ResponsiveCard key={i} className="p-6 min-h-[160px] bg-white/50 dark:bg-white/5 border border-white/40 dark:border-white/10 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-24 rounded-full" />
+                <Skeleton className="h-9 w-9 rounded-lg" />
+              </div>
+              <div className="mt-4 flex justify-between items-end">
+                <div>
+                  <Skeleton className="h-8 w-16 mb-2 rounded-lg" />
+                  <Skeleton className="h-3 w-32 rounded-full" />
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Skeleton className="h-3 w-20 rounded-full" />
+                  <Skeleton className="h-3 w-16 rounded-full" />
+                </div>
+              </div>
+            </ResponsiveCard>
+          ))}
+        </div>
+      ) : null}
 
       {!loading && metrics && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

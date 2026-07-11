@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Card } from '../../../components/ui/Card'
+import { Skeleton } from '../../../components/ui/Skeleton'
 import { Badge } from '../../../components/ui/Badge'
 import { useAuth } from '../../../hooks/useAuth'
 import { ensureCreatorProfile } from '../services/creatorProfile'
@@ -46,7 +47,38 @@ export function CreatorDashboard() {
   const recentTemplates = useMemo(() => templates.slice(0, 4), [templates])
   const totalUses = metrics?.total_uses ?? creatorProfile?.total_template_uses ?? 0
 
-  if (loading) return <Card className="text-sm font-semibold text-zinc-500">Loading creator dashboard...</Card>
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-9 w-48 mb-2 rounded-lg" />
+          <Skeleton className="h-5 w-96 rounded-lg" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <Skeleton className="h-4 w-24 mb-2 rounded-lg" />
+              <Skeleton className="h-9 w-16 rounded-lg" />
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <Skeleton className="h-7 w-32 mb-4 rounded-lg" />
+          <div className="mt-4 grid gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex justify-between items-center rounded-md bg-zinc-50 p-3 dark:bg-white/5">
+                <div>
+                  <Skeleton className="h-5 w-32 mb-1 rounded-lg" />
+                  <Skeleton className="h-4 w-48 rounded-lg" />
+                </div>
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    )
+  }
   if (error) return <Card className="border-rose-200 bg-rose-50 text-rose-700">{error}</Card>
   if (!creatorProfile) {
     return (

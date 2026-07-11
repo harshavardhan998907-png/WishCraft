@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Button } from '../ui/Button'
 import { useAuth } from '../../hooks/useAuth'
 import { ThemeToggle } from '../ui/ThemeToggle'
-import { NavbarLanguageSelector } from './NavbarLanguageSelector'
 import { ChevronDown, LogOut, Menu, Shield, Sparkles, UserCircle, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -70,6 +69,17 @@ export function Navbar() {
     }
   }, [menuOpen])
 
+  // Close mobile menu on desktop resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && menuOpen) {
+        setMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [menuOpen])
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/70 bg-cream/85 backdrop-blur-xl transition-colors dark:border-white/10 dark:bg-[#10101a]/90">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3" aria-label="Main Navigation">
@@ -91,15 +101,17 @@ export function Navbar() {
             </>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {!user ? <div className="hidden xl:block"><NavbarLanguageSelector /></div> : null}
+        <div className="flex items-center gap-2 md:gap-3">
+          {!user ? null : null}
           {!user ? <div className="hidden md:block"><ThemeToggle /></div> : null}
+          
           <Button
-            className="hidden md:inline-flex px-5 py-2 rounded-full shadow-soft hover:shadow-premium transition-all"
+            className="inline-flex px-4 py-2 text-sm md:text-base md:px-5 rounded-full shadow-soft hover:shadow-premium transition-all"
             onClick={handleCreateWish}
           >
-            Create Wish <Sparkles size={16} className="ml-1" />
+            Create Wish <Sparkles size={16} className="ml-1.5 hidden md:block" />
           </Button>
+
           {user ? (
             <div className="relative hidden md:block" ref={accountRef}>
               <button
@@ -160,10 +172,12 @@ export function Navbar() {
                 ) : null}
               </AnimatePresence>
             </div>
-          ) : <Button className="hidden md:inline-flex" variant="ghost" onClick={() => navigate('/auth')}>Login</Button>}
+          ) : (
+            <Link to="/auth" className={`hidden md:block pl-2 ${navLinkClass}`}>Login</Link>
+          )}
           <button
             type="button"
-            className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-ink hover:bg-black/5 dark:text-white dark:hover:bg-white/10 md:hidden"
+            className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-ink hover:bg-black/5 dark:text-white dark:hover:bg-white/10 md:hidden ml-1"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(!menuOpen)}
@@ -217,20 +231,10 @@ export function Navbar() {
                       <ThemeToggle />
                     </div>
                   </div>
-                  {!user ? <div className="flex items-center justify-between">
-                    <span className="text-sm font-black text-ink dark:text-white">Language</span>
-                    <NavbarLanguageSelector />
-                  </div> : null}
                 </div>
 
                 {/* CTAs Section */}
                 <div className="flex flex-col gap-3">
-                  <Button
-                    className="w-full justify-center rounded-full py-3.5 shadow-premium text-base font-black animate-pulse-subtle"
-                    onClick={() => { closeMenu(); handleCreateWish() }}
-                  >
-                    Create Wish <Sparkles size={18} className="ml-2" />
-                  </Button>
                   {user ? (
                     <>
                       {role === 'admin' ? (
@@ -243,7 +247,7 @@ export function Navbar() {
                       </Button>
                     </>
                   ) : (
-                    <Button variant="ghost" className="w-full justify-center py-3 text-base" onClick={() => { closeMenu(); navigate('/auth') }}>Login</Button>
+                    <Button variant="ghost" className="w-full justify-center py-3 text-base font-bold text-ink dark:text-white border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10" onClick={() => { closeMenu(); navigate('/auth') }}>Login to Account</Button>
                   )}
                 </div>
               </div>
