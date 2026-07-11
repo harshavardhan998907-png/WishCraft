@@ -9,6 +9,10 @@ type TemplateSubmissionConfig = {
   slug: string
   category: string
   price: number
+  // Creator-defined form fields + theme from config.json. Persisted onto the
+  // published template's manifest_json so the editor can render custom fields.
+  fields?: unknown[]
+  theme?: Record<string, unknown>
 }
 
 type TemplateSubmissionRow = {
@@ -191,6 +195,12 @@ serve(async (req) => {
         is_active: true,
         is_external: true,
         submission_id: submissionId,
+        // Persist the creator-defined fields/theme so the editor renders the
+        // custom schema instead of falling back to standard occasion fields.
+        manifest_json: {
+          schema: Array.isArray(config.fields) ? config.fields : [],
+          theme: config.theme ?? {},
+        },
       })
       .select('id')
       .single()
