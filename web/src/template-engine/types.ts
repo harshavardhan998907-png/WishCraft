@@ -110,7 +110,7 @@ export function wishDataToTemplateProps(data: WishData, previewMode = false): Te
     photos: data.photoUrls,
     musicUrl: data.musicUrl ?? undefined,
     previewMode,
-    customData: data.customData,
+    customData: data.customData ?? {},
   }
 }
 

@@ -22,36 +22,223 @@ function templateIndexSource(templateName: string): string {
   const functionName = /^[A-Za-z_$]/.test(sanitizedName) ? sanitizedName : `WishCraft${sanitizedName}`
   const safeFunctionName = functionName.length > 0 ? functionName : 'WishCraftTemplate'
 
-  return `import type { CSSProperties } from 'react'
+  return `/*
+ * WishCraft Template
+ *
+ * RULES:
+ * 1. Export a default React component
+ * 2. Accept exactly these props (no additions, no removals)
+ * 3. Use only inline styles — no external CSS imports
+ * 4. No routing, no fetch calls, no localStorage
+ * 5. React is provided globally — do not import it
+ *
+ * Your template renders inside a sandboxed iframe. External stylesheets,
+ * network requests, and browser navigation are NOT available — anything
+ * that relies on them will silently break. Keep everything self-contained.
+ */
 
+// ❌ DO NOT CHANGE: this type-only import is erased at build time and never
+// pulls React in at runtime. It just gives you autocomplete for CSSProperties.
+import type { CSSProperties } from 'react'
+
+// ❌ DO NOT CHANGE: Props must stay exactly as defined.
+// These are the ONLY values WishCraft passes to your template. Adding or
+// renaming a prop here means it will always be undefined when rendered.
+//
+// customData holds every field the user filled in the editor, keyed by the
+// field "id" from config.json. Define your own fields there to collect extra
+// input, then read them from customData below. For example, to add a nickname
+// and a start date, put this in config.json's "fields" array:
+//
+//   {
+//     "id": "friendNickname",
+//     "type": "text",
+//     "label": "Friend's Nickname",
+//     "required": false
+//   },
+//   {
+//     "id": "startDate",
+//     "type": "date",
+//     "label": "The Day It Started",
+//     "required": false
+//   }
+//
+// Supported field types: text, textarea, gallery, music, date, url, toggle,
+// repeater, section. Values arrive as customData.friendNickname etc.
 export type TemplateProps = {
   recipientName: string
   senderName: string
   message: string
   photos: string[]
   musicUrl?: string
+  customData?: Record<string, unknown>
   previewMode?: boolean
 }
 
-const shellStyles: CSSProperties = {
+// ✅ CUSTOMIZE: Change colors, fonts, layout below.
+// This palette is the quickest thing to tweak — swap the hex values to
+// re-theme the whole page, or replace the styles entirely with your own.
+const palette = {
+  bgStart: '#1a1035',
+  bgMid: '#311b5e',
+  bgEnd: '#0b2a4a',
+  accent: '#ffb347',
+  accentSoft: 'rgba(255, 179, 71, 0.16)',
+  text: '#f7f5ff',
+  textMuted: 'rgba(247, 245, 255, 0.72)',
+  cardBg: 'rgba(255, 255, 255, 0.07)',
+  cardBorder: 'rgba(255, 255, 255, 0.16)',
+}
+
+// ✅ CUSTOMIZE: animation keyframes live in this single <style> string.
+// A single inline <style> tag is allowed; external CSS files are not.
+const keyframes = \`
+  @keyframes wcFadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes wcGlow {
+    0%, 100% { text-shadow: 0 0 28px rgba(255, 179, 71, 0.35); }
+    50% { text-shadow: 0 0 48px rgba(255, 179, 71, 0.6); }
+  }
+\`
+
+// ✅ CUSTOMIZE: every style object below is yours to redesign.
+const shellStyle: CSSProperties = {
   minHeight: '100vh',
-  padding: '48px 24px',
-  color: '#F8F7F4',
+  width: '100%',
+  boxSizing: 'border-box',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '40px',
+  padding: '64px 24px',
+  color: palette.text,
+  textAlign: 'center',
   background:
-    'radial-gradient(circle at top, rgba(255, 200, 79, 0.28), transparent 32%), linear-gradient(135deg, #15141f 0%, #241c3f 48%, #0f2a2d 100%)',
+    'radial-gradient(circle at 20% 18%, rgba(255, 179, 71, 0.22), transparent 42%), ' +
+    'radial-gradient(circle at 82% 82%, rgba(99, 102, 241, 0.28), transparent 46%), ' +
+    'linear-gradient(135deg, ' + palette.bgStart + ' 0%, ' + palette.bgMid + ' 52%, ' + palette.bgEnd + ' 100%)',
   fontFamily:
     '"Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
 }
 
-const cardStyles: CSSProperties = {
-  maxWidth: '960px',
-  margin: '0 auto',
-  borderRadius: '32px',
-  padding: '32px',
-  background: 'rgba(255, 255, 255, 0.08)',
-  border: '1px solid rgba(255, 255, 255, 0.14)',
-  boxShadow: '0 24px 80px rgba(0, 0, 0, 0.35)',
-  backdropFilter: 'blur(24px)',
+const eyebrowStyle: CSSProperties = {
+  margin: 0,
+  letterSpacing: '0.32em',
+  textTransform: 'uppercase',
+  color: palette.accent,
+  fontSize: '13px',
+  fontWeight: 700,
+  animation: 'wcFadeUp 0.6s ease both',
+}
+
+const heroStyle: CSSProperties = {
+  margin: '8px 0 0',
+  fontSize: 'clamp(48px, 11vw, 120px)',
+  lineHeight: 0.92,
+  fontWeight: 800,
+  letterSpacing: '-0.02em',
+  animation: 'wcFadeUp 0.7s ease both, wcGlow 4s ease-in-out infinite',
+}
+
+const cardStyle: CSSProperties = {
+  maxWidth: '640px',
+  width: '100%',
+  borderRadius: '28px',
+  padding: '36px 32px',
+  background: palette.cardBg,
+  border: '1px solid ' + palette.cardBorder,
+  boxShadow: '0 28px 90px rgba(0, 0, 0, 0.4)',
+  backdropFilter: 'blur(22px)',
+  animation: 'wcFadeUp 0.8s ease both',
+}
+
+const messageStyle: CSSProperties = {
+  margin: 0,
+  fontSize: 'clamp(18px, 2.4vw, 24px)',
+  lineHeight: 1.7,
+  fontWeight: 400,
+  color: palette.text,
+}
+
+const photoGridStyle: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+  gap: '16px',
+  maxWidth: '720px',
+  width: '100%',
+  animation: 'wcFadeUp 0.9s ease both',
+}
+
+const photoFrameStyle: CSSProperties = {
+  position: 'relative',
+  aspectRatio: '1 / 1',
+  borderRadius: '20px',
+  overflow: 'hidden',
+  border: '1px solid ' + palette.cardBorder,
+  boxShadow: '0 16px 50px rgba(0, 0, 0, 0.35)',
+}
+
+const photoStyle: CSSProperties = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+}
+
+const emptyPhotoStyle: CSSProperties = {
+  maxWidth: '640px',
+  width: '100%',
+  padding: '28px',
+  borderRadius: '20px',
+  border: '1px dashed ' + palette.cardBorder,
+  color: palette.textMuted,
+  fontSize: '15px',
+}
+
+const senderStyle: CSSProperties = {
+  margin: 0,
+  fontSize: '15px',
+  color: palette.textMuted,
+  animation: 'wcFadeUp 1s ease both',
+}
+
+const senderNameStyle: CSSProperties = {
+  margin: '4px 0 0',
+  fontSize: '22px',
+  fontWeight: 600,
+  color: palette.accent,
+}
+
+const musicPillStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
+  padding: '8px 16px',
+  borderRadius: '999px',
+  background: palette.accentSoft,
+  border: '1px solid ' + palette.cardBorder,
+  fontSize: '13px',
+  color: palette.text,
+}
+
+const previewBadgeStyle: CSSProperties = {
+  position: 'fixed',
+  top: '16px',
+  right: '16px',
+  padding: '8px 14px',
+  borderRadius: '999px',
+  background: 'rgba(0, 0, 0, 0.45)',
+  border: '1px solid ' + palette.cardBorder,
+  fontSize: '12px',
+  fontWeight: 700,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: palette.accent,
+  backdropFilter: 'blur(8px)',
+  zIndex: 10,
 }
 
 export default function ${safeFunctionName}({
@@ -59,37 +246,76 @@ export default function ${safeFunctionName}({
   senderName,
   message,
   photos,
+  musicUrl,
+  customData,
   previewMode,
 }: TemplateProps) {
-  const heading = recipientName || 'Someone special'
-  const subheading = senderName ? \`With love, \${senderName}\` : 'A WishCraft template'
+  // ❌ DO NOT CHANGE: render straight from the props above.
+  // Don't fetch data, read localStorage, or navigate — none of it works here.
+  const hasPhotos = photos.length > 0
+
+  // ✅ CUSTOMIZE: read any custom fields you defined in config.json's "fields".
+  // Each value is keyed by its field "id". They're typed as unknown, so cast
+  // to the shape you expect and always provide a fallback for empty input.
+  const friendNickname = (customData?.friendNickname as string) || ''
+  const startDate = (customData?.startDate as string) || ''
 
   return (
-    <main style={shellStyles}>
-      <section style={cardStyles}>
-        <p style={{ margin: 0, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#FFC84F', fontSize: 12, fontWeight: 800 }}>
-          WishCraft template
+    <main style={shellStyle}>
+      {/* ✅ CUSTOMIZE: animations are defined in this one inline style tag. */}
+      <style>{keyframes}</style>
+
+      {/* previewMode: WishCraft sets this true in the editor preview only. */}
+      {previewMode ? <div style={previewBadgeStyle}>Preview Mode</div> : null}
+
+      <div>
+        <p style={eyebrowStyle}>A wish for you</p>
+        {/* recipientName — the hero of the page. */}
+        <h1 style={heroStyle}>{recipientName || 'Someone Special'}</h1>
+      </div>
+
+      {/* customData example — only rendered when the user filled these fields.
+          Define "friendNickname" and "startDate" in config.json to enable them. */}
+      {friendNickname ? <p style={eyebrowStyle}>aka {friendNickname}</p> : null}
+
+      {/* message — shown inside a glassy card. */}
+      <div style={cardStyle}>
+        <p style={messageStyle}>
+          {message || 'Your heartfelt message will appear right here.'}
         </p>
-        <h1 style={{ margin: '16px 0 12px', fontSize: 'clamp(40px, 8vw, 84px)', lineHeight: 0.95 }}>
-          {heading}
-        </h1>
-        <p style={{ margin: 0, fontSize: 18, lineHeight: 1.7, maxWidth: 620, color: 'rgba(248, 247, 244, 0.82)' }}>
-          {message || 'Start here by telling a story with images, motion, and a little magic.'}
-        </p>
-        <div style={{ marginTop: 28, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(255, 122, 94, 0.16)', border: '1px solid rgba(255, 122, 94, 0.32)' }}>
-            {subheading}
-          </span>
-          <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(73, 199, 164, 0.16)', border: '1px solid rgba(73, 199, 164, 0.32)' }}>
-            {photos.length} photo{photos.length === 1 ? '' : 's'}
-          </span>
-          {previewMode ? (
-            <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
-              Preview mode
-            </span>
-          ) : null}
+        {startDate ? (
+          <p style={senderStyle}>Together since {startDate}</p>
+        ) : null}
+      </div>
+
+      {/* photos — mapped into a responsive grid, with a graceful empty state. */}
+      {hasPhotos ? (
+        <div style={photoGridStyle}>
+          {photos.map((photo, index) => (
+            <div key={index} style={photoFrameStyle}>
+              <img
+                src={photo}
+                alt={'Memory ' + (index + 1)}
+                style={photoStyle}
+                loading="lazy"
+              />
+            </div>
+          ))}
         </div>
-      </section>
+      ) : (
+        <div style={emptyPhotoStyle}>
+          Add photos in the editor to fill this space with memories.
+        </div>
+      )}
+
+      {/* musicUrl is optional — show a subtle indicator when one is attached. */}
+      {musicUrl ? <span style={musicPillStyle}>🎵 With a song attached</span> : null}
+
+      {/* senderName — attribution at the bottom. */}
+      <div>
+        <p style={senderStyle}>With love,</p>
+        <p style={senderNameStyle}>{senderName || 'Someone who cares'}</p>
+      </div>
     </main>
   )
 }

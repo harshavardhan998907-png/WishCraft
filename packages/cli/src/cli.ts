@@ -23,13 +23,15 @@ const initCommand = new Command('init')
   .option('--category <category>', 'Template category')
   .option('--price <price>', 'Price in paise')
   .option('--sdk-version <version>', 'SDK version')
-  .action(async (options: { name?: string; slug?: string; category?: string; price?: string; sdkVersion?: string }) => {
+  .option('-y, --yes', 'Skip prompts and scaffold from flags + defaults (non-interactive)')
+  .action(async (options: { name?: string; slug?: string; category?: string; price?: string; sdkVersion?: string; yes?: boolean }) => {
     await runInitCommand({
       name: options.name,
       slug: options.slug,
       category: options.category,
       price: options.price,
       sdkVersion: options.sdkVersion,
+      yes: options.yes,
     })
   })
 

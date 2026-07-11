@@ -4,6 +4,7 @@ import inquirer from 'inquirer'
 import chalk from 'chalk'
 import { WishCraftError } from '../lib/errors'
 import { getAuthPaths } from '../lib/paths'
+import { WISHCRAFT_ENDPOINTS } from '../lib/api'
 
 interface LoginResponse {
   token?: string
@@ -45,7 +46,7 @@ export async function runLoginCommand(): Promise<void> {
     },
   ])
 
-  const response = await fetch('https://pgwfnlyrbkbwxklziieo.supabase.co/functions/v1/creator-login', {
+  const response = await fetch(WISHCRAFT_ENDPOINTS.login, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
