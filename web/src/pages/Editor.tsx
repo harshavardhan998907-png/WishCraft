@@ -11,23 +11,46 @@ import { DynamicFormRenderer } from '../components/editor/DynamicFormRenderer'
 import { useToastStore } from '../store/toastStore'
 import { Modal } from '../components/ui/Modal'
 import { Skeleton } from '../components/ui/Skeleton'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
 import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
 import { getTemplateSchema } from '../template-engine'
-import { Image as ImageIcon, Music, MessageSquare, UserCircle, Palette, Sparkles, Monitor, Smartphone, ChevronRight, ChevronLeft, Trash2, Plus, CheckCircle } from 'lucide-react'
+import { Image as ImageIcon, Music, UserCircle, Palette, Sparkles, Monitor, Smartphone, Trash2, Plus, CheckCircle } from 'lucide-react'
 import type { Template } from '../types'
 import { uploadOptimizedImage } from '../modules/media/services/mediaService'
 
 const musicTracks = ['Gentle Piano', 'Warm Celebration', 'Soft Romance', 'Festival Lights', 'Bright Future']
 
-const WIZARD_STEPS = [
-  { id: 'details', label: 'Details', icon: UserCircle },
-  { id: 'message', label: 'Message', icon: MessageSquare },
-  { id: 'media', label: 'Media', icon: ImageIcon },
-]
-
 // ─── Sub-components extracted outside to avoid recreation on every render ────
+
+// Applies a schema-driven field change to the editor store, keeping the legacy
+// named fields (recipientName/customMessage/photoUrls/musicUrl) in sync with the
+// generic formData map. Shared by the desktop (ContentEditor) and mobile
+// (MobileWizard) editors so both render the exact same creator-defined schema.
+function applySchemaChange(store: StoreSnapshot, fieldId: string, value: unknown) {
+  store.setFieldValue(fieldId, value)
+  if (fieldId === 'recipient_name') store.setRecipientName(String(value ?? ''))
+  if (fieldId === 'sender_name') store.setSenderName(String(value ?? ''))
+  if (fieldId === 'message') store.setCustomMessage(String(value ?? ''))
+  if (fieldId === 'photos' && Array.isArray(value)) {
+    store.photoUrls.forEach(store.removePhoto)
+    value.filter((item): item is string => typeof item === 'string').forEach(store.addPhoto)
+  }
+  if (fieldId === 'music') store.setMusicUrl(typeof value === 'string' ? value : null)
+}
+
+// Builds the `values` map DynamicFormRenderer expects: legacy named fields merged
+// with the generic formData (custom creator fields live in formData).
+function schemaValues(store: StoreSnapshot): Record<string, unknown> {
+  return {
+    recipient_name: store.recipientName,
+    sender_name: store.senderName,
+    message: store.customMessage,
+    photos: store.photoUrls,
+    music: store.musicUrl,
+    ...store.formData,
+  }
+}
 
 type StoreSnapshot = {
   recipientName: string
@@ -54,17 +77,6 @@ function ContentEditor({ store }: { store: StoreSnapshot }) {
   const schema = selectedTemplate ? getTemplateSchema(selectedTemplate) : []
 
   const isDetailsComplete = store.recipientName.trim().length > 0 && store.senderName.trim().length > 0
-  const handleSchemaChange = (fieldId: string, value: unknown) => {
-    store.setFieldValue(fieldId, value)
-    if (fieldId === 'recipient_name') store.setRecipientName(String(value ?? ''))
-    if (fieldId === 'sender_name') store.setSenderName(String(value ?? ''))
-    if (fieldId === 'message') store.setCustomMessage(String(value ?? ''))
-    if (fieldId === 'photos' && Array.isArray(value)) {
-      store.photoUrls.forEach(store.removePhoto)
-      value.filter((item): item is string => typeof item === 'string').forEach(store.addPhoto)
-    }
-    if (fieldId === 'music') store.setMusicUrl(typeof value === 'string' ? value : null)
-  }
 
   return (
     <div className="space-y-8 p-6 glass-panel rounded-2xl h-full overflow-y-auto">
@@ -103,17 +115,10 @@ function ContentEditor({ store }: { store: StoreSnapshot }) {
         </div>
         <DynamicFormRenderer
           schema={schema}
-          values={{
-            recipient_name: store.recipientName,
-            sender_name: store.senderName,
-            message: store.customMessage,
-            photos: store.photoUrls,
-            music: store.musicUrl,
-            ...store.formData,
-          }}
+          values={schemaValues(store)}
           templateId={selectedTemplate?.id ?? null}
           allowMusic={selectedTemplate?.tier !== 'free'}
-          onChange={handleSchemaChange}
+          onChange={(fieldId, value) => applySchemaChange(store, fieldId, value)}
         />
       </div>
       <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
@@ -179,102 +184,44 @@ function CustomizationStudio({ onPublish }: { onPublish: () => void }) {
 
 function MobileWizard({
   store,
-  mobileStepIndex,
-  onNext,
-  onBack,
+  onPreview,
 }: {
   store: StoreSnapshot
-  mobileStepIndex: number
-  onNext: () => void
-  onBack: () => void
+  onPreview: () => void
 }) {
   const selectedTemplate = store.template
+  // Schema-driven so creator-defined fields (external templates) render on mobile
+  // too — the previous hardcoded 3-step form only knew the standard 5 fields.
+  const schema = selectedTemplate ? getTemplateSchema(selectedTemplate) : []
   return (
     <div className="flex flex-col h-full glass-panel rounded-2xl overflow-hidden relative">
       {/* Header */}
       <div className="p-4 border-b border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-ink/50 backdrop-blur-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold font-heading">Wish Studio</h2>
-          <span className="text-sm font-semibold text-brand">Step {mobileStepIndex + 1} of {WIZARD_STEPS.length}</span>
-        </div>
-        <div className="flex gap-2">
-          {WIZARD_STEPS.map((step, idx) => (
-            <div key={step.id} className={`h-1.5 flex-1 rounded-full transition-colors ${idx <= mobileStepIndex ? 'bg-brand' : 'bg-zinc-200 dark:bg-white/10'}`} />
-          ))}
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-brand/10 text-brand rounded-xl"><Sparkles size={20} className="animate-pulse" /></div>
+          <div>
+            <h2 className="text-lg font-bold font-heading">Wish Studio</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Customize your wish — preview updates live.</p>
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-5 flex-1 overflow-y-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={mobileStepIndex}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-5"
-          >
-            {mobileStepIndex === 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-brand/10 text-brand rounded-xl"><UserCircle size={24} /></div>
-                  <h3 className="text-xl font-bold">Who is this for?</h3>
-                </div>
-                <Input label="Recipient name" value={store.recipientName} onChange={(e) => store.setRecipientName(e.target.value)} required />
-                <Input label="Sender name (You)" value={store.senderName} onChange={(e) => store.setSenderName(e.target.value)} required />
-              </div>
-            )}
-            {mobileStepIndex === 1 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-brand/10 text-brand rounded-xl"><MessageSquare size={24} /></div>
-                  <h3 className="text-xl font-bold">Write a heartfelt message</h3>
-                </div>
-                <Textarea label="Custom message" maxLength={300} value={store.customMessage} onChange={(e) => store.setCustomMessage(e.target.value)} />
-                <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
-              </div>
-            )}
-            {mobileStepIndex === 2 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-brand/10 text-brand rounded-xl"><ImageIcon size={24} /></div>
-                  <h3 className="text-xl font-bold">Add memories</h3>
-                </div>
-                <ImageUpload urls={store.photoUrls} onUploaded={store.addPhoto} onRemove={store.removePhoto} templateId={selectedTemplate?.id ?? null} />
-                {selectedTemplate && selectedTemplate.tier !== 'free' && (
-                  <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-white/10">
-                    <label className="block space-y-1.5">
-                      <span className="text-sm font-semibold flex items-center gap-2"><Music size={16} /> Background Music</span>
-                      <select
-                        className="w-full rounded-md border p-3 bg-white dark:bg-ink focus-ring"
-                        value={store.useCustomMusic ? '' : store.musicUrl ?? ''}
-                        onChange={(e) => { store.setUseCustomMusic(false); store.setMusicUrl(e.target.value || null) }}
-                      >
-                        <option value="">No music</option>
-                        {musicTracks.map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                    </label>
-                  </div>
-                )}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+      <div className="p-5 flex-1 overflow-y-auto space-y-6">
+        <DynamicFormRenderer
+          schema={schema}
+          values={schemaValues(store)}
+          templateId={selectedTemplate?.id ?? null}
+          allowMusic={selectedTemplate?.tier !== 'free'}
+          onChange={(fieldId, value) => applySchemaChange(store, fieldId, value)}
+        />
+        <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
       </div>
 
-      {/* Footer Navigation */}
-      <div className="p-4 border-t border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-ink/50 backdrop-blur-md flex gap-3">
-        {mobileStepIndex > 0 && (
-          <Button variant="secondary" onClick={onBack} className="flex-1 py-3">
-            <ChevronLeft size={20} className="mr-1" /> Back
-          </Button>
-        )}
-        <Button onClick={onNext} className="flex-[2] py-3 shadow-premium">
-          {mobileStepIndex === WIZARD_STEPS.length - 1 ? (
-            <>Preview <Sparkles size={18} className="ml-2" /></>
-          ) : (
-            <>Next <ChevronRight size={20} className="ml-1" /></>
-          )}
+      {/* Footer */}
+      <div className="p-4 border-t border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-ink/50 backdrop-blur-md">
+        <Button onClick={onPreview} className="w-full py-3 shadow-premium">
+          Preview <Sparkles size={18} className="ml-2" />
         </Button>
       </div>
     </div>
@@ -327,7 +274,6 @@ export function Editor() {
   const toast = useToastStore()
   const store = useEditorStore()
 
-  const [mobileStepIndex, setMobileStepIndex] = useState(0)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
 
@@ -373,18 +319,6 @@ export function Editor() {
       return
     }
     navigate('/preview')
-  }
-
-  const handleNext = () => {
-    if (mobileStepIndex < WIZARD_STEPS.length - 1) {
-      setMobileStepIndex(mobileStepIndex + 1)
-    } else {
-      setPreviewOpen(true)
-    }
-  }
-
-  const handleBack = () => {
-    if (mobileStepIndex > 0) setMobileStepIndex(mobileStepIndex - 1)
   }
 
   // Flatten store into a plain snapshot so sub-components receive stable props
@@ -464,9 +398,7 @@ export function Editor() {
       <div className="h-full p-4 lg:hidden">
         <MobileWizard
           store={storeSnapshot}
-          mobileStepIndex={mobileStepIndex}
-          onNext={handleNext}
-          onBack={handleBack}
+          onPreview={() => setPreviewOpen(true)}
         />
       </div>
 

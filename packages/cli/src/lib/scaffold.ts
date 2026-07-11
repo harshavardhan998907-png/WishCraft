@@ -44,12 +44,34 @@ import type { CSSProperties } from 'react'
 // ❌ DO NOT CHANGE: Props must stay exactly as defined.
 // These are the ONLY values WishCraft passes to your template. Adding or
 // renaming a prop here means it will always be undefined when rendered.
+//
+// customData holds every field the user filled in the editor, keyed by the
+// field "id" from config.json. Define your own fields there to collect extra
+// input, then read them from customData below. For example, to add a nickname
+// and a start date, put this in config.json's "fields" array:
+//
+//   {
+//     "id": "friendNickname",
+//     "type": "text",
+//     "label": "Friend's Nickname",
+//     "required": false
+//   },
+//   {
+//     "id": "startDate",
+//     "type": "date",
+//     "label": "The Day It Started",
+//     "required": false
+//   }
+//
+// Supported field types: text, textarea, gallery, music, date, url, toggle,
+// repeater, section. Values arrive as customData.friendNickname etc.
 export type TemplateProps = {
   recipientName: string
   senderName: string
   message: string
   photos: string[]
   musicUrl?: string
+  customData?: Record<string, unknown>
   previewMode?: boolean
 }
 
@@ -225,11 +247,18 @@ export default function ${safeFunctionName}({
   message,
   photos,
   musicUrl,
+  customData,
   previewMode,
 }: TemplateProps) {
   // ❌ DO NOT CHANGE: render straight from the props above.
   // Don't fetch data, read localStorage, or navigate — none of it works here.
   const hasPhotos = photos.length > 0
+
+  // ✅ CUSTOMIZE: read any custom fields you defined in config.json's "fields".
+  // Each value is keyed by its field "id". They're typed as unknown, so cast
+  // to the shape you expect and always provide a fallback for empty input.
+  const friendNickname = (customData?.friendNickname as string) || ''
+  const startDate = (customData?.startDate as string) || ''
 
   return (
     <main style={shellStyle}>
@@ -245,11 +274,18 @@ export default function ${safeFunctionName}({
         <h1 style={heroStyle}>{recipientName || 'Someone Special'}</h1>
       </div>
 
+      {/* customData example — only rendered when the user filled these fields.
+          Define "friendNickname" and "startDate" in config.json to enable them. */}
+      {friendNickname ? <p style={eyebrowStyle}>aka {friendNickname}</p> : null}
+
       {/* message — shown inside a glassy card. */}
       <div style={cardStyle}>
         <p style={messageStyle}>
           {message || 'Your heartfelt message will appear right here.'}
         </p>
+        {startDate ? (
+          <p style={senderStyle}>Together since {startDate}</p>
+        ) : null}
       </div>
 
       {/* photos — mapped into a responsive grid, with a graceful empty state. */}
