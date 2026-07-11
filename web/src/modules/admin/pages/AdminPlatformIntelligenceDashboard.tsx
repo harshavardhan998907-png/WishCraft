@@ -4,8 +4,6 @@ import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { ResponsiveCard } from '../../../components/responsive/ResponsiveCard'
 import { ResponsiveGrid } from '../../../components/responsive/ResponsiveGrid'
-import { useLocalization } from '../../i18n/hooks/useLocalization'
-import { formatLocalizedDate } from '../../i18n/utils/format'
 import { fetchGlobalGrowthMetrics, fetchPlatformIntelligenceMetrics, generatePlatformGrowthSnapshot } from '../services/platformIntelligenceService'
 import type { GlobalGrowthMetrics, PlatformIntelligenceMetric } from '../services/platformIntelligenceService'
 
@@ -14,7 +12,6 @@ function formatCurrency(value: number) {
 }
 
 export function AdminPlatformIntelligenceDashboard() {
-  const { locale, timezone } = useLocalization()
   const [metrics, setMetrics] = useState<GlobalGrowthMetrics | null>(null)
   const [snapshots, setSnapshots] = useState<PlatformIntelligenceMetric[]>([])
   const [loading, setLoading] = useState(true)
@@ -122,7 +119,7 @@ export function AdminPlatformIntelligenceDashboard() {
                   <td className="py-3 font-bold">{snapshot.metric_name}</td>
                   <td><Badge tone="gray">{snapshot.metric_category}</Badge></td>
                   <td>{snapshot.metric_value}</td>
-                  <td>{formatLocalizedDate(snapshot.generated_at, { preferred_locale: locale, preferred_timezone: timezone })}</td>
+                  <td>{new Date(snapshot.generated_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
