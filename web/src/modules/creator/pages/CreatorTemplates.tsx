@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { Badge, OccasionBadge, TierBadge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
@@ -174,11 +175,12 @@ export function CreatorTemplates() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <h2 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Templates</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-white/70">Create drafts, edit metadata, upload thumbnails, submit for review, and archive creator templates.</p>
-        </div>
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end mb-6">
+        <PageHeader 
+          title="Templates" 
+          subtitle="Create drafts, edit metadata, upload thumbnails, submit for review, and archive creator templates."
+          backTo="/creator"
+        />
         <div className="grid grid-cols-4 gap-2 text-center text-sm">
           <Card className="p-3"><p className="font-black">{counts.draft}</p><p className="text-zinc-500">Draft</p></Card>
           <Card className="p-3"><p className="font-black">{counts.review}</p><p className="text-zinc-500">Review</p></Card>

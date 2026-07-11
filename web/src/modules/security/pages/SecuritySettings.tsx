@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
@@ -6,6 +7,7 @@ import { Skeleton } from '../../../components/ui/Skeleton'
 import { useToastStore } from '../../../store/toastStore'
 import { requestAccountDeletion, requestDataExport } from '../services/governanceService'
 import { useSecurityOverview } from '../hooks/useSecurityOverview'
+import { useDeferredLoading } from '../../../hooks/useDeferredLoading'
 
 function dateLabel(value: string | null | undefined) {
   return value ? new Date(value).toLocaleString() : 'Pending'
@@ -13,6 +15,7 @@ function dateLabel(value: string | null | undefined) {
 
 export function SecuritySettings() {
   const { sessions, consents, exports, deletions, loading, error, setExports, setDeletions } = useSecurityOverview()
+  const deferredLoading = useDeferredLoading(loading)
   const [requestingExport, setRequestingExport] = useState(false)
   const [requestingDeletion, setRequestingDeletion] = useState(false)
   const toast = useToastStore()
@@ -58,13 +61,14 @@ export function SecuritySettings() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Security settings</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-white/70 sm:text-base">Manage session visibility, privacy requests, account deletion recovery, and consent history.</p>
-      </div>
+      <PageHeader 
+        title="Security settings" 
+        subtitle="Manage session visibility, privacy requests, account deletion recovery, and consent history."
+        backTo="/dashboard"
+      />
 
       {error ? <Card className="mb-6 border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
-      {loading ? (
+      {deferredLoading ? (
         <div className="grid gap-6 lg:grid-cols-[1fr_360px] animate-in fade-in duration-500">
           <div className="space-y-6">
             <Card>
@@ -102,7 +106,7 @@ export function SecuritySettings() {
         </div>
       ) : null}
 
-      {!loading && (
+      {!deferredLoading && (
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="space-y-6">
           <Card>
@@ -123,7 +127,7 @@ export function SecuritySettings() {
                   <p className="mt-2 text-xs font-semibold text-zinc-500">Last active {dateLabel(session.lastActiveAt)}</p>
                 </div>
               ))}
-              {!loading && sessions.length === 0 ? <p className="text-sm text-zinc-500">No active session found.</p> : null}
+              {!deferredLoading && sessions.length === 0 ? <p className="text-sm text-zinc-500">No active session found.</p> : null}
             </div>
           </Card>
 
@@ -139,7 +143,7 @@ export function SecuritySettings() {
                   <Badge tone={record.granted ? 'green' : 'red'}>{record.granted ? 'Granted' : 'Revoked'}</Badge>
                 </div>
               ))}
-              {!loading && consents.length === 0 ? <p className="text-sm text-zinc-500">No consent records yet.</p> : null}
+              {!deferredLoading && consents.length === 0 ? <p className="text-sm text-zinc-500">No consent records yet.</p> : null}
             </div>
           </Card>
         </div>

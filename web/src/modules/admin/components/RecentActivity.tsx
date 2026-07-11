@@ -1,4 +1,4 @@
-import { Spinner } from '../../../../components/ui/Spinner'
+import { Loader } from '../../../components/ui/Loader'
 import { useEffect, useState } from 'react'
 import { Card } from '../../../components/ui/Card'
 import { Badge } from '../../../components/ui/Badge'
@@ -24,7 +24,7 @@ export function RecentActivity() {
         <Badge tone="gray">{items.length}</Badge>
       </div>
 
-      {loading ? <div className="flex justify-center py-8"><Spinner /></div> : null}
+      {loading ? <div className="flex justify-center py-8"><Loader variant="spinner" size="md" /></div> : null}
       {error ? <p className="mt-6 text-sm font-semibold text-rose-600 dark:text-rose-300">{error}</p> : null}
 
       {!loading && !error ? (

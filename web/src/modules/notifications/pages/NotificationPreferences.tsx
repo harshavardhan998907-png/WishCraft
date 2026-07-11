@@ -1,8 +1,10 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Skeleton } from '../../../components/ui/Skeleton'
 import { useToastStore } from '../../../store/toastStore'
+import { useDeferredLoading } from '../../../hooks/useDeferredLoading'
 import { fetchNotificationPreferences, updateNotificationPreferences } from '../services/notificationService'
 import type { NotificationPreferences as NotificationPreferencesType } from '../types'
 
@@ -17,6 +19,7 @@ const preferenceLabels: Array<[keyof Omit<NotificationPreferencesType, 'id' | 'u
 export function NotificationPreferences() {
   const [preferences, setPreferences] = useState<NotificationPreferencesType | null>(null)
   const [loading, setLoading] = useState(true)
+  const deferredLoading = useDeferredLoading(loading)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const toast = useToastStore()
@@ -50,14 +53,15 @@ export function NotificationPreferences() {
 
   return (
     <section className="mx-auto max-w-4xl px-4 py-10">
+      <PageHeader 
+        title="Notification preferences" 
+        subtitle="Control lifecycle, engagement, creator, and payment communication."
+        backTo="/dashboard"
+      />
       <Card>
-        <div>
-          <h1 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Notification preferences</h1>
-          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-white/70">Control lifecycle, engagement, creator, and payment communication.</p>
-        </div>
 
         {error ? <p className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-200">{error}</p> : null}
-        {loading ? (
+        {deferredLoading ? (
           <div className="mt-6 grid gap-3 animate-in fade-in duration-500">
             <Skeleton className="h-[52px] w-full" />
             <Skeleton className="h-[52px] w-full" />
@@ -68,7 +72,7 @@ export function NotificationPreferences() {
           </div>
         ) : null}
 
-        {!loading && preferences ? (
+        {!deferredLoading && preferences ? (
           <form className="mt-6 grid gap-3" onSubmit={save}>
             {preferenceLabels.map(([key, label]) => (
               <label key={key} className="flex items-center justify-between rounded-md bg-zinc-100 p-3 font-semibold dark:bg-white/10">

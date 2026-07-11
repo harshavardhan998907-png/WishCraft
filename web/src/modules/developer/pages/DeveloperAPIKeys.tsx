@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Input } from '../../../components/ui/Input'
 import { Skeleton } from '../../../components/ui/Skeleton'
 import { useToastStore } from '../../../store/toastStore'
+import { useDeferredLoading } from '../../../hooks/useDeferredLoading'
 import { createDeveloperApiKey, fetchDeveloperApiKeys, fetchDeveloperApiUsage, revokeDeveloperApiKey } from '../services/ecosystemService'
 import type { ApiScope, EcosystemApiKey, EcosystemApiUsageEvent } from '../services/ecosystemService'
 
@@ -17,6 +19,7 @@ export function DeveloperAPIKeys() {
   const [selectedScopes, setSelectedScopes] = useState<ApiScope[]>(['templates:read'])
   const [newKey, setNewKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const deferredLoading = useDeferredLoading(loading)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const toast = useToastStore()
@@ -60,13 +63,14 @@ export function DeveloperAPIKeys() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Developer API keys</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-white/70">Create scoped ecosystem keys, revoke access, and monitor integration usage.</p>
-      </div>
+      <PageHeader 
+        title="Developer API keys" 
+        subtitle="Create scoped ecosystem keys, revoke access, and monitor integration usage."
+        backTo="/dashboard"
+      />
 
       {error ? <Card className="mb-6 border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
-      {loading ? (
+      {deferredLoading ? (
         <div className="grid gap-6 lg:grid-cols-[380px_1fr] animate-in fade-in duration-500">
           <Card>
             <div className="space-y-4">
@@ -101,7 +105,7 @@ export function DeveloperAPIKeys() {
         </div>
       ) : null}
 
-      {!loading && (
+      {!deferredLoading && (
         <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
           <Card>
           <form className="space-y-4" onSubmit={createKey}>
@@ -146,7 +150,7 @@ export function DeveloperAPIKeys() {
                   {key.is_active ? <Button className="mt-3" size="sm" variant="danger" type="button" onClick={() => revokeKey(key.id)}>Revoke</Button> : null}
                 </div>
               ))}
-              {!loading && keys.length === 0 ? <p className="text-sm text-zinc-500">No API keys yet.</p> : null}
+              {!deferredLoading && keys.length === 0 ? <p className="text-sm text-zinc-500">No API keys yet.</p> : null}
             </div>
           </Card>
 

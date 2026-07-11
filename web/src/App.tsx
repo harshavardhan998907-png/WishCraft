@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { Loader } from './components/ui/Loader'
 import { PageWrapper } from './components/layout/PageWrapper'
 import { AdminRoute } from './components/layout/AdminRoute'
 import { CreatorRoute } from './components/layout/CreatorRoute'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
+import { ScrollRestoration } from './components/layout/ScrollRestoration'
 import { ErrorBoundary } from './modules/performance/components/ErrorBoundary'
 
 const Home = lazy(() => import('./pages/Home').then((module) => ({ default: module.Home })))
@@ -47,7 +49,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <PageWrapper>
-        <Suspense fallback={<div>Loading...</div>}>
+        <ScrollRestoration />
+        <Suspense fallback={<Loader variant="fullPage" />}>
           <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />

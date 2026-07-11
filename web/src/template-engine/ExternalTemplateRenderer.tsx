@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Loader } from '../components/ui/Loader'
 import type { TemplateProps } from './types'
 
 interface ExternalTemplateRendererProps {
@@ -238,11 +239,7 @@ export function ExternalTemplateRenderer({
   return (
     <div className={className} style={{ position: 'relative', minHeight: '100vh', height: '100%', width: '100%' }}>
       {status === 'loading' || !blobUrl ? (
-        fallback ?? (
-          <div className="grid min-h-[520px] place-items-center bg-cream font-bold text-zinc-500 dark:bg-[#10101a] dark:text-white/60">
-            Loading template...
-          </div>
-        )
+        fallback ?? <Loader variant="fullPage" />
       ) : (
         <iframe
           ref={iframeRef}
