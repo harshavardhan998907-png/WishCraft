@@ -9,8 +9,6 @@ import { fetchOwnedMediaAssets } from '../../media/services/mediaService'
 import type { MediaAsset } from '../../media/types'
 import { fetchCreatorEngagementMetrics } from '../../engagement/services/engagementService'
 import type { CreatorEngagementMetric } from '../../engagement/types'
-import { useLocalization } from '../../i18n/hooks/useLocalization'
-import { formatLocalizedDate } from '../../i18n/utils/format'
 
 function formatBytes(bytes: number) {
   if (!bytes) return '0 B'
@@ -21,7 +19,6 @@ function formatBytes(bytes: number) {
 
 export function CreatorAnalytics() {
   const { user } = useAuth()
-  const { locale, timezone } = useLocalization()
   const [metrics, setMetrics] = useState<CreatorTemplateMetric | null>(null)
   const [popularity, setPopularity] = useState<CreatorTemplatePopularity[]>([])
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([])
@@ -59,7 +56,7 @@ export function CreatorAnalytics() {
       <div>
         <h2 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Analytics</h2>
         <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-white/70">Views, conversions, popularity, and engagement metrics from the central analytics system.</p>
-        <p className="mt-1 text-xs font-semibold text-zinc-500">Localized report time: {formatLocalizedDate(new Date(), { preferred_locale: locale, preferred_timezone: timezone })}</p>
+        <p className="mt-1 text-xs font-semibold text-zinc-500">Report time: {new Date().toLocaleString()}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
