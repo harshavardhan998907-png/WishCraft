@@ -15,7 +15,7 @@ export type AnalyticsEventName =
   | 'ai_generation_requested'
   | 'ai_generation_completed'
   | 'ai_generation_failed'
-  | 'template_recommendation_served'
+
   | 'wish_reaction_added'
   | 'wish_message_added'
   | 'engagement_report_created'
@@ -42,6 +42,11 @@ export type AnalyticsEventName =
   | 'platform_growth_snapshot_generated'
   | 'regional_growth_detected'
   | 'integration_request_created'
+  | 'feedback_dialog_opened'
+  | 'review_submitted'
+  | 'feature_request_submitted'
+  | 'bug_reported'
+  | 'instagram_clicked'
 
 export interface AnalyticsEventInput {
   eventName: AnalyticsEventName

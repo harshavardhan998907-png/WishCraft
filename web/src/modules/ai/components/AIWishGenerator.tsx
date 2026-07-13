@@ -2,7 +2,13 @@ import { Sparkles, Heart, Globe, PenTool, Type } from 'lucide-react'
 import { Card } from '../../../components/ui/Card'
 import type { OccasionType } from '../../../types'
 
-export function AIWishGenerator({}: { initialOccasion?: OccasionType; onApply?: (message: string) => void } = {}) {
+interface AIWishGeneratorProps {
+  initialOccasion?: OccasionType;
+  onApply?: (message: string) => void;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function AIWishGenerator(props: AIWishGeneratorProps) {
   return (
     <Card className="space-y-6 relative overflow-hidden bg-gradient-to-br from-white to-brand/5 dark:from-[#181824] dark:to-brand/10 border-brand/20">
       <div className="absolute top-0 right-0 p-6 pointer-events-none opacity-10">

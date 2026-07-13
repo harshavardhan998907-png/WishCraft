@@ -237,7 +237,7 @@ export function ExternalTemplateRenderer({
   }
 
   return (
-    <div className={className} style={{ position: 'relative', minHeight: '100vh', height: '100%', width: '100%' }}>
+    <div className={className} style={{ position: 'relative', height: '100%', width: '100%' }}>
       {status === 'loading' || !blobUrl ? (
         fallback ?? <Loader variant="fullPage" />
       ) : (
@@ -247,7 +247,7 @@ export function ExternalTemplateRenderer({
           title="Template preview"
           sandbox="allow-scripts"
           className="h-full w-full border-0"
-          style={{ display: 'block', minHeight: '100vh', height: '100%', width: '100%', border: 0 }}
+          style={{ display: 'block', height: '100%', width: '100%', border: 0 }}
         />
       )}
     </div>

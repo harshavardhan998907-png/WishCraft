@@ -1,11 +1,32 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Camera, MessageCircle, PlayCircle } from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { HowItWorksDialog } from '../shared/HowItWorksDialog'
 import { AboutDialog } from '../shared/AboutDialog'
 import { PrivacyPolicyDialog } from '../shared/PrivacyPolicyDialog'
 import { TermsOfServiceDialog } from '../shared/TermsOfServiceDialog'
+import { FeedbackDialog } from '../shared/FeedbackDialog'
+import { trackInstagramClicked } from '../../modules/analytics/services/analyticsService'
+
+const Instagram = ({ size = 20, className = '' }: { size?: number; className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+)
 
 export function Footer() {
   const { user } = useAuth()
@@ -15,6 +36,7 @@ export function Footer() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [termsOpen, setTermsOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   function handleAboutClick(e: React.MouseEvent) {
     e.preventDefault()
@@ -66,16 +88,32 @@ export function Footer() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs leading-relaxed">
               Bespoke animated celebration sites. Turn simple greetings into cinematic memories that last forever.
             </p>
-            <div className="flex items-center gap-3 pt-2 text-zinc-400 dark:text-zinc-500">
-              <a href="#" className="hover:text-brand transition-colors p-2 -ml-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5" aria-label="Twitter">
-                <MessageCircle size={20} />
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <a
+                href="https://www.instagram.com/ctrlcreate.works?igsh=eWtucnMzdHR0NHkx"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackInstagramClicked()}
+                className="focus-ring inline-flex items-center gap-2 rounded-xl border border-black/5 bg-zinc-50 px-3.5 py-2 text-sm font-bold text-zinc-500 transition hover:bg-zinc-100 hover:text-brand dark:border-white/10 dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-brand"
+                title="Follow WishCraft on Instagram"
+                aria-label="Follow WishCraft on Instagram"
+              >
+                <Instagram size={18} className="shrink-0" />
+                <span className="hidden sm:inline">Instagram</span>
               </a>
-              <a href="#" className="hover:text-brand transition-colors p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5" aria-label="Instagram">
-                <Camera size={20} />
-              </a>
-              <a href="#" className="hover:text-brand transition-colors p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5" aria-label="YouTube">
-                <PlayCircle size={20} />
-              </a>
+
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setFeedbackOpen(true)}
+                  className="focus-ring inline-flex items-center gap-2 rounded-xl border border-black/5 bg-zinc-50 px-3.5 py-2 text-sm font-bold text-zinc-500 transition hover:bg-zinc-100 hover:text-brand dark:border-white/10 dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-brand"
+                  title="Open Feedback Center"
+                  aria-label="Open Feedback Center"
+                >
+                  <MessageSquare size={18} className="shrink-0" />
+                  <span className="hidden sm:inline">Feedback Center</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -159,6 +197,7 @@ export function Footer() {
       <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <PrivacyPolicyDialog open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
       <TermsOfServiceDialog open={termsOpen} onClose={() => setTermsOpen(false)} />
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </footer>
   )
 }
