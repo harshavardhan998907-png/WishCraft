@@ -12,7 +12,7 @@ export function WishCard({ wish }: WishCardProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      navigate(`/preview/${wish.slug}`)
+      navigate(wish.status === 'draft' ? `/editor/${wish.template_slug || wish.template?.slug}` : `/share/${wish.slug}`)
     }
   }
 
@@ -25,7 +25,7 @@ export function WishCard({ wish }: WishCardProps) {
 
   return (
     <div 
-      onClick={() => navigate(`/preview/${wish.slug}`)} 
+      onClick={() => navigate(wish.status === 'draft' ? `/editor/${wish.template_slug || wish.template?.slug}` : `/share/${wish.slug}`)} 
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"

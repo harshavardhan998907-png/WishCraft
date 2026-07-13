@@ -116,11 +116,14 @@ export function Navbar() {
           {user ? (
             <>
               {[
+                { id: 'explore', label: 'Explore', path: '/browse', basePath: '/browse' },
                 { id: 'overview', label: 'Dashboard', path: '/dashboard#overview', basePath: '/dashboard' },
                 { id: 'wishes', label: 'My Wishes', path: '/dashboard#wishes', basePath: '/dashboard' },
                 { id: 'templates', label: 'Templates', path: '/dashboard#templates', basePath: '/dashboard' }
               ].map(link => {
-                const isActive = location.pathname === link.basePath && (activeSection === link.id || (!activeSection && link.id === 'overview'))
+                const isActive = link.basePath === '/browse' 
+                  ? location.pathname === '/browse'
+                  : location.pathname === link.basePath && (activeSection === link.id || (!activeSection && link.id === 'overview'))
                 return (
                   <Link 
                     key={link.id}
@@ -143,7 +146,7 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <NavLink to="/browse" className={navLinkClass}>Browse</NavLink>
+              <NavLink to="/browse" className={navLinkClass}>Explore</NavLink>
               <a href="/#how-it-works" className={navLinkClass}>How it works</a>
             </>
           )}
@@ -248,13 +251,14 @@ export function Navbar() {
               <nav className="flex flex-col gap-6 text-center">
                 {user ? (
                   <>
+                    <NavLink onClick={closeMenu} to="/browse" className={mobileLinkClass}>Explore</NavLink>
                     <Link onClick={(e) => handleNavClick(e, '/dashboard', 'overview')} to="/dashboard#overview" className={mobileLinkClass}>Dashboard</Link>
                     <Link onClick={(e) => handleNavClick(e, '/dashboard', 'wishes')} to="/dashboard#wishes" className={mobileLinkClass}>My Wishes</Link>
                     <Link onClick={(e) => handleNavClick(e, '/dashboard', 'templates')} to="/dashboard#templates" className={mobileLinkClass}>Templates</Link>
                   </>
                 ) : (
                   <>
-                    <NavLink onClick={closeMenu} to="/browse" className={mobileLinkClass}>Browse</NavLink>
+                    <NavLink onClick={closeMenu} to="/browse" className={mobileLinkClass}>Explore</NavLink>
                     <a onClick={closeMenu} href="/#how-it-works" className={mobileLinkClass}>How It Works</a>
                   </>
                 )}

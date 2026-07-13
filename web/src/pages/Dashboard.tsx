@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTemplates } from '../hooks/useTemplates'
 import { useUserWishes } from '../hooks/useUserWishes'
+import { Footer } from '../components/layout/Footer'
 import { Skeleton } from '../components/ui/Skeleton'
 import { WishCard } from '../components/wishes/WishCard'
 
@@ -227,6 +228,10 @@ export function Dashboard() {
           )}
         </div>
       </SectionContainer>
+
+      <div className="pt-16 md:pt-24">
+        <Footer />
+      </div>
     </div>
   )
 }

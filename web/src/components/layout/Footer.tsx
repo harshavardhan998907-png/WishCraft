@@ -1,7 +1,58 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Camera, MessageCircle, PlayCircle } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
+import { HowItWorksDialog } from '../shared/HowItWorksDialog'
+import { AboutDialog } from '../shared/AboutDialog'
+import { PrivacyPolicyDialog } from '../shared/PrivacyPolicyDialog'
+import { TermsOfServiceDialog } from '../shared/TermsOfServiceDialog'
 
 export function Footer() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const [termsOpen, setTermsOpen] = useState(false)
+
+  function handleAboutClick(e: React.MouseEvent) {
+    e.preventDefault()
+    setAboutOpen(true)
+  }
+
+  function handlePrivacyClick(e: React.MouseEvent) {
+    e.preventDefault()
+    setPrivacyOpen(true)
+  }
+
+  function handleTermsClick(e: React.MouseEvent) {
+    e.preventDefault()
+    setTermsOpen(true)
+  }
+
+  function handleHowItWorksClick(e: React.MouseEvent) {
+    if (user) {
+      e.preventDefault()
+      setHowItWorksOpen(true)
+    }
+  }
+
+  function handleCreateWish(e: React.MouseEvent) {
+    if (user && location.pathname === '/browse') {
+      e.preventDefault()
+      const el = document.getElementById('templates-gallery')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' })
+        el.classList.add('ring-4', 'ring-brand/50', 'rounded-3xl', 'transition-all', 'duration-500')
+        setTimeout(() => el.classList.remove('ring-4', 'ring-brand/50'), 1000)
+      }
+    } else if (user) {
+      e.preventDefault()
+      navigate('/browse#templates-gallery')
+    }
+  }
+
   return (
     <footer className="border-t border-black/10 bg-white px-6 py-12 md:py-16 transition-colors dark:border-white/10 dark:bg-[#10101a]">
       <div className="mx-auto max-w-7xl">
@@ -33,8 +84,24 @@ export function Footer() {
             <h4 className="text-sm font-bold text-ink dark:text-white">Product</h4>
             <ul className="space-y-2.5 text-sm">
               <li><Link to="/browse" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Browse Templates</Link></li>
-              <li><Link to="/auth?redirect=/browse" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Create Wish</Link></li>
-              <li><a href="/#how-it-works" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">How It Works</a></li>
+              <li>
+                <Link 
+                  to={user ? "/browse#templates-gallery" : "/auth?redirect=/browse#templates-gallery"}
+                  onClick={handleCreateWish}
+                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                >
+                  Create Wish
+                </Link>
+              </li>
+              <li>
+                <a 
+                  href="/#how-it-works" 
+                  onClick={handleHowItWorksClick}
+                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                >
+                  How It Works
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -42,7 +109,15 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="text-sm font-bold text-ink dark:text-white">Company</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">About</a></li>
+              <li>
+                <a 
+                  href="#" 
+                  onClick={handleAboutClick}
+                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                >
+                  About
+                </a>
+              </li>
               <li><a href="#" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Contact</a></li>
               <li><a href="#" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Support</a></li>
             </ul>
@@ -52,17 +127,38 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="text-sm font-bold text-ink dark:text-white">Legal</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Terms of Service</a></li>
+              <li>
+                <a 
+                  href="#" 
+                  onClick={handlePrivacyClick}
+                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                >
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  onClick={handleTermsClick}
+                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                >
+                  Terms of Service
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
         <div className="pt-8 border-t border-black/10 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-400 dark:text-zinc-500">
           <p>© {new Date().getFullYear()} WishCraft. All rights reserved.</p>
-          <p>Beautiful wishes, live for 7 days.</p>
+          <p>Beautiful wishes, live for 24 hours.</p>
         </div>
       </div>
+
+      <HowItWorksDialog open={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
+      <PrivacyPolicyDialog open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
+      <TermsOfServiceDialog open={termsOpen} onClose={() => setTermsOpen(false)} />
     </footer>
   )
 }

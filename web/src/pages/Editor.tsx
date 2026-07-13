@@ -6,13 +6,12 @@ import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Textarea } from '../components/ui/Textarea'
-import { ImageUpload } from '../components/ui/ImageUpload'
 import { LivePreview } from '../components/editor/LivePreview'
 import { DynamicFormRenderer } from '../components/editor/DynamicFormRenderer'
 import { useToastStore } from '../store/toastStore'
 import { Modal } from '../components/ui/Modal'
 import { Loader } from '../components/ui/Loader'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
 import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
 import { getTemplateSchema } from '../template-engine'
@@ -293,7 +292,7 @@ export function Editor() {
         if (data) store.setTemplate(data)
         if (error) console.error('[Editor] template lookup failed', error)
       })
-  }, [templateSlug])
+  }, [templateSlug, store])
 
   const previewData = useMemo(() => ({
     recipientName: store.recipientName,
