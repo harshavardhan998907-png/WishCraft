@@ -4,7 +4,7 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { LivePreview } from '../components/editor/LivePreview'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
-import { addDays, generateWishSlug } from '../lib/utils'
+import { addHours, generateWishSlug } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import { useEditorStore } from '../store/editorStore'
 import { useToastStore } from '../store/toastStore'
@@ -123,7 +123,7 @@ export function Preview() {
       music_url: editor.musicUrl,
       status,
       is_paid: paid,
-      expires_at: status === 'active' ? addDays(new Date(), 7) : null,
+      expires_at: status === 'active' ? addHours(new Date(), 24) : null,
       activated_at: status === 'active' ? new Date().toISOString() : null,
     }
     console.info('[Preview] inserting wish', {
@@ -148,7 +148,7 @@ export function Preview() {
       void enqueueScheduledJob({
         jobType: 'wish_expiry_reminder',
         payload: { user_id: user.id, wish_id: data.id, template_id: template.id },
-        scheduledFor: addDays(new Date(), 6),
+        scheduledFor: addHours(new Date(), 23),
       }).catch(() => undefined)
     } else {
       void enqueueScheduledJob({

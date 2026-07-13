@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '../components/ui/Button'
+import { Footer } from '../components/layout/Footer'
 import { FloatingRibbons, OrbitGlow } from '../components/ui/MotionDecor'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { useTemplates } from '../hooks/useTemplates'
@@ -149,6 +150,9 @@ export function Browse() {
             ))}
           </div>
         )}
+      </div>
+      <div className="pt-16 md:pt-24">
+        <Footer />
       </div>
     </section>
   )

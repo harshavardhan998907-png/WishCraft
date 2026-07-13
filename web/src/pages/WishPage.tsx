@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, HeartCrack } from 'lucide-react'
 import { useWish } from '../hooks/useWish'
+import { useAuth } from '../hooks/useAuth'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Button } from '../components/ui/Button'
 import { Expired } from './Expired'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
 import { preloadMedia } from '../modules/media/services/mediaService'
@@ -16,6 +18,7 @@ const WishMessages = lazy(() => import('../modules/engagement/components/WishMes
 export function WishPage() {
   const { slug } = useParams()
   const { data, loading, error } = useWish(slug)
+  const { user } = useAuth()
   const analytics = useAnalytics()
   const trackedWishId = useRef<string | null>(null)
 
@@ -45,7 +48,24 @@ export function WishPage() {
   }
 
   if (error || !data) {
-    return <div className="grid min-h-screen place-items-center bg-ink px-4 text-center text-2xl font-black text-white">This memory could not be found.</div>
+    return (
+      <div className="grid min-h-screen place-items-center bg-celebration-light dark:bg-celebration-dark px-4 text-center">
+        <div className="max-w-md w-full bg-white/80 dark:bg-ink/80 backdrop-blur-xl p-10 rounded-[3rem] shadow-premium border border-white/20 dark:border-white/10">
+          <div className="w-20 h-20 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto mb-6">
+            <HeartCrack size={36} />
+          </div>
+          <h1 className="text-3xl font-heading font-black text-ink dark:text-white mb-3">Wish Not Found</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-8 leading-relaxed">
+            This memory could not be found. It may have been deleted, expired, or the link might be incorrect.
+          </p>
+          <Link to={user ? "/browse" : "/"}>
+            <Button size="lg" className="w-full shadow-lg rounded-xl">
+              Return Home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   if (data.isExpired) return <Expired />
