@@ -207,7 +207,8 @@ export function Preview() {
         subtitle="Review your wish before publishing and sharing."
         backTo={`/editor/${editor.template.slug}`}
       />
-      <LivePreview template={editor.template} data={data} />
+      
+      {/* Action Banner moved to the top for better accessibility */}
       <div className="flex flex-col sm:flex-row items-center justify-between rounded-2xl bg-white p-6 shadow-premium border border-zinc-100 dark:border-white/10 dark:bg-ink dark:text-white gap-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-2 h-full bg-brand" />
         <div className="pl-4 text-center sm:text-left">
@@ -220,6 +221,10 @@ export function Preview() {
             Publish & Share
           </Button>
         </div>
+      </div>
+
+      <div className="w-full h-[70vh] min-h-[600px] relative rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 shadow-2xl">
+        <LivePreview template={editor.template} data={data} />
       </div>
     </section>
   )

@@ -155,3 +155,23 @@ export async function fetchTemplatePerformance(): Promise<TemplatePerformanceMet
     return (data ?? []) as TemplatePerformanceMetric[]
   })
 }
+
+export function trackFeedbackDialogOpened() {
+  void trackEvent({ eventName: 'feedback_dialog_opened' })
+}
+
+export function trackReviewSubmitted(rating: number) {
+  void trackEvent({ eventName: 'review_submitted', metadata: { rating } })
+}
+
+export function trackFeatureRequestSubmitted(category: string, priority: string) {
+  void trackEvent({ eventName: 'feature_request_submitted', metadata: { category, priority } })
+}
+
+export function trackBugReported(page: string, severity: string) {
+  void trackEvent({ eventName: 'bug_reported', metadata: { page, severity } })
+}
+
+export function trackInstagramClicked() {
+  void trackEvent({ eventName: 'instagram_clicked' })
+}
