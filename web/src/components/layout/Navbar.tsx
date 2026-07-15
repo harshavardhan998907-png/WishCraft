@@ -34,7 +34,11 @@ export function Navbar() {
   function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, path: string, sectionId: string) {
     if (location.pathname === path) {
       e.preventDefault()
-      scrollToSection(sectionId)
+      if (path === '/browse') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        scrollToSection(sectionId)
+      }
       closeMenu()
     } else {
       closeMenu()

@@ -27,7 +27,21 @@ export function HowItWorksDialog({ open, onClose }: HowItWorksDialogProps) {
   }
 
   return (
-    <Modal open={open} title="How WishCraft Works" onClose={onClose}>
+    <Modal
+      open={open}
+      title="How WishCraft Works"
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="ghost" className="w-full sm:w-auto" onClick={onClose}>
+            Close
+          </Button>
+          <Button variant="primary" className="w-full sm:w-auto" onClick={handleStartCreating}>
+            Start Creating
+          </Button>
+        </>
+      }
+    >
       <div className="space-y-6 pt-2">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Create, personalize and share beautiful wishes in just a few simple steps.
@@ -53,15 +67,6 @@ export function HowItWorksDialog({ open, onClose }: HowItWorksDialogProps) {
               </p>
             </div>
           ))}
-        </div>
-
-        <div className="flex flex-col gap-3 pt-6 sm:flex-row sm:justify-end border-t border-black/10 dark:border-white/10 mt-6">
-          <Button variant="ghost" className="w-full sm:w-auto" onClick={onClose}>
-            Close
-          </Button>
-          <Button variant="primary" className="w-full sm:w-auto" onClick={handleStartCreating}>
-            Start Creating
-          </Button>
         </div>
       </div>
     </Modal>
