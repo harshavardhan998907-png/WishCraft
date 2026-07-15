@@ -171,7 +171,3 @@ export function trackFeatureRequestSubmitted(category: string, priority: string)
 export function trackBugReported(page: string, severity: string) {
   void trackEvent({ eventName: 'bug_reported', metadata: { page, severity } })
 }
-
-export function trackInstagramClicked() {
-  void trackEvent({ eventName: 'instagram_clicked' })
-}

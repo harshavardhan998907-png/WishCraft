@@ -39,7 +39,10 @@ export function ScrollRestoration() {
   useEffect(() => {
     // Reset restoration flag on path change so we can restore again if needed
     hasRestored.current = false
-  }, [location.pathname])
+    if (!location.hash) {
+      window.scrollTo(0, 0)
+    }
+  }, [location.pathname, location.hash])
 
   // Handle browser back/forward buttons (popstate)
   useEffect(() => {

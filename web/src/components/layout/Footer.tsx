@@ -1,15 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Info, Mail, LayoutGrid, Sparkles, Play, ShieldCheck, FileText } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { HowItWorksDialog } from '../shared/HowItWorksDialog'
-import { AboutDialog } from '../shared/AboutDialog'
-import { PrivacyPolicyDialog } from '../shared/PrivacyPolicyDialog'
-import { TermsOfServiceDialog } from '../shared/TermsOfServiceDialog'
-import { FeedbackDialog } from '../shared/FeedbackDialog'
-import { trackInstagramClicked } from '../../modules/analytics/services/analyticsService'
 
-const Instagram = ({ size = 20, className = '' }: { size?: number; className?: string }) => (
+const InstagramIcon = ({ size = 20, className = '' }: { size?: number; className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
@@ -28,6 +22,12 @@ const Instagram = ({ size = 20, className = '' }: { size?: number; className?: s
   </svg>
 )
 
+import { HowItWorksDialog } from '../shared/HowItWorksDialog'
+import { AboutDialog } from '../shared/AboutDialog'
+import { PrivacyPolicyDialog } from '../shared/PrivacyPolicyDialog'
+import { TermsOfServiceDialog } from '../shared/TermsOfServiceDialog'
+import { FeedbackDialog } from '../shared/FeedbackDialog'
+
 export function Footer() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -41,6 +41,13 @@ export function Footer() {
   function handleAboutClick(e: React.MouseEvent) {
     e.preventDefault()
     setAboutOpen(true)
+  }
+
+  function handleBrowseTemplatesClick(e: React.MouseEvent) {
+    if (location.pathname === '/browse') {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   function handlePrivacyClick(e: React.MouseEvent) {
@@ -88,99 +95,170 @@ export function Footer() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs leading-relaxed">
               Bespoke animated celebration sites. Turn simple greetings into cinematic memories that last forever.
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a
-                href="https://www.instagram.com/ctrlcreate.works?igsh=eWtucnMzdHR0NHkx"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackInstagramClicked()}
-                className="focus-ring inline-flex items-center gap-2 rounded-xl border border-black/5 bg-zinc-50 px-3.5 py-2 text-sm font-bold text-zinc-500 transition hover:bg-zinc-100 hover:text-brand dark:border-white/10 dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-brand"
-                title="Follow WishCraft on Instagram"
-                aria-label="Follow WishCraft on Instagram"
-              >
-                <Instagram size={18} className="shrink-0" />
-                <span className="hidden sm:inline">Instagram</span>
-              </a>
-
-              {user && (
+            {user && (
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setFeedbackOpen(true)}
-                  className="focus-ring inline-flex items-center gap-2 rounded-xl border border-black/5 bg-zinc-50 px-3.5 py-2 text-sm font-bold text-zinc-500 transition hover:bg-zinc-100 hover:text-brand dark:border-white/10 dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-brand"
+                  className="group focus-ring flex w-full max-w-[220px] items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
                   title="Open Feedback Center"
                   aria-label="Open Feedback Center"
                 >
-                  <MessageSquare size={18} className="shrink-0" />
-                  <span className="hidden sm:inline">Feedback Center</span>
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <MessageSquare size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    Feedback Center
+                  </span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Product */}
           <div className="space-y-4">
             <h4 className="text-sm font-bold text-ink dark:text-white">Product</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li><Link to="/browse" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Browse Templates</Link></li>
+            <ul className="space-y-2.5">
+              <li>
+                <Link 
+                  to={user ? "/browse" : "/auth?redirect=/browse"}
+                  onClick={handleBrowseTemplatesClick}
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="Browse Templates"
+                  aria-label="Browse Templates"
+                >
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <LayoutGrid size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    Browse Templates
+                  </span>
+                </Link>
+              </li>
               <li>
                 <Link 
                   to={user ? "/browse#templates-gallery" : "/auth?redirect=/browse#templates-gallery"}
                   onClick={handleCreateWish}
-                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="Create Wish"
+                  aria-label="Create Wish"
                 >
-                  Create Wish
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <Sparkles size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    Create Wish
+                  </span>
                 </Link>
               </li>
               <li>
                 <a 
                   href="/#how-it-works" 
                   onClick={handleHowItWorksClick}
-                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="How It Works"
+                  aria-label="How It Works"
                 >
-                  How It Works
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <Play size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    How It Works
+                  </span>
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Company */}
+          {/* Connect */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-ink dark:text-white">Company</h4>
-            <ul className="space-y-2.5 text-sm">
+            <h4 className="text-sm font-bold text-ink dark:text-white">Connect</h4>
+            <ul className="space-y-2.5">
               <li>
                 <a 
                   href="#" 
                   onClick={handleAboutClick}
-                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="About WishCraft"
+                  aria-label="About WishCraft"
                 >
-                  About
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <Info size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    About WishCraft
+                  </span>
                 </a>
               </li>
-              <li><a href="#" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Contact</a></li>
-              <li><a href="#" className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors">Support</a></li>
+              <li>
+                <a 
+                  href="https://www.instagram.com/ctrlcreate.works?igsh=eWtucnMzdHR0NHkx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="Follow WishCraft on Instagram"
+                  aria-label="Follow WishCraft on Instagram"
+                >
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <InstagramIcon size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    Instagram
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="mailto:ctrlandcreate26@gmail.com"
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="Email the WishCraft Team"
+                  aria-label="Email the WishCraft Team"
+                >
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <Mail size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    Support
+                  </span>
+                </a>
+              </li>
             </ul>
           </div>
 
           {/* Legal */}
           <div className="space-y-4">
             <h4 className="text-sm font-bold text-ink dark:text-white">Legal</h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2.5">
               <li>
                 <a 
                   href="#" 
                   onClick={handlePrivacyClick}
-                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="Privacy Policy"
+                  aria-label="Privacy Policy"
                 >
-                  Privacy Policy
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <ShieldCheck size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    Privacy Policy
+                  </span>
                 </a>
               </li>
               <li>
                 <a 
                   href="#" 
                   onClick={handleTermsClick}
-                  className="text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand transition-colors"
+                  className="group focus-ring flex items-center gap-3 rounded-xl border border-black/5 bg-white p-2.5 text-sm transition-all duration-200 hover:scale-[1.01] hover:border-black/10 hover:bg-zinc-50 hover:shadow-sm dark:border-white/5 dark:bg-white/5 dark:hover:border-white/10 dark:hover:bg-white/10"
+                  title="Terms of Service"
+                  aria-label="Terms of Service"
                 >
-                  Terms of Service
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 group-hover:scale-105 group-hover:bg-brand/10 group-hover:text-brand dark:bg-white/5 dark:text-zinc-400 dark:group-hover:bg-brand/20 dark:group-hover:text-brand">
+                    <FileText size={18} className="shrink-0" />
+                  </div>
+                  <span className="font-semibold text-ink transition-colors duration-200 group-hover:text-brand group-hover:underline dark:text-white leading-tight">
+                    Terms of Service
+                  </span>
                 </a>
               </li>
             </ul>
