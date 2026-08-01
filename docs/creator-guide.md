@@ -171,6 +171,70 @@ Field options you can set:
 > because they map directly to the props your component receives (see §3). You're
 > free to add extra fields on top.
 
+#### Custom fields
+
+Any field you add beyond the core four is a **custom field**. The platform
+renders an input for it in the editor automatically, and the value the user
+enters is delivered to your component via the `customData` prop (see §3), keyed
+by the field's `id`.
+
+What each `type` gives you:
+
+| `type` | Editor input | Value in `customData` |
+| --- | --- | --- |
+| `text` | Single-line text | `string` |
+| `textarea` | Multi-line text | `string` |
+| `date` | Date picker | `string` (date string) |
+| `url` | URL input | `string` |
+| `gallery` | Photo uploader | `string[]` of image URLs |
+| `music` | Music picker/URL | `string` (audio URL) |
+| `toggle` | On/off switch | `boolean` |
+| `repeater` | "Add another" list of grouped inputs | `Array<Record<string, unknown>>` — one object per entry, keyed by `subFields` ids |
+| `section` | Visual heading that groups the fields after it | *(no value)* |
+
+A simple example — a nickname and a date:
+
+```json
+{
+  "id": "friendNickname",
+  "type": "text",
+  "label": "Friend's Nickname",
+  "required": false
+},
+{
+  "id": "startDate",
+  "type": "date",
+  "label": "The Day It Started",
+  "required": false
+}
+```
+
+A `repeater` collects a list of structured entries. Each entry is shaped by its
+`subFields`:
+
+```json
+{
+  "id": "milestones",
+  "label": "Milestones",
+  "type": "repeater",
+  "helper": "Add the moments that mattered.",
+  "subFields": [
+    { "id": "year", "label": "Year", "type": "text", "placeholder": "e.g. 2020" },
+    { "id": "title", "label": "Title", "type": "text", "placeholder": "e.g. We met" },
+    {
+      "id": "description",
+      "label": "Description",
+      "type": "textarea",
+      "maxLength": 200
+    }
+  ]
+}
+```
+
+In `customData`, `milestones` arrives as an array like
+`[{ "year": "2020", "title": "We met", "description": "…" }, …]`. §3 shows how
+to read these values in your component.
+
 #### `theme` — your color and type tokens
 
 All four color values must be valid hex (`#fff`, `#ffffff`, or `#ffffffff`):
@@ -199,6 +263,7 @@ type TemplateProps = {
   message: string
   photos: string[]
   musicUrl?: string
+  customData?: Record<string, unknown>
   previewMode?: boolean
 }
 ```
@@ -206,8 +271,47 @@ type TemplateProps = {
 **Use these exact prop names.** The platform maps a wish's data onto this shape
 and hands it to your component — if you rename or restructure them, your template
 won't receive any data and will render empty (or break). `recipientName`,
-`senderName`, `message`, and `photos` are always provided; `musicUrl` and
-`previewMode` are optional.
+`senderName`, `message`, and `photos` are always provided; `musicUrl`,
+`customData`, and `previewMode` are optional.
+
+### `customData` — your custom field values
+
+`customData` contains **every field value from the editor form, keyed by the
+field `id` you defined in `config.json`** (see §2, "Custom fields"). Values are
+typed `unknown`, so cast to the shape you expect and always provide a fallback —
+users can leave optional fields empty.
+
+```tsx
+export default function MyTemplate({ customData, /* ... */ }: TemplateProps) {
+  // Simple fields — cast and fall back
+  const friendNickname = (customData?.friendNickname as string) || ''
+  const startDate = (customData?.startDate as string) || ''
+
+  // Repeater fields arrive as an array of objects keyed by subField id
+  const milestones = (customData?.milestones as Array<{
+    year?: string
+    title?: string
+    description?: string
+  }>) ?? []
+
+  return (
+    <main>
+      {friendNickname && <p>aka {friendNickname}</p>}
+      {startDate && <p>Together since {startDate}</p>}
+      {milestones.length > 0 && (
+        <ol>
+          {milestones.map((m, i) => (
+            <li key={i}>
+              <strong>{m.year}</strong> — {m.title}
+              {m.description && <p>{m.description}</p>}
+            </li>
+          ))}
+        </ol>
+      )}
+    </main>
+  )
+}
+```
 
 ### A minimal working example
 
@@ -224,6 +328,7 @@ export type TemplateProps = {
   message: string
   photos: string[]
   musicUrl?: string
+  customData?: Record<string, unknown>
   previewMode?: boolean
 }
 
@@ -243,10 +348,13 @@ export default function ConfettiBirthday({
   message,
   photos,
   musicUrl,
+  customData,
   previewMode,
 }: TemplateProps) {
   const heading = recipientName || 'Someone special'
   const hasPhotos = photos.length > 0
+  // Custom fields from config.json land in customData, keyed by field id.
+  const friendNickname = (customData?.friendNickname as string) || ''
 
   return (
     <main style={shell}>
@@ -254,6 +362,10 @@ export default function ConfettiBirthday({
         <h1 style={{ fontSize: 'clamp(40px, 8vw, 80px)', margin: '0 0 16px' }}>
           Happy Birthday, {heading}!
         </h1>
+
+        {friendNickname && (
+          <p style={{ opacity: 0.7, margin: '0 0 12px' }}>aka {friendNickname}</p>
+        )}
 
         <p style={{ fontSize: 18, lineHeight: 1.7, opacity: 0.85 }}>
           {message || 'Wishing you a wonderful day.'}
@@ -363,6 +475,12 @@ The usual culprit is accidentally bundling a heavy dependency; see §7.
 ---
 
 ## 5. Submitting for review
+
+> ⚠️ **`preview.png` must be a real screenshot of your template.** The scaffolded
+> file is a 1×1 placeholder — replacing it is a **manual step you must do before
+> `wishcraft submit`**. Render your template, capture a screenshot, and save it
+> over `preview.png` in the project root (then rebuild so `dist/preview.png` is
+> updated). Reviewers and marketplace users see this image first.
 
 Once you're happy with the build and your `preview.png` is a real screenshot:
 
