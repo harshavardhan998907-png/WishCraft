@@ -1,6 +1,7 @@
 import { Input } from '../ui/Input'
 import { Textarea } from '../ui/Textarea'
 import { ImageUpload } from '../ui/ImageUpload'
+import { AudioUpload } from '../ui/AudioUpload'
 import type { FormFieldDefinition, FormSchema } from '../../template-engine'
 import { Plus, Trash2 } from 'lucide-react'
 
@@ -12,8 +13,6 @@ interface DynamicFormRendererProps {
   errors?: Record<string, string>
   onChange: (fieldId: string, value: unknown) => void
 }
-
-const musicTracks = ['Gentle Piano', 'Warm Celebration', 'Soft Romance', 'Festival Lights', 'Bright Future']
 
 function stringValue(value: unknown): string {
   return typeof value === 'string' ? value : ''
@@ -245,18 +244,18 @@ export function DynamicFormRenderer({ schema, values, templateId, allowMusic = t
 
         if (field.type === 'music') {
           if (!allowMusic) return null
+          const currentUrl = stringValue(value)
           return (
-            <label key={field.id} className="block space-y-1.5">
-              <span className="text-sm font-semibold text-ink dark:text-white/90">{field.label}</span>
-              <select
-                className="focus-ring w-full rounded-xl border border-black/15 bg-white px-3 py-2.5 text-ink dark:border-white/10 dark:bg-white/10 dark:text-white"
-                value={stringValue(value)}
-                onChange={(event) => onChange(field.id, event.target.value || null)}
-              >
-                <option value="">No music</option>
-                {musicTracks.map((track) => <option key={track} value={track}>{track}</option>)}
-              </select>
-            </label>
+            <div key={field.id} className="space-y-1.5">
+              <label className="text-sm font-semibold text-ink dark:text-white/90">{field.label}</label>
+              <AudioUpload
+                url={currentUrl || null}
+                onUploaded={(url) => onChange(field.id, url)}
+                onRemove={() => onChange(field.id, null)}
+                templateId={templateId}
+              />
+              {field.helper ? <p className="text-[11px] text-zinc-400 dark:text-zinc-500">{field.helper}</p> : null}
+            </div>
           )
         }
 
