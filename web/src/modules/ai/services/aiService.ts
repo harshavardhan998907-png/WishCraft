@@ -1,9 +1,9 @@
 import { supabase } from '../../../lib/supabase'
 import { trackEvent } from '../../analytics/services/analyticsService'
-import { getCached } from '../../performance/services/cacheService'
+
 import { withCircuitBreaker, withRetry } from '../../performance/services/loggerService'
 import { logSecurityAudit, recordRateLimitEvent } from '../../security/services/governanceService'
-import type { AIGenerationLog, AITemplateRecommendation, AIUsageMetrics, AIWishContext, AIWishResponse, CreatorMetadataInput } from '../types'
+import type { AIGenerationLog, AIUsageMetrics, AIWishContext, AIWishResponse, CreatorMetadataInput } from '../types'
 import { getCsrfToken } from '../../../lib/csrf'
 
 function sanitize(value: string) {
@@ -62,15 +62,7 @@ export async function generateWishMessage(context: AIWishContext): Promise<AIWis
   return { ...data, message: sanitize(data.message) }
 }
 
-export async function fetchAITemplateRecommendations(context: Partial<AIWishContext>): Promise<AITemplateRecommendation[]> {
-  try {
-    const data = await getCached('ai_recommendations', JSON.stringify(context), 60_000, () => invokeAI<{ recommendations: AITemplateRecommendation[] }>('recommend_templates', context))
-    void trackEvent({ eventName: 'template_recommendation_served', metadata: { count: data.recommendations.length, occasion: context.occasion, tone: context.tone } })
-    return data.recommendations
-  } catch {
-    return []
-  }
-}
+
 
 export async function generateCreatorMetadata(input: CreatorMetadataInput) {
   const data = await invokeAI<{ suggestion: string; fallback: boolean }>('creator_metadata', { ...input })

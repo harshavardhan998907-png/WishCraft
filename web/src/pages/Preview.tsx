@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PageHeader } from '../components/layout/PageHeader'
 import { LivePreview } from '../components/editor/LivePreview'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
-import { addDays, generateWishSlug } from '../lib/utils'
+import { addHours, generateWishSlug } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import { useEditorStore } from '../store/editorStore'
 import { useToastStore } from '../store/toastStore'
@@ -122,7 +123,7 @@ export function Preview() {
       music_url: editor.musicUrl,
       status,
       is_paid: paid,
-      expires_at: status === 'active' ? addDays(new Date(), 7) : null,
+      expires_at: status === 'active' ? addHours(new Date(), 24) : null,
       activated_at: status === 'active' ? new Date().toISOString() : null,
     }
     console.info('[Preview] inserting wish', {
@@ -147,7 +148,7 @@ export function Preview() {
       void enqueueScheduledJob({
         jobType: 'wish_expiry_reminder',
         payload: { user_id: user.id, wish_id: data.id, template_id: template.id },
-        scheduledFor: addDays(new Date(), 6),
+        scheduledFor: addHours(new Date(), 23),
       }).catch(() => undefined)
     } else {
       void enqueueScheduledJob({
@@ -201,7 +202,13 @@ export function Preview() {
   }
   return (
     <section className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <LivePreview template={editor.template} data={data} />
+      <PageHeader 
+        title="Experience Preview" 
+        subtitle="Review your wish before publishing and sharing."
+        backTo={`/editor/${editor.template.slug}`}
+      />
+      
+      {/* Action Banner moved to the top for better accessibility */}
       <div className="flex flex-col sm:flex-row items-center justify-between rounded-2xl bg-white p-6 shadow-premium border border-zinc-100 dark:border-white/10 dark:bg-ink dark:text-white gap-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-2 h-full bg-brand" />
         <div className="pl-4 text-center sm:text-left">
@@ -214,6 +221,10 @@ export function Preview() {
             Publish & Share
           </Button>
         </div>
+      </div>
+
+      <div className="w-full h-[70vh] min-h-[600px] relative rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 shadow-2xl">
+        <LivePreview template={editor.template} data={data} />
       </div>
     </section>
   )

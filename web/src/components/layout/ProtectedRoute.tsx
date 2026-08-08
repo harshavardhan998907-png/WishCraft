@@ -1,11 +1,12 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { Loader } from '../ui/Loader'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const location = useLocation()
 
-  if (loading) return <div className="grid min-h-screen place-items-center">Loading...</div>
+  if (loading) return <Loader variant="fullPage" />
 
   if (!user) {
     const intendedPath = location.pathname + location.search

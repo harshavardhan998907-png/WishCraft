@@ -1,4 +1,4 @@
-import type { OccasionType, Template, TemplateTier } from '../../../types'
+import type { OccasionType, TemplateTier } from '../../../types'
 
 export type AITone = 'birthday' | 'romantic' | 'funny' | 'emotional' | 'professional'
 
@@ -15,10 +15,7 @@ export interface AIWishResponse {
   fallback: boolean
 }
 
-export type AITemplateRecommendation = Template & {
-  recommendation_score: number
-  recommendation_reason: string
-}
+
 
 export interface CreatorMetadataInput {
   templateName: string

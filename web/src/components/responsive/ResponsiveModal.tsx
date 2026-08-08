@@ -1,14 +1,31 @@
 import { useEffect, useId } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X } from 'lucide-react'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 interface ResponsiveModalProps {
   open: boolean
-  title: string
-  children: React.ReactNode
   onClose: () => void
+  children: React.ReactNode
+  title?: string
+  subtitle?: string
+  footer?: React.ReactNode
+  customHeader?: React.ReactNode
+  maxWidth?: string // default "max-w-lg"
+  showCloseButton?: boolean
 }
 
-export function ResponsiveModal({ open, title, children, onClose }: ResponsiveModalProps) {
+export function ResponsiveModal({
+  open,
+  onClose,
+  children,
+  title,
+  subtitle,
+  footer,
+  customHeader,
+  maxWidth = 'max-w-lg',
+  showCloseButton = true
+}: ResponsiveModalProps) {
   const titleId = useId()
   const focusTrapRef = useFocusTrap(open)
 
@@ -24,24 +41,79 @@ export function ResponsiveModal({ open, title, children, onClose }: ResponsiveMo
     }
   }, [open, onClose])
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-40 grid place-items-end bg-black/45 p-0 backdrop-blur-sm sm:place-items-center sm:p-4" onMouseDown={onClose}>
-      <div
-        ref={focusTrapRef}
-        className="max-h-[92dvh] w-full overflow-y-auto rounded-t-lg bg-white p-4 text-ink shadow-soft transition-colors dark:border dark:border-white/10 dark:bg-[#181824] dark:text-white sm:max-w-lg sm:rounded-lg sm:p-6"
-        onMouseDown={(event) => event.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 id={titleId} className="text-lg font-black sm:text-xl">{title}</h2>
-          <button className="focus-ring min-h-11 rounded-xl px-3 py-2 text-sm font-bold text-zinc-600 hover:bg-black/5 dark:text-white/70 dark:hover:bg-white/10" onClick={onClose}>Close</button>
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[100] grid place-items-center p-4 sm:p-6 md:p-8">
+          {/* Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+
+          {/* Modal Container */}
+          <motion.div
+            ref={focusTrapRef}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className={`relative w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] rounded-[24px] sm:rounded-[28px] bg-white text-ink shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] dark:bg-[#12121a] dark:text-white dark:border dark:border-white/10 overflow-hidden flex flex-col`}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            {/* Close Button */}
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/50 backdrop-blur-md border border-black/5 hover:bg-black/5 dark:bg-black/50 dark:border-white/10 dark:hover:bg-white/10 transition-colors focus-ring"
+                aria-label="Close dialog"
+              >
+                <X size={20} className="text-zinc-600 dark:text-zinc-400" />
+              </button>
+            )}
+
+            {/* Header (Fixed) */}
+            {(title || customHeader) && (
+              <div className="p-5 sm:p-6 border-b border-black/5 dark:border-white/5 shrink-0 z-10 flex flex-col gap-1.5 pr-14">
+                {customHeader ? (
+                  customHeader
+                ) : (
+                  <>
+                    <h2 id={titleId} className="text-xl sm:text-2xl font-heading font-black tracking-tight text-ink dark:text-white">
+                      {title}
+                    </h2>
+                    {subtitle && (
+                      <p className="text-zinc-600 dark:text-zinc-400 text-sm sm:text-base leading-relaxed">
+                        {subtitle}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pr-1.5 p-5 sm:p-8 md:p-10">
+              {children}
+            </div>
+
+            {/* Footer (Fixed) */}
+            {footer && (
+              <div className="p-4 sm:p-6 border-t border-black/5 dark:border-white/5 bg-zinc-50 dark:bg-white/[0.02] flex justify-end gap-3 shrink-0 z-10">
+                {footer}
+              </div>
+            )}
+          </motion.div>
         </div>
-        {children}
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   )
 }

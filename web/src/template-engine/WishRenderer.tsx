@@ -8,6 +8,7 @@ interface WishRendererProps {
   template?: Template | null
   previewMode?: boolean
   fallback?: ReactNode
+  className?: string
 }
 
 export function TemplateNotFound({ templateId }: { templateId?: string | null }) {
@@ -24,7 +25,7 @@ export function TemplateNotFound({ templateId }: { templateId?: string | null })
   )
 }
 
-export function WishRenderer({ wish, template, previewMode = false, fallback }: WishRendererProps) {
+export function WishRenderer({ wish, template, previewMode = false, fallback, className }: WishRendererProps) {
   const templateSlug = wish.template_slug ?? template?.slug
   const componentKey = template?.component_key ?? template?.component_name
   const formData = wishToFormData(wish)
@@ -38,6 +39,7 @@ export function WishRenderer({ wish, template, previewMode = false, fallback }: 
       isExternal={template?.is_external}
       props={formDataToTemplateProps(formData, previewMode)}
       fallback={fallback}
+      className={className}
       errorFallback={<TemplateNotFound templateId={templateSlug ?? wish.template_id} />}
     />
   )

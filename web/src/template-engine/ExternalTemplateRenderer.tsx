@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Loader } from '../components/ui/Loader'
 import type { TemplateProps } from './types'
 
 interface ExternalTemplateRendererProps {
@@ -16,6 +17,7 @@ type LoadStatus = 'loading' | 'ready' | 'error'
 // Messages exchanged with the sandboxed iframe.
 const READY_MESSAGE = 'WISHCRAFT_PREVIEW_READY'
 const UPDATE_MESSAGE = 'WISHCRAFT_UPDATE_PROPS'
+const RESIZE_MESSAGE = 'WISHCRAFT_RESIZE'
 
 // Stop the bundle source from prematurely closing the inline <script> tag.
 function escapeForScript(source: string): string {
@@ -146,6 +148,32 @@ function buildIframeHtml(bundleSource: string, initialProps: TemplateProps): str
 
     // Tell the parent we're listening so it can flush the latest props.
     try { window.parent.postMessage({ type: ${JSON.stringify(READY_MESSAGE)} }, '*'); } catch (e) {}
+
+    function notifyHeight() {
+      try {
+        var body = document.body;
+        var html = document.documentElement;
+        var h = Math.max(
+          body ? body.scrollHeight : 0,
+          body ? body.offsetHeight : 0,
+          html ? html.scrollHeight : 0,
+          html ? html.offsetHeight : 0
+        );
+        if (h > 0) {
+          window.parent.postMessage({ type: ${JSON.stringify(RESIZE_MESSAGE)}, height: h }, '*');
+        }
+      } catch (e) {}
+    }
+
+    if (typeof ResizeObserver !== 'undefined' && document.body) {
+      var ro = new ResizeObserver(function () { notifyHeight(); });
+      ro.observe(document.body);
+    }
+    window.addEventListener('resize', notifyHeight);
+    window.addEventListener('load', notifyHeight);
+    setTimeout(notifyHeight, 200);
+    setTimeout(notifyHeight, 800);
+    setTimeout(notifyHeight, 1500);
   })();
 </script>
 </body>
@@ -169,6 +197,7 @@ export function ExternalTemplateRenderer({
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [iframeHeight, setIframeHeight] = useState<number | null>(null)
 
   latestPropsRef.current = props
 
@@ -222,13 +251,15 @@ export function ExternalTemplateRenderer({
     function handleMessage(event: MessageEvent) {
       const frame = iframeRef.current
       if (!frame || event.source !== frame.contentWindow) return
-      const data = event.data as { type?: string } | null
+      const data = event.data as { type?: string; height?: number } | null
       if (data?.type === READY_MESSAGE) {
         readyRef.current = true
         frame.contentWindow?.postMessage(
           { type: UPDATE_MESSAGE, props: latestPropsRef.current },
           '*',
         )
+      } else if (data?.type === RESIZE_MESSAGE && typeof data.height === 'number' && data.height > 0) {
+        setIframeHeight(data.height)
       }
     }
     window.addEventListener('message', handleMessage)
@@ -254,13 +285,17 @@ export function ExternalTemplateRenderer({
   }
 
   return (
-    <div className={className} style={{ position: 'relative', minHeight: '100vh', height: '100%', width: '100%' }}>
+    <div
+      className={className ?? 'w-full min-h-screen'}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: iframeHeight ? `${iframeHeight}px` : '100%',
+        minHeight: '100vh',
+      }}
+    >
       {status === 'loading' || !blobUrl ? (
-        fallback ?? (
-          <div className="grid min-h-[520px] place-items-center bg-cream font-bold text-zinc-500 dark:bg-[#10101a] dark:text-white/60">
-            Loading template...
-          </div>
-        )
+        fallback ?? <Loader variant="fullPage" />
       ) : (
         <iframe
           ref={iframeRef}
@@ -268,9 +303,10 @@ export function ExternalTemplateRenderer({
           title="Template preview"
           sandbox="allow-scripts"
           className="h-full w-full border-0"
-          style={{ display: 'block', minHeight: '100vh', height: '100%', width: '100%', border: 0 }}
+          style={{ display: 'block', height: '100%', width: '100%', border: 0 }}
         />
       )}
     </div>
   )
 }
+

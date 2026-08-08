@@ -34,3 +34,9 @@ export function addDays(date: Date, days: number): string {
   next.setDate(next.getDate() + days)
   return next.toISOString()
 }
+
+export function addHours(date: Date, hours: number): string {
+  const next = new Date(date)
+  next.setHours(next.getHours() + hours)
+  return next.toISOString()
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
@@ -56,13 +57,12 @@ export function AdminPlatformIntelligenceDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <h2 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Platform intelligence</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-white/70 sm:text-base">Regional growth, creator intelligence, engagement, AI usage, retention, and ecosystem usage from the central analytics layer.</p>
-        </div>
-        <Button type="button" loading={generating} onClick={generateSnapshot}>Generate snapshot</Button>
-      </div>
+      <PageHeader 
+        title="Platform intelligence" 
+        subtitle="Regional growth, creator intelligence, engagement, AI usage, retention, and ecosystem usage from the central analytics layer."
+        backTo="/admin"
+        actions={<Button type="button" loading={generating} onClick={generateSnapshot}>Generate snapshot</Button>}
+      />
 
       {error ? <Card className="border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">{error}</Card> : null}
       {loading ? <Card className="text-sm font-semibold text-zinc-500">Loading platform intelligence...</Card> : null}

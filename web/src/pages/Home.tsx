@@ -1,11 +1,19 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Footer } from '../components/layout/Footer'
 import { Button } from '../components/ui/Button'
+import { Loader } from '../components/ui/Loader'
+import { useAuth } from '../hooks/useAuth'
+import { HOW_IT_WORKS_STEPS } from '../data/howItWorks'
 import { FloatingRibbons, OrbitGlow } from '../components/ui/MotionDecor'
-import { Sparkles, Image as ImageIcon, Music, Link as LinkIcon, Heart, Star, Layout, Play } from 'lucide-react'
+import { Sparkles, Image as ImageIcon, Music, Heart, Star, Layout, Play } from 'lucide-react'
 
 export function Home() {
+  const { user, loading } = useAuth()
+
+  if (loading) return <Loader variant="fullPage" />
+  if (user) return <Navigate to="/browse" replace />
+
   return (
     <div className="bg-soft-cream dark:bg-deep-navy overflow-hidden">
       {/* Hero Section */}
@@ -149,12 +157,7 @@ export function Home() {
           </div>
 
           <div className="space-y-24">
-            {[
-              { num: '01', title: 'Choose Template', desc: 'Select from our gallery of premium, cinematic canvases.', icon: Layout },
-              { num: '02', title: 'Personalize', desc: 'Add their name, a heartfelt message, and your favorite photos.', icon: Heart },
-              { num: '03', title: 'Preview Experience', desc: 'See exactly how they will experience the surprise in real-time.', icon: Play },
-              { num: '04', title: 'Share', desc: 'Send them a magical link that opens an unforgettable journey.', icon: LinkIcon },
-            ].map((step, idx) => (
+            {HOW_IT_WORKS_STEPS.map((step, idx) => (
               <motion.div 
                 key={step.num}
                 initial={{ opacity: 0, x: idx % 2 === 0 ? -50 : 50 }}
