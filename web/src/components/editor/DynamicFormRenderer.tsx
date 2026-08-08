@@ -10,6 +10,7 @@ interface DynamicFormRendererProps {
   values: Record<string, unknown>
   templateId?: string | null
   allowMusic?: boolean
+  errors?: Record<string, string>
   onChange: (fieldId: string, value: unknown) => void
 }
 
@@ -179,7 +180,7 @@ function SectionHeader({ field }: { field: FormFieldDefinition }) {
 
 // ─── Main Renderer ──────────────────────────────────────────────────────────
 
-export function DynamicFormRenderer({ schema, values, templateId, allowMusic = true, onChange }: DynamicFormRendererProps) {
+export function DynamicFormRenderer({ schema, values, templateId, allowMusic = true, errors = {}, onChange }: DynamicFormRendererProps) {
   return (
     <div className="space-y-5">
       {schema.map((field) => {
@@ -213,12 +214,14 @@ export function DynamicFormRenderer({ schema, values, templateId, allowMusic = t
           return (
             <Textarea
               key={field.id}
+              id={`field-${field.id}`}
               label={`${field.label}${field.required ? ' (Required)' : ''}`}
               placeholder={field.placeholder}
               maxLength={field.maxLength}
               value={stringValue(value)}
               onChange={(event) => onChange(field.id, event.target.value)}
               required={field.required}
+              error={errors[field.id]}
             />
           )
         }
@@ -259,6 +262,7 @@ export function DynamicFormRenderer({ schema, values, templateId, allowMusic = t
         return (
           <Input
             key={field.id}
+            id={`field-${field.id}`}
             type={field.type === 'date' ? 'date' : field.type === 'url' ? 'url' : 'text'}
             label={`${field.label}${field.required ? ' (Required)' : ''}`}
             placeholder={field.placeholder}
@@ -266,6 +270,7 @@ export function DynamicFormRenderer({ schema, values, templateId, allowMusic = t
             value={stringValue(value)}
             onChange={(event) => onChange(field.id, event.target.value)}
             required={field.required}
+            error={errors[field.id]}
           />
         )
       })}

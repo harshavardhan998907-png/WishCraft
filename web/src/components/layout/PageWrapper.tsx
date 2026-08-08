@@ -3,7 +3,7 @@ import { ToastViewport } from '../ui/Toast'
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
-const fullscreenRoutePrefixes = ['/w/']
+const fullscreenRoutePrefixes = ['/w/', '/editor']
 
 function OfflineBanner() {
   const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && !navigator.onLine)

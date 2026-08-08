@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
+import { PageHeader } from '../components/layout/PageHeader'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useEditorStore } from '../store/editorStore'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Textarea } from '../components/ui/Textarea'
-import { ImageUpload } from '../components/ui/ImageUpload'
 import { LivePreview } from '../components/editor/LivePreview'
 import { DynamicFormRenderer } from '../components/editor/DynamicFormRenderer'
-import { useToastStore } from '../store/toastStore'
+
 import { Modal } from '../components/ui/Modal'
-import { Skeleton } from '../components/ui/Skeleton'
+import { Loader } from '../components/ui/Loader'
+import { ValidationDialog } from '../components/editor/ValidationDialog'
 import { motion } from 'framer-motion'
 import { AIWishGenerator } from '../modules/ai/components/AIWishGenerator'
-import { AITemplateRecommendations } from '../modules/ai/components/AITemplateRecommendations'
+
 import { getTemplateSchema } from '../template-engine'
 import { Image as ImageIcon, Music, UserCircle, Palette, Sparkles, Monitor, Smartphone, Trash2, Plus, CheckCircle } from 'lucide-react'
 import type { Template } from '../types'
@@ -28,6 +29,7 @@ const musicTracks = ['Gentle Piano', 'Warm Celebration', 'Soft Romance', 'Festiv
 // generic formData map. Shared by the desktop (ContentEditor) and mobile
 // (MobileWizard) editors so both render the exact same creator-defined schema.
 function applySchemaChange(store: StoreSnapshot, fieldId: string, value: unknown) {
+  store.clearError(fieldId)
   store.setFieldValue(fieldId, value)
   if (fieldId === 'recipient_name') store.setRecipientName(String(value ?? ''))
   if (fieldId === 'sender_name') store.setSenderName(String(value ?? ''))
@@ -41,14 +43,14 @@ function applySchemaChange(store: StoreSnapshot, fieldId: string, value: unknown
 
 // Builds the `values` map DynamicFormRenderer expects: legacy named fields merged
 // with the generic formData (custom creator fields live in formData).
-function schemaValues(store: StoreSnapshot): Record<string, unknown> {
+function schemaValues(data: Pick<StoreSnapshot, 'recipientName' | 'senderName' | 'customMessage' | 'photoUrls' | 'musicUrl' | 'formData'>): Record<string, unknown> {
   return {
-    recipient_name: store.recipientName,
-    sender_name: store.senderName,
-    message: store.customMessage,
-    photos: store.photoUrls,
-    music: store.musicUrl,
-    ...store.formData,
+    recipient_name: data.recipientName,
+    sender_name: data.senderName,
+    message: data.customMessage,
+    photos: data.photoUrls,
+    music: data.musicUrl,
+    ...data.formData,
   }
 }
 
@@ -69,6 +71,8 @@ type StoreSnapshot = {
   removePhoto: (url: string) => void
   setMusicUrl: (url: string | null) => void
   setUseCustomMusic: (v: boolean) => void
+  errors: Record<string, string>
+  clearError: (id: string) => void
 }
 
 function ContentEditor({ store }: { store: StoreSnapshot }) {
@@ -118,18 +122,19 @@ function ContentEditor({ store }: { store: StoreSnapshot }) {
           values={schemaValues(store)}
           templateId={selectedTemplate?.id ?? null}
           allowMusic={selectedTemplate?.tier !== 'free'}
+          errors={store.errors}
           onChange={(fieldId, value) => applySchemaChange(store, fieldId, value)}
         />
       </div>
       <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
-      <AITemplateRecommendations occasion={selectedTemplate?.occasion} />
+
     </div>
   )
 }
 
 function CustomizationStudio({ onPublish }: { onPublish: () => void }) {
   return (
-    <div className="space-y-6 p-6 glass-panel rounded-2xl h-full overflow-y-auto bg-white dark:bg-ink">
+    <div className="space-y-6 p-6 glass-panel rounded-2xl h-full overflow-y-auto bg-white dark:bg-ink min-h-0">
       <div className="mb-6 pb-6 border-b border-zinc-200 dark:border-white/10">
         <h2 className="text-xl font-heading font-bold mb-4 flex items-center gap-2">
           <Palette className="text-brand" size={24} />
@@ -213,6 +218,7 @@ function MobileWizard({
           values={schemaValues(store)}
           templateId={selectedTemplate?.id ?? null}
           allowMusic={selectedTemplate?.tier !== 'free'}
+          errors={store.errors}
           onChange={(fieldId, value) => applySchemaChange(store, fieldId, value)}
         />
         <AIWishGenerator initialOccasion={selectedTemplate?.occasion ?? 'birthday'} onApply={store.setCustomMessage} />
@@ -268,14 +274,26 @@ function SceneNavigator({ store }: { store: StoreSnapshot }) {
 // ─── Main Editor ─────────────────────────────────────────────────────────────
 
 export function Editor() {
-  const { templateSlug } = useParams()
-  const isBirthdayTemplate = templateSlug === 'birthday-letter-in-light'
   const navigate = useNavigate()
-  const toast = useToastStore()
+  const { templateSlug } = useParams()
   const store = useEditorStore()
+
+  useEffect(() => {
+    // Prevent the browser page from scrolling, ensuring only the inner containers scroll
+    const originalStyle = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = originalStyle
+    }
+  }, [])
+
+  const isBirthdayTemplate = templateSlug === 'birthday-letter-in-light'
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false)
+  const [missingFields, setMissingFields] = useState<{ id: string; label: string }[]>([])
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const selectedTemplate = store.template
 
@@ -292,7 +310,7 @@ export function Editor() {
         if (data) store.setTemplate(data)
         if (error) console.error('[Editor] template lookup failed', error)
       })
-  }, [templateSlug])
+  }, [templateSlug, store])
 
   const previewData = useMemo(() => ({
     recipientName: store.recipientName,
@@ -304,20 +322,32 @@ export function Editor() {
   }), [store.recipientName, store.senderName, store.customMessage, store.photoUrls, store.musicUrl, store.formData])
 
   if (!selectedTemplate) {
-    return (
-      <div className="h-[calc(100vh-80px)] max-w-[1600px] mx-auto p-4 lg:p-6 grid lg:grid-cols-[380px_1fr_320px] gap-6">
-        <Skeleton className="h-full w-full rounded-2xl" />
-        <Skeleton className="h-full w-full rounded-2xl hidden lg:block" />
-        <Skeleton className="h-full w-full rounded-2xl hidden lg:block" />
-      </div>
-    )
+    return <Loader variant="fullPage" />
   }
 
+  const schema = selectedTemplate ? getTemplateSchema(selectedTemplate) : []
+
   function goPreview() {
-    if (!store.recipientName || !store.senderName) {
-      toast.push('error', 'Recipient and sender names are required')
+    const currentValues = schemaValues(store)
+    const requiredFields = schema.filter(f => f.required)
+    const newErrors: Record<string, string> = {}
+    const missing: { id: string; label: string }[] = []
+
+    for (const field of requiredFields) {
+      const val = currentValues[field.id]
+      if (!val || (typeof val === 'string' && val.trim() === '') || (Array.isArray(val) && val.length === 0)) {
+        newErrors[field.id] = 'This field is required.'
+        missing.push({ id: field.id, label: field.label || field.id })
+      }
+    }
+
+    if (missing.length > 0) {
+      setErrors(newErrors)
+      setMissingFields(missing)
+      setValidationDialogOpen(true)
       return
     }
+
     navigate('/preview')
   }
 
@@ -339,29 +369,67 @@ export function Editor() {
     removePhoto: store.removePhoto,
     setMusicUrl: store.setMusicUrl,
     setUseCustomMusic: store.setUseCustomMusic,
+    errors,
+    clearError: (id) => setErrors(prev => {
+      if (!prev[id]) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    }),
   }
+
+  const renderValidationDialog = () => (
+    <ValidationDialog
+      open={validationDialogOpen}
+      missingFields={missingFields}
+      onClose={() => setValidationDialogOpen(false)}
+      onGoToFields={() => {
+        setValidationDialogOpen(false)
+        setTimeout(() => {
+          const firstInvalid = missingFields[0]
+          if (firstInvalid) {
+            const el = document.getElementById(`field-${firstInvalid.id}`)
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              el.focus()
+            }
+          }
+        }, 100)
+      }}
+    />
+  )
 
   if (isBirthdayTemplate) {
     return (
-      <BirthdayEditorLayout
-        store={storeSnapshot}
-        goPreview={goPreview}
-        previewData={previewData}
-      />
+      <>
+        <BirthdayEditorLayout
+          store={storeSnapshot}
+          goPreview={goPreview}
+          previewData={previewData}
+        />
+        {renderValidationDialog()}
+      </>
     )
   }
 
   return (
-    <section className="h-[calc(100vh-80px)] overflow-hidden bg-soft-cream dark:bg-deep-navy">
+    <section 
+      className="overflow-hidden bg-soft-cream dark:bg-deep-navy flex flex-col h-[100dvh]"
+    >
+      <div className="px-4 pt-4 lg:px-6 lg:pt-6 pb-2 shrink-0 max-w-[1600px] w-full mx-auto">
+        <PageHeader title="Wish Studio" backTo="/browse" />
+      </div>
 
       {/* ── Desktop 3-Column Layout (lg+) ── */}
-      <div className="h-full max-w-[1600px] mx-auto p-4 lg:p-6 hidden lg:grid lg:grid-cols-[380px_1fr_320px] lg:gap-6">
+      <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 pb-4 lg:px-6 lg:pb-6 lg:pt-0 hidden lg:grid lg:grid-cols-[380px_1fr_320px] lg:gap-6 overflow-hidden min-h-0">
 
         {/* Column 1: Content Controls */}
-        <ContentEditor store={storeSnapshot} />
+        <div className="min-h-0">
+          <ContentEditor store={storeSnapshot} />
+        </div>
 
         {/* Column 2: Dominant Live Preview */}
-        <div className="relative h-full flex flex-col glass-panel rounded-2xl overflow-hidden">
+        <div className="relative h-full flex flex-col glass-panel rounded-2xl overflow-hidden min-h-0">
           {/* Top bar */}
           <div className="flex h-12 shrink-0 items-center justify-between border-b border-black/10 bg-white/40 px-4 backdrop-blur-md dark:border-white/10 dark:bg-black/40">
             <span className="font-heading font-black text-xs tracking-widest uppercase opacity-40 text-ink dark:text-white">Live View</span>
@@ -395,11 +463,13 @@ export function Editor() {
         </div>
 
         {/* Column 3: Customization */}
-        <CustomizationStudio onPublish={goPreview} />
+        <div className="min-h-0">
+          <CustomizationStudio onPublish={goPreview} />
+        </div>
       </div>
 
       {/* ── Mobile Wizard (< lg) ── */}
-      <div className="h-full p-4 lg:hidden">
+      <div className="flex-1 w-full p-4 lg:hidden overflow-hidden">
         <MobileWizard
           store={storeSnapshot}
           onPreview={() => setPreviewOpen(true)}
@@ -417,6 +487,7 @@ export function Editor() {
           </div>
         </div>
       </Modal>
+      {renderValidationDialog()}
     </section>
   )
 }
@@ -512,8 +583,11 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
   }
 
   return (
-    <section className="min-h-[calc(100vh-80px)] bg-zinc-50 dark:bg-zinc-950">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-start gap-6 p-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(520px,1.05fr)] lg:p-6">
+    <section className="min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col">
+      <div className="px-4 pt-4 lg:px-6 lg:pt-6 pb-2 shrink-0 max-w-[1600px] w-full mx-auto">
+        <PageHeader title="" backTo="/browse" />
+      </div>
+      <div className="mx-auto w-full grid max-w-[1600px] grid-cols-1 items-start gap-6 p-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(520px,1.05fr)] lg:px-6 lg:pb-6 lg:pt-0">
         
         <div className="bg-white dark:bg-zinc-900 shadow-soft lg:rounded-2xl overflow-hidden relative border border-zinc-200/50 dark:border-white/5">
           
@@ -553,16 +627,26 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Input
+                        id="field-recipient_name"
+                        error={store.errors['recipient_name']}
                         label="Recipient's Name (Required)"
                         value={store.recipientName}
-                        onChange={(e) => store.setRecipientName(e.target.value)}
+                        onChange={(e) => {
+                          store.setRecipientName(e.target.value)
+                          store.clearError('recipient_name')
+                        }}
                         placeholder="e.g. Amelia"
                         required
                       />
                       <Input
+                        id="field-birthday_date"
+                        error={store.errors['birthday_date']}
                         label="Birthday Date (Required)"
                         value={String(store.formData.birthday_date || '')}
-                        onChange={(e) => store.setFieldValue('birthday_date', e.target.value)}
+                        onChange={(e) => {
+                          store.setFieldValue('birthday_date', e.target.value)
+                          store.clearError('birthday_date')
+                        }}
                         placeholder="e.g. December 4th"
                         required
                       />
@@ -570,9 +654,14 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Input
+                        id="field-sender_name"
+                        error={store.errors['sender_name']}
                         label="Your Name (Required)"
                         value={store.senderName}
-                        onChange={(e) => store.setSenderName(e.target.value)}
+                        onChange={(e) => {
+                          store.setSenderName(e.target.value)
+                          store.clearError('sender_name')
+                        }}
                         placeholder="e.g. Daniel"
                         required
                       />
@@ -607,9 +696,14 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
 
                       <div>
                         <Textarea
+                          id="field-message"
+                          error={store.errors['message']}
                           label="Main Birthday Message (Required)"
                           value={store.customMessage}
-                          onChange={(e) => store.setCustomMessage(e.target.value)}
+                          onChange={(e) => {
+                            store.setCustomMessage(e.target.value)
+                            store.clearError('message')
+                          }}
                           placeholder="Today the world feels a little brighter — because the day it learned your name is the day everything began to glow..."
                           maxLength={300}
                           rows={4}
@@ -661,7 +755,7 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
 
                         {uploadProgress && (
                           <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-xs text-brand flex items-center gap-2">
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                            <Loader variant="spinner" size="sm" />
                             <span className="animate-pulse">{uploadProgress}</span>
                           </div>
                         )}
@@ -926,7 +1020,7 @@ export function BirthdayEditorLayout({ store, goPreview, previewData }: Birthday
           </div>
         </div>
 
-        <div className="sticky top-[80px] hidden h-[calc(100vh-112px)] min-h-[560px] lg:flex flex-col bg-zinc-100/50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200/50 dark:border-white/5 overflow-hidden relative">
+        <div className="sticky top-6 hidden h-[calc(100dvh-48px)] min-h-[560px] lg:flex flex-col bg-zinc-100/50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200/50 dark:border-white/5 overflow-hidden relative">
           
           <div className="p-4 border-b border-zinc-200/40 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md flex items-center justify-between absolute top-0 inset-x-0 z-10 pointer-events-none">
             <span className="font-heading font-black text-xs uppercase tracking-widest text-zinc-400 dark:text-zinc-500 pl-2">

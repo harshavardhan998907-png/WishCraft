@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { motion } from 'framer-motion'
 import { Inbox, Eye, Check, X, Loader2 } from 'lucide-react'
 import {
@@ -128,12 +129,11 @@ export function AdminSubmissions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Template Submissions</h2>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-white/70">
-          Review creator-submitted templates before they go live.
-        </p>
-      </div>
+      <PageHeader 
+        title="Template Submissions" 
+        subtitle="Review creator-submitted templates before they go live."
+        backTo="/admin"
+      />
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2">

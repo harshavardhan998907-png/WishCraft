@@ -108,3 +108,39 @@ export interface WishData {
   musicUrl: string | null
   customData?: Record<string, unknown>
 }
+
+export interface Review {
+  id: string
+  user_id: string | null
+  rating: number
+  review: string | null
+  title: string | null
+  platform: string
+  app_version: string | null
+  created_at: string
+}
+
+export interface FeatureRequest {
+  id: string
+  user_id: string
+  title: string
+  description: string
+  category: string
+  priority: 'Low' | 'Medium' | 'High'
+  status: string
+  created_at: string
+}
+
+export interface BugReport {
+  id: string
+  user_id: string
+  title: string
+  description: string
+  page: string
+  severity: 'Low' | 'Medium' | 'High' | 'Critical'
+  expected_behavior: string
+  actual_behavior: string
+  screenshot_url: string | null
+  status: string
+  created_at: string
+}

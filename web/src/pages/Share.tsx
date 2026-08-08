@@ -1,9 +1,10 @@
 import { Link, useParams } from 'react-router-dom'
+import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
 import { getShareableUrl } from '../lib/utils'
 import { useToastStore } from '../store/toastStore'
 import { useAnalytics } from '../modules/analytics/hooks/useAnalytics'
-import { Copy, ExternalLink, Share2, Sparkles, LayoutDashboard } from 'lucide-react'
+import { Copy, ExternalLink, Share2, Sparkles } from 'lucide-react'
 
 export function Share() {
   const { slug = '' } = useParams()
@@ -39,8 +40,11 @@ export function Share() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-70px)] bg-celebration-light dark:bg-celebration-dark grid place-items-center px-4 py-12">
-      <div className="max-w-xl w-full rounded-3xl bg-white/90 p-8 text-center shadow-premium backdrop-blur-xl dark:border dark:border-white/10 dark:bg-ink/90 dark:text-white">
+    <section className="min-h-[calc(100vh-70px)] bg-celebration-light dark:bg-celebration-dark px-4 py-8">
+      <div className="max-w-xl mx-auto mb-4">
+        <PageHeader title="" backTo="/dashboard" />
+      </div>
+      <div className="max-w-xl w-full mx-auto rounded-3xl bg-white/90 p-8 text-center shadow-premium backdrop-blur-xl dark:border dark:border-white/10 dark:bg-ink/90 dark:text-white">
         <div className="w-20 h-20 rounded-full bg-sun/10 text-sun flex items-center justify-center mx-auto mb-6">
           <Sparkles size={36} />
         </div>
@@ -69,11 +73,6 @@ export function Share() {
           </Link>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-zinc-100 dark:border-white/10">
-          <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline">
-            <LayoutDashboard size={16} /> Return to Dashboard
-          </Link>
-        </div>
       </div>
     </section>
   )

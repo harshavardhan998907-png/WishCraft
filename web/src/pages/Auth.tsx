@@ -5,6 +5,7 @@ import { CheckCircle2, Eye, EyeOff, ArrowLeft, Check, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { Loader } from '../components/ui/Loader'
 import { supabase } from '../lib/supabase'
 import { useToastStore } from '../store/toastStore'
 import { recordRateLimitEvent } from '../modules/security/services/governanceService'
@@ -139,7 +140,7 @@ export function Auth() {
       try {
         const data = await signUp(email.trim(), password, fullName.trim())
         const role = data.user?.user_metadata?.role
-        const destination = safeRedirect(redirectTo) ?? (role === 'admin' ? '/admin' : '/dashboard')
+        const destination = safeRedirect(redirectTo) ?? (role === 'admin' ? '/admin' : '/browse')
         navigate(destination)
       } catch (err) {
         const message = err instanceof Error ? err.message : typeof err === 'object' && err && 'message' in err ? String(err.message) : 'Authentication failed'
@@ -165,7 +166,7 @@ export function Auth() {
       try {
         const data = await signIn(email.trim(), password)
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
-        const destination = safeRedirect(redirectTo) ?? (profile?.role === 'admin' ? '/admin' : '/dashboard')
+        const destination = safeRedirect(redirectTo) ?? (profile?.role === 'admin' ? '/admin' : '/browse')
         navigate(destination)
       } catch (err) {
         const message = err instanceof Error ? err.message : typeof err === 'object' && err && 'message' in err ? String(err.message) : 'Authentication failed'
@@ -196,8 +197,10 @@ export function Auth() {
     : true
 
   return (
-    <section className="grid min-h-[calc(100vh-70px)] place-items-center overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
-      <form noValidate onSubmit={submit} className="w-full max-w-md min-h-[550px] sm:min-h-[580px] rounded-2xl border border-black/5 bg-white/95 p-5 shadow-soft transition-colors dark:border-white/10 dark:bg-[#181824]/95 dark:text-white sm:p-7 overflow-hidden flex flex-col">
+    <>
+      {loading && <Loader variant="fullPage" />}
+      <section className="grid min-h-[calc(100vh-70px)] place-items-center overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
+        <form noValidate onSubmit={submit} className="w-full max-w-md min-h-[550px] sm:min-h-[580px] rounded-2xl border border-black/5 bg-white/95 p-5 shadow-soft transition-colors dark:border-white/10 dark:bg-[#181824]/95 dark:text-white sm:p-7 overflow-hidden flex flex-col">
         <div className="flex-none mb-6">
           <button 
             type="button" 
@@ -328,5 +331,6 @@ export function Auth() {
         </div>
       </form>
     </section>
+    </>
   )
 }

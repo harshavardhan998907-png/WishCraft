@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
+import { PageHeader } from '../../../components/layout/PageHeader'
 import { Card } from '../../../components/ui/Card'
 import { useAuth } from '../../../hooks/useAuth'
 import { fetchCreatorMetrics, fetchCreatorTemplatePopularity } from '../services/creatorAnalytics'
 import { fetchCreatorProfile } from '../services/creatorProfile'
 import { marketplaceSchemaMessage } from '../services/marketplaceSchema'
 import type { CreatorTemplateMetric, CreatorTemplatePopularity } from '../types'
-import { fetchOwnedMediaAssets } from '../../media/services/mediaService'
-import type { MediaAsset } from '../../media/types'
 import { fetchCreatorEngagementMetrics } from '../../engagement/services/engagementService'
 import type { CreatorEngagementMetric } from '../../engagement/types'
+import { fetchOwnedMediaAssets } from '../../media/services/mediaService'
+import type { MediaAsset } from '../../media/types'
 
 function formatBytes(bytes: number) {
   if (!bytes) return '0 B'
@@ -53,11 +54,12 @@ export function CreatorAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">Analytics</h2>
-        <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-white/70">Views, conversions, popularity, and engagement metrics from the central analytics system.</p>
-        <p className="mt-1 text-xs font-semibold text-zinc-500">Report time: {new Date().toLocaleString()}</p>
-      </div>
+      <PageHeader 
+        title="Analytics" 
+        subtitle="Views, conversions, popularity, and engagement metrics from the central analytics system."
+        backTo="/creator"
+        actions={<p className="text-xs font-semibold text-zinc-500 mt-2 sm:mt-0">Report time: {new Date().toLocaleString()}</p>}
+      />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card><p className="text-sm font-bold text-zinc-500">Views</p><p className="mt-2 text-3xl font-black">{metrics?.total_views ?? 0}</p></Card>
