@@ -40,12 +40,30 @@ function buildIframeHtml(bundleSource: string, initialProps: TemplateProps): str
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  html,body{margin:0;padding:0;height:100%;width:100%;}
+  *, ::before, ::after { box-sizing: border-box; }
+  html,body{margin:0;padding:0;height:100%;width:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;}
   #root{min-height:100%;width:100%;}
   #wc-error{display:none;padding:24px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:13px;line-height:1.5;color:#b91c1c;background:#fff;white-space:pre-wrap;}
 </style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          heading: ['Outfit', 'Inter', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script>
