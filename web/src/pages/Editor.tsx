@@ -298,6 +298,8 @@ export function Editor() {
   const selectedTemplate = store.template
 
   useEffect(() => {
+    if (!templateSlug) return
+    let cancelled = false
     supabase
       .from('templates')
       .select('*')
@@ -306,11 +308,16 @@ export function Editor() {
       .eq('status', 'published')
       .single()
       .then(({ data, error }) => {
+        if (cancelled) return
         console.info('[Editor] template lookup result', { templateSlug, found: Boolean(data), error })
-        if (data) store.setTemplate(data)
+        if (data) useEditorStore.getState().setTemplate(data)
         if (error) console.error('[Editor] template lookup failed', error)
       })
-  }, [templateSlug, store])
+
+    return () => {
+      cancelled = true
+    }
+  }, [templateSlug])
 
   const previewData = useMemo(() => ({
     recipientName: store.recipientName,

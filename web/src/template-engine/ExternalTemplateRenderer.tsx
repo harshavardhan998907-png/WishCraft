@@ -47,8 +47,9 @@ function buildIframeHtml(bundleSource: string, initialProps: TemplateProps): str
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   *, ::before, ::after { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; min-height: 100%; width: 100%; font-family: 'Inter', system-ui, -apple-system, sans-serif; overflow-x: hidden; overflow-y: auto; }
-  #root { min-height: 100%; width: 100%; }
+  html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+  body { margin: 0; padding: 0; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-overflow-scrolling: touch; }
+  #root { width: 100%; min-height: 100%; }
   #wc-error { display: none; padding: 24px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 13px; line-height: 1.5; color: #b91c1c; background: #fff; white-space: pre-wrap; }
 </style>
@@ -286,12 +287,11 @@ export function ExternalTemplateRenderer({
 
   return (
     <div
-      className={className ?? 'w-full min-h-screen'}
+      className={className ?? 'w-full h-full min-h-[500px]'}
       style={{
         position: 'relative',
         width: '100%',
-        height: iframeHeight ? `${iframeHeight}px` : '100%',
-        minHeight: '100vh',
+        height: '100%',
       }}
     >
       {status === 'loading' || !blobUrl ? (
@@ -303,7 +303,12 @@ export function ExternalTemplateRenderer({
           title="Template preview"
           sandbox="allow-scripts"
           className="h-full w-full border-0"
-          style={{ display: 'block', height: '100%', width: '100%', border: 0 }}
+          style={{
+            display: 'block',
+            width: '100%',
+            height: '100%',
+            border: 0,
+          }}
         />
       )}
     </div>

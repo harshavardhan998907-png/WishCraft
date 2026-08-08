@@ -27,23 +27,29 @@ export function useAuth() {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!mounted) return
       setUser(data.user)
-      await fetchProfile(data.user)
-      setLoading(false)
+      if (data.user) {
+        await fetchProfile(data.user)
+      } else {
+        setProfile(null)
+      }
+      if (mounted) setLoading(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted || event === 'INITIAL_SESSION') return
       setUser(session?.user ?? null)
-      setLoading(true)
-      void fetchProfile(session?.user ?? null).finally(() => {
-        if (mounted) setLoading(false)
-      })
+      if (session?.user) {
+        void fetchProfile(session.user)
+      } else {
+        setProfile(null)
+      }
     })
 
     return () => {
       mounted = false
       listener.subscription.unsubscribe()
     }
-  }, [fetchProfile, setUser])
+  }, [fetchProfile, setProfile, setUser])
 
   async function signUp(email: string, password: string, fullName: string) {
     const { data, error } = await supabase.auth.signUp({
