@@ -45,10 +45,10 @@ function buildIframeHtml(bundleSource: string, initialProps: TemplateProps): str
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   *, ::before, ::after { box-sizing: border-box; }
-  html,body{margin:0;padding:0;height:100%;width:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;}
-  #root{min-height:100%;width:100%;}
-  #wc-error{display:none;padding:24px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-    font-size:13px;line-height:1.5;color:#b91c1c;background:#fff;white-space:pre-wrap;}
+  html, body { margin: 0; padding: 0; min-height: 100%; width: 100%; font-family: 'Inter', system-ui, -apple-system, sans-serif; overflow-x: hidden; overflow-y: auto; }
+  #root { min-height: 100%; width: 100%; }
+  #wc-error { display: none; padding: 24px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px; line-height: 1.5; color: #b91c1c; background: #fff; white-space: pre-wrap; }
 </style>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>

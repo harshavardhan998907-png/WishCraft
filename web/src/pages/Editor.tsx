@@ -363,26 +363,30 @@ export function Editor() {
         {/* Column 2: Dominant Live Preview */}
         <div className="relative h-full flex flex-col glass-panel rounded-2xl overflow-hidden">
           {/* Top bar */}
-          <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black/5 to-transparent z-10 flex items-center justify-between px-6 pointer-events-none">
-            <span className="font-heading font-black text-lg tracking-widest uppercase opacity-30 text-ink dark:text-white">Live View</span>
-            <div className="flex gap-2 pointer-events-auto bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-full p-1">
+          <div className="flex h-12 shrink-0 items-center justify-between border-b border-black/10 bg-white/40 px-4 backdrop-blur-md dark:border-white/10 dark:bg-black/40">
+            <span className="font-heading font-black text-xs tracking-widest uppercase opacity-40 text-ink dark:text-white">Live View</span>
+            <div className="flex gap-1.5 p-1">
               <button
+                type="button"
                 onClick={() => setPreviewMode('desktop')}
-                className={`p-2 rounded-full transition-colors ${previewMode === 'desktop' ? 'bg-white shadow-sm dark:bg-ink text-brand' : 'text-zinc-600 dark:text-zinc-400 hover:text-brand'}`}
+                className={`p-1.5 rounded-lg transition-colors ${previewMode === 'desktop' ? 'bg-white shadow-sm dark:bg-ink text-brand' : 'text-zinc-500 hover:text-brand dark:text-zinc-400'}`}
+                title="Desktop View"
               >
-                <Monitor size={18} />
+                <Monitor size={16} />
               </button>
               <button
+                type="button"
                 onClick={() => setPreviewMode('mobile')}
-                className={`p-2 rounded-full transition-colors ${previewMode === 'mobile' ? 'bg-white shadow-sm dark:bg-ink text-brand' : 'text-zinc-600 dark:text-zinc-400 hover:text-brand'}`}
+                className={`p-1.5 rounded-lg transition-colors ${previewMode === 'mobile' ? 'bg-white shadow-sm dark:bg-ink text-brand' : 'text-zinc-500 hover:text-brand dark:text-zinc-400'}`}
+                title="Mobile View"
               >
-                <Smartphone size={18} />
+                <Smartphone size={16} />
               </button>
             </div>
           </div>
 
           {/* Preview area */}
-          <div className="flex-1 overflow-hidden bg-zinc-100/50 dark:bg-ink/50 flex items-center justify-center p-6 pb-36">
+          <div className="flex-1 overflow-hidden bg-zinc-100/50 dark:bg-ink/50 flex items-center justify-center p-4 pb-20">
             <div className={`transition-all duration-500 ease-in-out h-full w-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-ink ${previewMode === 'mobile' ? 'max-w-[400px] aspect-[9/19] h-auto max-h-[850px]' : ''}`}>
               <LivePreview template={store.template} data={previewData} />
             </div>
