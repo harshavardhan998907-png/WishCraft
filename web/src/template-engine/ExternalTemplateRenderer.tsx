@@ -200,6 +200,8 @@ export function ExternalTemplateRenderer({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [iframeHeight, setIframeHeight] = useState<number | null>(null)
 
+  const isPreview = Boolean(props.previewMode)
+
   latestPropsRef.current = props
 
   // Fetch the bundle once per URL and build a same-origin Blob document for the
@@ -285,7 +287,21 @@ export function ExternalTemplateRenderer({
     )
   }
 
+  const wrapperStyle: React.CSSProperties = { position: 'relative', width: '100%' }
+  if (isPreview) {
+    wrapperStyle.height = '100%'
+  }
+
+  const iframeStyle: React.CSSProperties = { display: 'block', width: '100%', border: 0 }
+  if (isPreview) {
+    iframeStyle.height = '100%'
+  } else {
+    // Model B: Lock the published iframe to the browser's viewport height.
+    iframeStyle.height = '100vh'
+  }
+
   return (
+    <div className={className} style={wrapperStyle}>
     <div
       className={className ?? 'w-full h-full min-h-[500px]'}
       style={{
@@ -302,13 +318,8 @@ export function ExternalTemplateRenderer({
           src={blobUrl}
           title="Template preview"
           sandbox="allow-scripts"
-          className="h-full w-full border-0"
-          style={{
-            display: 'block',
-            width: '100%',
-            height: '100%',
-            border: 0,
-          }}
+          className={isPreview ? "h-full w-full border-0" : "w-full border-0"}
+          style={iframeStyle}
         />
       )}
     </div>
