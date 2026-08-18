@@ -301,14 +301,9 @@ export function ExternalTemplateRenderer({
   }
 
   return (
-    <div className={className} style={wrapperStyle}>
     <div
       className={className ?? 'w-full h-full min-h-[500px]'}
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-      }}
+      style={wrapperStyle}
     >
       {status === 'loading' || !blobUrl ? (
         fallback ?? <Loader variant="fullPage" />
