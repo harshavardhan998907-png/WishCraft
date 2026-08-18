@@ -43,6 +43,7 @@ function buildIframeHtml(bundleSource: string, initialProps: TemplateProps): str
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   html,body{margin:0;padding:0;height:100%;width:100%;}
+  body{overflow-y:auto;overflow-x:hidden;}
   #root{min-height:100%;width:100%;}
   #wc-error{display:none;padding:24px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:13px;line-height:1.5;color:#b91c1c;background:#fff;white-space:pre-wrap;}
@@ -153,6 +154,8 @@ export function ExternalTemplateRenderer({
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  const isPreview = Boolean(props.previewMode)
+
   latestPropsRef.current = props
 
   // Fetch the bundle once per URL and build a same-origin Blob document for the
@@ -236,8 +239,21 @@ export function ExternalTemplateRenderer({
     )
   }
 
+  const wrapperStyle: React.CSSProperties = { position: 'relative', width: '100%' }
+  if (isPreview) {
+    wrapperStyle.height = '100%'
+  }
+
+  const iframeStyle: React.CSSProperties = { display: 'block', width: '100%', border: 0 }
+  if (isPreview) {
+    iframeStyle.height = '100%'
+  } else {
+    // Model B: Lock the published iframe to the browser's viewport height.
+    iframeStyle.height = '100vh'
+  }
+
   return (
-    <div className={className} style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div className={className} style={wrapperStyle}>
       {status === 'loading' || !blobUrl ? (
         fallback ?? <Loader variant="fullPage" />
       ) : (
@@ -246,8 +262,8 @@ export function ExternalTemplateRenderer({
           src={blobUrl}
           title="Template preview"
           sandbox="allow-scripts"
-          className="h-full w-full border-0"
-          style={{ display: 'block', height: '100%', width: '100%', border: 0 }}
+          className={isPreview ? "h-full w-full border-0" : "w-full border-0"}
+          style={iframeStyle}
         />
       )}
     </div>
