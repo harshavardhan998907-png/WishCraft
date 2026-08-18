@@ -84,6 +84,7 @@ export function WishPage() {
         <WishRenderer
           wish={data.wish}
           template={data.template}
+          className="w-full min-h-screen"
           fallback={<div className="grid min-h-screen place-items-center bg-cream font-bold">Loading template...</div>}
         />
       )}

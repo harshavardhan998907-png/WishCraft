@@ -41,8 +41,12 @@ function buildPreviewHtml(bundleSource: string): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Template preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  html,body{margin:0;padding:0;height:100%;width:100%;}
+  *, ::before, ::after { box-sizing: border-box; }
+  html,body{margin:0;padding:0;height:100%;width:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;}
   #root{min-height:100%;width:100%;}
   #root-placeholder{padding:24px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:13px;color:#475569;}
@@ -51,6 +55,20 @@ function buildPreviewHtml(bundleSource: string): string {
     font-size:12px;line-height:1.5;color:#e2e8f0;background:rgba(15,23,42,0.92);white-space:pre-wrap;}
   #preview-status.error{color:#fecaca;background:rgba(69,10,10,0.95);}
 </style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          heading: ['Outfit', 'Inter', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
 <!-- React + ReactDOM globals BEFORE the bundle runs. Development builds so any
      render-time error is human-readable. No crossorigin attribute: CORS-mode
      fetches can fail silently in the opaque-origin sandboxed iframe. -->

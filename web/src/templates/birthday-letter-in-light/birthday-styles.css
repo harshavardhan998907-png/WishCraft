@@ -11,40 +11,61 @@
 
 .birthday-letter-in-light {
   --radius: 0.625rem;
-  /* Elegant Birthday — midnight + rose gold */
+  /* Elegant Birthday — midnight + rose gold (with hex fallbacks) */
+  --background: #110e1b;
   --background: oklch(0.14 0.03 280);
+  --ink: #0b0914;
   --ink: oklch(0.10 0.025 280);
+  --foreground: #f6f3e8;
   --foreground: oklch(0.96 0.012 80);
+  --card: #181427;
   --card: oklch(0.18 0.035 280);
+  --card-foreground: #f6f3e8;
   --card-foreground: oklch(0.96 0.012 80);
+  --popover: #181427;
   --popover: oklch(0.18 0.035 280);
+  --popover-foreground: #f6f3e8;
   --popover-foreground: oklch(0.96 0.012 80);
+  --primary: #e6b86a;
   --primary: oklch(0.78 0.12 55);        /* rose gold */
+  --primary-foreground: #110e1b;
   --primary-foreground: oklch(0.12 0.02 280);
+  --secondary: #211a36;
   --secondary: oklch(0.24 0.04 280);
+  --secondary-foreground: #f6f3e8;
   --secondary-foreground: oklch(0.96 0.012 80);
+  --muted: #1e1830;
   --muted: oklch(0.22 0.03 280);
+  --muted-foreground: #bdab9c;
   --muted-foreground: oklch(0.72 0.025 60);
+  --accent: #d85c6e;
   --accent: oklch(0.62 0.16 25);          /* rose */
+  --accent-foreground: #ffffff;
   --accent-foreground: oklch(0.98 0.01 80);
+  --destructive: #cc3945;
   --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: #ffffff;
   --destructive-foreground: oklch(0.98 0.01 80);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.78 0.12 55 / 60%);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: rgba(230, 184, 106, 0.6);
+  --gold: #f0cc75;
   --gold: oklch(0.82 0.14 78);
+  --gold-soft: #f8e5b4;
   --gold-soft: oklch(0.88 0.08 78);
+  --rose: #e25867;
   --rose: oklch(0.68 0.17 18);
+  --champagne: #f7ebcf;
   --champagne: oklch(0.92 0.06 80);
 
   /* Gradients & shadows */
-  --gradient-aurora: radial-gradient(60% 80% at 20% 10%, oklch(0.35 0.12 25 / 0.45), transparent 60%),
-                     radial-gradient(50% 70% at 90% 30%, oklch(0.45 0.12 55 / 0.45), transparent 60%),
-                     radial-gradient(70% 90% at 50% 100%, oklch(0.30 0.10 300 / 0.55), transparent 70%);
-  --gradient-gold: linear-gradient(135deg, oklch(0.88 0.10 80), oklch(0.74 0.14 45), oklch(0.86 0.09 65));
-  --gradient-rose: linear-gradient(135deg, oklch(0.78 0.14 25), oklch(0.62 0.17 18));
-  --shadow-glow: 0 30px 80px -20px oklch(0.55 0.18 30 / 0.45);
-  --shadow-elegant: 0 20px 60px -20px oklch(0 0 0 / 0.6);
+  --gradient-aurora: radial-gradient(60% 80% at 20% 10%, rgba(216, 92, 110, 0.35), transparent 60%),
+                     radial-gradient(50% 70% at 90% 30%, rgba(230, 184, 106, 0.35), transparent 60%),
+                     radial-gradient(70% 90% at 50% 100%, rgba(49, 27, 94, 0.55), transparent 70%);
+  --gradient-gold: linear-gradient(135deg, #f8e5b4, #e6b86a, #f0cc75);
+  --gradient-rose: linear-gradient(135deg, #e87b88, #d85c6e);
+  --shadow-glow: 0 30px 80px -20px rgba(216, 92, 110, 0.45);
+  --shadow-elegant: 0 20px 60px -20px rgba(0, 0, 0, 0.6);
 
   /* Apply scoped base styles */
   background-color: var(--background);
@@ -104,6 +125,14 @@
 /* Scoped utility classes that use Tailwind @utility in the standalone template */
 .birthday-letter-in-light .font-display { font-family: "Cormorant Garamond", serif; }
 .birthday-letter-in-light .font-script { font-family: "Pinyon Script", cursive; }
+
+.birthday-letter-in-light .bg-gradient-gold {
+  background: var(--gradient-gold);
+}
+
+.birthday-letter-in-light .bg-gradient-rose {
+  background: var(--gradient-rose);
+}
 
 .birthday-letter-in-light .text-gradient-gold {
   background: var(--gradient-gold);

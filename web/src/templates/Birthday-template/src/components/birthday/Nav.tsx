@@ -33,7 +33,7 @@ export function Nav({ name }: { name: string }) {
   return (
     <motion.nav
       style={{ backgroundColor: bg, borderColor: border }}
-      className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl border-b transition-colors"
+      className="sticky top-0 inset-x-0 z-40 backdrop-blur-xl border-b transition-colors"
     >
       <div className="mx-auto max-w-7xl px-5 md:px-10 h-16 flex items-center justify-between gap-4">
         <a href="#top" className="flex items-center gap-2.5 group min-w-0">
