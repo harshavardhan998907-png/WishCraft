@@ -11,7 +11,7 @@ export function Footer({ sender, recipient }: { sender: string; recipient: strin
           </p>
         </div>
         <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground/60">
-          a TemplateHub birthday
+          a WishCraft birthday
         </div>
       </div>
     </footer>

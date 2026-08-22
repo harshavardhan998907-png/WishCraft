@@ -1,6 +1,6 @@
 {
-  "name": "Template Hub",
-  "short_name": "TemplateHub",
+  "name": "WishCraft",
+  "short_name": "WishCraft",
   "description": "Turn greetings into cinematic memories. Bespoke animated celebration sites.",
   "start_url": "/",
   "display": "standalone",

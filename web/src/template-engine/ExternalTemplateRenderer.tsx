@@ -17,7 +17,6 @@ type LoadStatus = 'loading' | 'ready' | 'error'
 // Messages exchanged with the sandboxed iframe.
 const READY_MESSAGE = 'WISHCRAFT_PREVIEW_READY'
 const UPDATE_MESSAGE = 'WISHCRAFT_UPDATE_PROPS'
-const RESIZE_MESSAGE = 'WISHCRAFT_RESIZE'
 
 // Stop the bundle source from prematurely closing the inline <script> tag.
 function escapeForScript(source: string): string {
@@ -149,32 +148,6 @@ function buildIframeHtml(bundleSource: string, initialProps: TemplateProps): str
 
     // Tell the parent we're listening so it can flush the latest props.
     try { window.parent.postMessage({ type: ${JSON.stringify(READY_MESSAGE)} }, '*'); } catch (e) {}
-
-    function notifyHeight() {
-      try {
-        var body = document.body;
-        var html = document.documentElement;
-        var h = Math.max(
-          body ? body.scrollHeight : 0,
-          body ? body.offsetHeight : 0,
-          html ? html.scrollHeight : 0,
-          html ? html.offsetHeight : 0
-        );
-        if (h > 0) {
-          window.parent.postMessage({ type: ${JSON.stringify(RESIZE_MESSAGE)}, height: h }, '*');
-        }
-      } catch (e) {}
-    }
-
-    if (typeof ResizeObserver !== 'undefined' && document.body) {
-      var ro = new ResizeObserver(function () { notifyHeight(); });
-      ro.observe(document.body);
-    }
-    window.addEventListener('resize', notifyHeight);
-    window.addEventListener('load', notifyHeight);
-    setTimeout(notifyHeight, 200);
-    setTimeout(notifyHeight, 800);
-    setTimeout(notifyHeight, 1500);
   })();
 </script>
 </body>
@@ -198,7 +171,7 @@ export function ExternalTemplateRenderer({
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [iframeHeight, setIframeHeight] = useState<number | null>(null)
+
 
   const isPreview = Boolean(props.previewMode)
 
@@ -261,8 +234,6 @@ export function ExternalTemplateRenderer({
           { type: UPDATE_MESSAGE, props: latestPropsRef.current },
           '*',
         )
-      } else if (data?.type === RESIZE_MESSAGE && typeof data.height === 'number' && data.height > 0) {
-        setIframeHeight(data.height)
       }
     }
     window.addEventListener('message', handleMessage)
