@@ -32,7 +32,7 @@ const manifest = {
   description: 'A premium, animated birthday wish — a love letter written in light, particles, and stars. Features parallax hero, memory gallery, interactive constellation, timeline, personal letter, secret surprise, and confetti celebration.',
   category: 'birthday',
   version: '1.0.0',
-  author: 'TemplateHub',
+  author: 'WishCraft',
   authorType: 'founder',
   thumbnailUrl: '/templates/birthday-letter-in-light/thumbnail.webp',
   rendererType: 'react-component',
