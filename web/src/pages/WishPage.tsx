@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { HeartCrack } from 'lucide-react'
+import { HeartCrack, ArrowLeft } from 'lucide-react'
 import { useWish } from '../hooks/useWish'
 import { useAuth } from '../hooks/useAuth'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -14,6 +14,7 @@ import { TemplateNotFound, WishRenderer } from '../template-engine'
 
 export function WishPage() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const { data, loading, error } = useWish(slug)
   const { user } = useAuth()
   const analytics = useAnalytics()
@@ -33,6 +34,14 @@ export function WishPage() {
       data.wish.music_url,
     ])
   }, [data])
+
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1)
+    } else {
+      navigate(user ? '/dashboard' : '/')
+    }
+  }
 
   if (loading) {
     return (
@@ -70,7 +79,7 @@ export function WishPage() {
   const templateIdentity = data.wish.template_slug ?? data.template.slug ?? data.template.component_key ?? data.template.component_name
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-celebration-light dark:bg-celebration-dark">
       <Helmet>
         <title>A special surprise for {data.wish.recipient_name}</title>
         <meta property="og:title" content={`${data.wish.recipient_name} has a wish for you!`} />
@@ -78,17 +87,33 @@ export function WishPage() {
         {data.template.thumbnail_url ? <meta property="og:image" content={data.template.thumbnail_url} /> : null}
       </Helmet>
 
-      {!templateIdentity ? (
-        <TemplateNotFound templateId={data.wish.template_id} />
-      ) : (
-        <WishRenderer
-          wish={data.wish}
-          template={data.template}
-          className="w-full min-h-screen"
-          fallback={<div className="grid min-h-screen place-items-center bg-cream font-bold">Loading template...</div>}
-        />
-      )}
-    </>
+      {/* Trusted WishCraft Navigation Shell */}
+      <div className="w-full bg-white/80 dark:bg-ink/80 backdrop-blur-md border-b border-zinc-200 dark:border-white/10 px-4 py-2 flex items-center shrink-0 z-50">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleBack} 
+          className="text-zinc-600 dark:text-zinc-300 hover:text-ink dark:hover:text-white"
+          aria-label="Back"
+        >
+          <ArrowLeft size={18} />
+          <span className="font-medium">Back</span>
+        </Button>
+      </div>
+
+      <div className="flex-1 w-full relative">
+        {!templateIdentity ? (
+          <TemplateNotFound templateId={data.wish.template_id} />
+        ) : (
+          <WishRenderer
+            wish={data.wish}
+            template={data.template}
+            className="w-full min-h-[calc(100vh-56px)]"
+            fallback={<div className="grid min-h-[500px] place-items-center bg-cream font-bold">Loading template...</div>}
+          />
+        )}
+      </div>
+    </div>
   )
 }
 
