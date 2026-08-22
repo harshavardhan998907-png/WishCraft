@@ -1,5 +1,5 @@
 import type { Template, WishData } from '../../types'
-import { motion } from 'framer-motion'
+
 import { TemplateRenderer, wishDataToTemplateProps } from '../../template-engine'
 
 export function LivePreview({ template, data }: { template: Template | null; data: WishData }) {

@@ -198,7 +198,7 @@ export function ExternalTemplateRenderer({
   const [status, setStatus] = useState<LoadStatus>('loading')
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [iframeHeight, setIframeHeight] = useState<number | null>(null)
+
 
   const isPreview = Boolean(props.previewMode)
 
