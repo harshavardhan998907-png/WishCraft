@@ -88,7 +88,7 @@ async function processJob(supabase: ReturnType<typeof createClient>, job: Job) {
   const templateId = sanitize(payload.template_id, 80)
 
   let type = job.job_type
-  let title = 'Template Hub update'
+  let title = 'WishCraft update'
   let message = 'You have a new update.'
 
   if (job.job_type === 'wish_expiry_reminder') {
