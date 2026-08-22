@@ -80,7 +80,7 @@ export function PaymentHistory() {
         amount: payment.amount_paise,
         wishId: payment.wish_id,
         templateId: payment.template_id,
-        userName: profile?.full_name ?? payment.wish?.recipient_name ?? 'Template Hub user',
+        userName: profile?.full_name ?? payment.wish?.recipient_name ?? 'WishCraft user',
         userEmail: user?.email ?? '',
       })
       await verifyPayment({ ...result, wishId: payment.wish_id, templateId: payment.template_id })

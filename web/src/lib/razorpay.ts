@@ -21,7 +21,7 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions) {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: opts.amount,
       currency: 'INR',
-      name: 'Template Hub',
+      name: 'WishCraft',
       description: 'Wish page unlock',
       order_id: opts.razorpayOrderId,
       prefill: { name: opts.userName, email: opts.userEmail },

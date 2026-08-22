@@ -15,7 +15,7 @@ const scopes: ApiScope[] = ['templates:read', 'analytics:read', 'webhooks:write'
 export function DeveloperAPIKeys() {
   const [keys, setKeys] = useState<EcosystemApiKey[]>([])
   const [usage, setUsage] = useState<EcosystemApiUsageEvent[]>([])
-  const [keyName, setKeyName] = useState('Template Hub integration')
+  const [keyName, setKeyName] = useState('WishCraft integration')
   const [selectedScopes, setSelectedScopes] = useState<ApiScope[]>(['templates:read'])
   const [newKey, setNewKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
