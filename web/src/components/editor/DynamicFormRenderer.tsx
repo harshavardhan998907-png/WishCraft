@@ -69,10 +69,12 @@ function ToggleField({
 function RepeaterField({
   field,
   value,
+  templateId,
   onChange,
 }: {
   field: FormFieldDefinition
   value: unknown
+  templateId?: string | null
   onChange: (id: string, val: unknown) => void
 }) {
   const items = arrayValue(value)
@@ -134,6 +136,21 @@ function RepeaterField({
                   value={stringValue(subVal)}
                   onChange={(e) => updateItem(idx, sf.id, e.target.value)}
                 />
+              )
+            }
+            if (sf.type === 'gallery') {
+              const urls = listValue(subVal)
+              return (
+                <div key={sf.id} className="space-y-1.5">
+                  <label className="text-sm font-semibold text-ink dark:text-white/90">{sf.label}</label>
+                  <ImageUpload
+                    urls={urls}
+                    onUploaded={(url) => updateItem(idx, sf.id, [...urls, url].slice(0, sf.maxItems ?? 5))}
+                    onRemove={(url) => updateItem(idx, sf.id, urls.filter((item) => item !== url))}
+                    templateId={templateId}
+                  />
+                  {sf.helper ? <p className="text-[11px] text-zinc-400 dark:text-zinc-500">{sf.helper}</p> : null}
+                </div>
               )
             }
             return (
@@ -207,7 +224,7 @@ export function DynamicFormRenderer({ schema, values, templateId, allowMusic = t
 
         // Repeater
         if (field.type === 'repeater') {
-          return <RepeaterField key={field.id} field={field} value={value} onChange={onChange} />
+          return <RepeaterField key={field.id} field={field} value={value} templateId={templateId} onChange={onChange} />
         }
 
         if (field.type === 'textarea') {
