@@ -484,14 +484,18 @@ export function Editor() {
       </div>
 
       {/* Mobile Preview Modal */}
-      <Modal open={previewOpen} title="Experience Preview" onClose={() => setPreviewOpen(false)}>
-        <div className="max-h-[75vh] w-full overflow-hidden rounded-xl bg-white dark:bg-ink relative">
+      <Modal
+        open={previewOpen}
+        title="Experience Preview"
+        onClose={() => setPreviewOpen(false)}
+        footer={
+          <Button onClick={goPreview} className="w-full py-4 shadow-premium shadow-brand/50 text-lg">
+            Continue to Share <Sparkles size={20} className="ml-2" />
+          </Button>
+        }
+      >
+        <div className="h-[70vh] sm:h-[600px] w-full overflow-hidden rounded-xl bg-white dark:bg-ink relative ring-1 ring-black/5 dark:ring-white/10 shadow-lg">
           <LivePreview template={store.template} data={previewData} />
-          <div className="absolute bottom-6 inset-x-6">
-            <Button onClick={goPreview} className="w-full py-4 shadow-premium shadow-brand/50 text-lg">
-              Continue to Share <Sparkles size={20} className="ml-2" />
-            </Button>
-          </div>
         </div>
       </Modal>
       {renderValidationDialog()}
