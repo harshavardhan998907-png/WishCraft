@@ -1,5 +1,4 @@
 import type { Template, WishData } from '../../types'
-import { motion } from 'framer-motion'
 import { TemplateRenderer, wishDataToTemplateProps } from '../../template-engine'
 
 export function LivePreview({ template, data }: { template: Template | null; data: WishData }) {
@@ -15,6 +14,7 @@ export function LivePreview({ template, data }: { template: Template | null; dat
         bundleUrl={template.bundle_url}
         isExternal={template.is_external}
         props={wishDataToTemplateProps(data, true)}
+        className="h-full w-full"
       />
     </div>
   )
