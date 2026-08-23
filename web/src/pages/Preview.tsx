@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LivePreview } from '../components/editor/LivePreview'
@@ -23,6 +23,17 @@ export function Preview() {
   const navigate = useNavigate()
   const toast = useToastStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Defensively ensure the parent body is unlocked for native mobile scrolling.
+  // This repairs any state leaks from Editor.tsx or ResponsiveModal.tsx cleanups
+  // that can occur during route transitions. We unconditionally unlock on mount
+  // and unmount because the Preview route is a standard scrolling page.
+  useEffect(() => {
+    document.body.style.overflow = ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [])
   const data = {
     recipientName: editor.recipientName,
     senderName: editor.senderName,
@@ -208,7 +219,17 @@ export function Preview() {
         backTo={`/editor/${editor.template.slug}`}
       />
       
-      {/* Action Banner moved to the top for better accessibility */}
+      {/*
+        This py-8 wrapper acts as a guaranteed vertical touch area (gutter)
+        for the external parent page, ensuring the user can always swipe
+        above or below the template iframe on mobile devices.
+      */}
+      <div className="py-8 w-full">
+        <div className="w-[86%] mx-auto sm:w-full h-[70vh] min-h-[600px] relative rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 shadow-2xl">
+          <LivePreview template={editor.template} data={data} />
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row items-center justify-between rounded-2xl bg-white p-6 shadow-premium border border-zinc-100 dark:border-white/10 dark:bg-ink dark:text-white gap-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-2 h-full bg-brand" />
         <div className="pl-4 text-center sm:text-left">
@@ -221,10 +242,6 @@ export function Preview() {
             Publish & Share
           </Button>
         </div>
-      </div>
-
-      <div className="w-full h-[70vh] min-h-[600px] relative rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 shadow-2xl">
-        <LivePreview template={editor.template} data={data} />
       </div>
     </section>
   )
