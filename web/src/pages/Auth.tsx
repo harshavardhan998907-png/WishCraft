@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Eye, EyeOff, ArrowLeft, Check, X } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft, Check, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -141,7 +141,7 @@ export function Auth() {
         const data = await signUp(email.trim(), password, fullName.trim())
         const role = data.user?.user_metadata?.role
         const destination = safeRedirect(redirectTo) ?? (role === 'admin' ? '/admin' : '/browse')
-        navigate(destination)
+        navigate(destination, { replace: true })
       } catch (err) {
         const message = err instanceof Error ? err.message : typeof err === 'object' && err && 'message' in err ? String(err.message) : 'Authentication failed'
         setError(friendlyAuthError(message))
@@ -167,7 +167,7 @@ export function Auth() {
         const data = await signIn(email.trim(), password)
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
         const destination = safeRedirect(redirectTo) ?? (profile?.role === 'admin' ? '/admin' : '/browse')
-        navigate(destination)
+        navigate(destination, { replace: true })
       } catch (err) {
         const message = err instanceof Error ? err.message : typeof err === 'object' && err && 'message' in err ? String(err.message) : 'Authentication failed'
         setError(friendlyAuthError(message))
@@ -199,9 +199,9 @@ export function Auth() {
   return (
     <>
       {loading && <Loader variant="fullPage" />}
-      <section className="grid min-h-[calc(100vh-70px)] place-items-center overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
-        <form noValidate onSubmit={submit} className="w-full max-w-md min-h-[550px] sm:min-h-[580px] rounded-2xl border border-black/5 bg-white/95 p-5 shadow-soft transition-colors dark:border-white/10 dark:bg-[#181824]/95 dark:text-white sm:p-7 overflow-hidden flex flex-col">
-        <div className="flex-none mb-6">
+      <section className="grid min-h-[calc(100dvh-70px)] place-items-center overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
+        <form noValidate onSubmit={submit} className="w-full max-w-md rounded-2xl border border-black/5 bg-white/95 p-5 shadow-soft transition-colors dark:border-white/10 dark:bg-[#181824]/95 dark:text-white sm:p-7 overflow-hidden flex flex-col">
+        <div className="flex-none mb-0">
           <button 
             type="button" 
             onClick={() => location.key !== 'default' ? navigate(-1) : navigate('/browse')}
@@ -211,7 +211,7 @@ export function Auth() {
           </button>
         </div>
 
-        <div className="flex-1">
+        <div>
           <AnimatePresence mode="wait">
             {mode === 'forgot_password' ? (
               <motion.div 
@@ -242,9 +242,7 @@ export function Auth() {
                 transition={{ duration: 0.2 }}
               >
                 <div className="mb-6 space-y-2 text-center">
-                  <div className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-brand text-white shadow-soft">
-                    <CheckCircle2 size={22} aria-hidden="true" />
-                  </div>
+                  <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-ink text-base font-black text-white shadow-soft dark:bg-white dark:text-ink">WC</span>
                   <h1 className="text-2xl font-black text-ink dark:text-white sm:text-3xl">{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h1>
                   <p className="text-sm leading-6 text-zinc-500 dark:text-white/60">
                     {mode === 'signup' ? 'Start crafting polished wishes in a few seconds.' : 'Continue to your WishCraft workspace.'}
@@ -315,15 +313,16 @@ export function Auth() {
                   )}
 
                   {mode === 'signup' ? <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required error={fieldErrors.confirmPassword} /> : null}
-                  {mode === 'login' ? (
-                    <div className="flex justify-end pt-1">
-                      <button type="button" onClick={() => { setMode('forgot_password'); setFieldErrors({}); setError(''); }} className="focus-ring min-h-11 rounded-lg px-2 text-sm font-semibold text-brand hover:bg-brand/5">Forgot password?</button>
-                    </div>
-                  ) : null}
-                  {error ? <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-200">{error}</p> : null}
-                  <div className="pt-2">
-                    <Button loading={loading} disabled={mode === 'signup' && !isSignupValid} className="w-full shadow-premium">{mode === 'signup' ? 'Create Account' : 'Login'}</Button>
+                </div>
+
+                {mode === 'login' ? (
+                  <div className="flex justify-end">
+                    <button type="button" onClick={() => { setMode('forgot_password'); setFieldErrors({}); setError(''); }} className="focus-ring min-h-11 rounded-lg px-2 text-sm font-semibold text-brand hover:bg-brand/5">Forgot password?</button>
                   </div>
+                ) : null}
+                {error ? <p role="alert" className={`rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-200 ${mode === 'signup' ? 'mt-4' : 'mt-1'}`}>{error}</p> : null}
+                <div className={mode === 'signup' ? 'mt-4' : 'mt-0'}>
+                  <Button loading={loading} disabled={mode === 'signup' && !isSignupValid} className="w-full shadow-premium">{mode === 'signup' ? 'Create Account' : 'Login'}</Button>
                 </div>
               </motion.div>
             )}

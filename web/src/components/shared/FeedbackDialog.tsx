@@ -90,18 +90,7 @@ export function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
     }
   }, [open])
 
-  // Prevent background scrolling, setup ESC listener
-  useEffect(() => {
-    if (!open) return
-    const previousOverflow = document.body.style.overflow
-    const handler = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', handler)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', handler)
-    }
-  }, [open, onClose])
+
 
   // Clear success states when changing tabs
   const handleTabChange = (tab: 'review' | 'feature' | 'bug') => {

@@ -116,55 +116,59 @@ export function Navbar() {
           <span className="grid h-9 w-9 place-items-center rounded-md bg-ink text-sm text-white shadow-soft dark:bg-white dark:text-ink">WC</span>
           WishCraft
         </Link>
-        <div className="hidden items-center gap-6 md:flex">
-          {user ? (
-            <>
-              {[
-                { id: 'explore', label: 'Explore', path: '/browse', basePath: '/browse' },
-                { id: 'overview', label: 'Dashboard', path: '/dashboard#overview', basePath: '/dashboard' },
-                { id: 'wishes', label: 'My Wishes', path: '/dashboard#wishes', basePath: '/dashboard' },
-                { id: 'templates', label: 'Templates', path: '/dashboard#templates', basePath: '/dashboard' }
-              ].map(link => {
-                const isActive = link.basePath === '/browse' 
-                  ? location.pathname === '/browse'
-                  : location.pathname === link.basePath && (activeSection === link.id || (!activeSection && link.id === 'overview'))
-                return (
-                  <Link 
-                    key={link.id}
-                    to={link.path} 
-                    onClick={(e) => handleNavClick(e, link.basePath, link.id)}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={`relative font-semibold transition-colors hover:text-ink dark:hover:text-white px-2 py-1 ${isActive ? 'text-brand dark:text-brand' : 'text-zinc-700 dark:text-white/70'}`}
-                  >
-                    {link.label}
-                    {isActive && (
-                      <motion.div
-                        layoutId="navbar-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-full"
-                        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                      />
-                    )}
-                  </Link>
-                )
-              })}
-            </>
-          ) : (
-            <>
-              <NavLink to="/browse" className={navLinkClass}>Explore</NavLink>
-              <a href="/#how-it-works" className={navLinkClass}>How it works</a>
-            </>
-          )}
-        </div>
+        {location.pathname !== '/auth' && (
+          <div className="hidden items-center gap-6 md:flex">
+            {user ? (
+              <>
+                {[
+                  { id: 'explore', label: 'Explore', path: '/browse', basePath: '/browse' },
+                  { id: 'overview', label: 'Dashboard', path: '/dashboard#overview', basePath: '/dashboard' },
+                  { id: 'wishes', label: 'My Wishes', path: '/dashboard#wishes', basePath: '/dashboard' },
+                  { id: 'templates', label: 'Templates', path: '/dashboard#templates', basePath: '/dashboard' }
+                ].map(link => {
+                  const isActive = link.basePath === '/browse'
+                    ? location.pathname === '/browse'
+                    : location.pathname === link.basePath && (activeSection === link.id || (!activeSection && link.id === 'overview'))
+                  return (
+                    <Link
+                      key={link.id}
+                      to={link.path}
+                      onClick={(e) => handleNavClick(e, link.basePath, link.id)}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`relative font-semibold transition-colors hover:text-ink dark:hover:text-white px-2 py-1 ${isActive ? 'text-brand dark:text-brand' : 'text-zinc-700 dark:text-white/70'}`}
+                    >
+                      {link.label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="navbar-indicator"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-full"
+                          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                        />
+                      )}
+                    </Link>
+                  )
+                })}
+              </>
+            ) : (
+              <>
+                <NavLink to="/browse" className={navLinkClass}>Explore</NavLink>
+                <a href="/#how-it-works" className={navLinkClass}>How it works</a>
+              </>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-2 md:gap-3">
           {!user ? null : null}
           {!user ? <div className="hidden md:block"><ThemeToggle /></div> : null}
           
-          <Button
-            className="inline-flex px-4 py-2 text-sm md:text-base md:px-5 rounded-full shadow-soft hover:shadow-premium transition-all"
-            onClick={handleCreateWish}
-          >
-            Create Wish <Sparkles size={16} className="ml-1.5 hidden md:block" />
-          </Button>
+          {(!['/', '/auth', '/preview'].includes(location.pathname) && !location.pathname.startsWith('/editor') && !location.pathname.startsWith('/share')) && (
+            <Button
+              className="inline-flex px-4 py-2 text-sm md:text-base md:px-5 rounded-full shadow-soft hover:shadow-premium transition-all"
+              onClick={handleCreateWish}
+            >
+              Create Wish <Sparkles size={16} className="ml-1.5 hidden md:block" />
+            </Button>
+          )}
 
           {user ? (
             <div className="relative hidden md:block" ref={accountRef}>
@@ -226,18 +230,20 @@ export function Navbar() {
                 ) : null}
               </AnimatePresence>
             </div>
-          ) : (
+          ) : location.pathname !== '/auth' ? (
             <Link to="/auth" className={`hidden md:block pl-2 ${navLinkClass}`}>Login</Link>
+          ) : null}
+          {location.pathname !== '/auth' && (
+            <button
+              type="button"
+              className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-ink hover:bg-black/5 dark:text-white dark:hover:bg-white/10 md:hidden ml-1"
+              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           )}
-          <button
-            type="button"
-            className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-ink hover:bg-black/5 dark:text-white dark:hover:bg-white/10 md:hidden ml-1"
-            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
       </nav>
 
@@ -249,9 +255,9 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute top-full left-0 right-0 h-[calc(100vh-100%)] bg-cream/95 backdrop-blur-xl dark:bg-[#10101a]/95 flex flex-col z-40 overflow-y-auto"
+            className="absolute top-full left-0 right-0 max-h-[calc(100dvh-100%)] bg-cream/95 backdrop-blur-xl dark:bg-[#10101a]/95 flex flex-col z-40 overflow-y-auto shadow-2xl border-b border-black/5 dark:border-white/10"
           >
-            <div className="flex-1 flex flex-col justify-between px-6 py-8">
+            <div className="flex flex-col px-6 py-8">
               <nav className="flex flex-col gap-6 text-center">
                 {user ? (
                   <>
@@ -268,7 +274,7 @@ export function Navbar() {
                 )}
               </nav>
 
-              <div className="mt-8 space-y-6">
+              <div className="mt-8 flex flex-col justify-end space-y-6">
                 {/* Secondary Settings Section */}
                 <div className="flex flex-col gap-4 border-t border-black/10 pt-6 dark:border-white/10">
                   {user ? (
@@ -289,7 +295,7 @@ export function Navbar() {
                 </div>
 
                 {/* CTAs Section */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 mt-auto">
                   {user ? (
                     <>
                       {role === 'admin' ? (
@@ -297,7 +303,7 @@ export function Navbar() {
                           <Shield size={18} /> Admin Dashboard
                         </Button>
                       ) : null}
-                      <Button variant="ghost" className="w-full justify-center py-3 text-base text-coral" onClick={handleLogout}>
+                      <Button variant="ghost" className="w-full justify-center py-3 text-base font-bold bg-red-600 text-white hover:bg-red-700 active:bg-red-800 hover:text-white transition-colors" onClick={handleLogout}>
                         <LogOut size={18} /> Logout
                       </Button>
                     </>
