@@ -116,10 +116,24 @@ export function getTemplateSchema(
   const occasion = 'occasion' in template ? template.occasion : template.category
   const manifestSchema = 'schema' in template ? template.schema ?? [] : []
   const manifestExtension = 'extensionSchema' in template ? template.extensionSchema ?? [] : []
-  return mergeSchemas(
+  const finalSchema = mergeSchemas(
     mergeSchemas(baseSchemas[occasion] ?? baseSchemas.other, manifestSchema),
     mergeSchemas(templateExtensionSchemas[slug] ?? [], manifestExtension),
   )
+
+  // Enforce Product Rule: Memory Photo fields must have exactly 1 image.
+  // Identify Memory Photo fields as 'gallery' fields inside a 'memories' repeater
+  for (const field of finalSchema) {
+    if (field.id === 'memories' && field.type === 'repeater' && field.subFields) {
+      for (const sf of field.subFields) {
+        if (sf.type === 'gallery') {
+          sf.maxItems = 1
+        }
+      }
+    }
+  }
+
+  return finalSchema
 }
 
 export function legacyWishDataToFormData(data: WishData): Record<string, unknown> {

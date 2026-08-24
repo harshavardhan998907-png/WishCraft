@@ -1,6 +1,7 @@
 import { supabase } from '../../../lib/supabase'
 import { trackEvent, trackStorageWarning, trackUpload } from '../../analytics/services/analyticsService'
 import type { ImageUploadResult, MediaAsset, MediaAssetType, MediaCleanupJob, MusicUploadResult, StorageUsageMetrics } from '../types'
+import { generateUUID } from '../../../lib/uuid'
 
 const imageMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const audioMimeTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/mp4']
@@ -65,7 +66,7 @@ async function resizeImage(file: File, maxDimension: number, quality: number) {
   if (!context) throw new Error('Image optimizer is unavailable')
   context.drawImage(bitmap, 0, 0, width, height)
   const blob = await canvasBlob(canvas, quality)
-  return new File([blob], `${crypto.randomUUID()}.webp`, { type: 'image/webp' })
+  return new File([blob], `${generateUUID()}.webp`, { type: 'image/webp' })
 }
 
 async function insertAsset(input: {
@@ -114,8 +115,8 @@ export async function uploadOptimizedImage(file: File, input: { templateId?: str
   input.onProgress?.(55)
 
   const prefix = input.pathPrefix ?? `draft/${ownerUserId}`
-  const imagePath = `${prefix}/${crypto.randomUUID()}.webp`
-  const thumbnailPath = `${prefix}/thumb-${crypto.randomUUID()}.webp`
+  const imagePath = `${prefix}/${generateUUID()}.webp`
+  const thumbnailPath = `${prefix}/thumb-${generateUUID()}.webp`
   const imageFile = optimized.size < file.size ? optimized : file
   const bucket = input.bucket ?? 'wish-photos'
 
@@ -168,7 +169,7 @@ export async function uploadMusicAsset(file: File, input: { templateId?: string 
   const rawExtension = file.name.split('.').pop()?.toLowerCase() || ''
   const extension = ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'mp4'].includes(rawExtension) ? rawExtension : 'mp3'
   const prefix = input.pathPrefix ?? `draft/${ownerUserId}`
-  const path = `${prefix}/${crypto.randomUUID()}.${extension}`
+  const path = `${prefix}/${generateUUID()}.${extension}`
   const bucket = 'wish-music'
   input.onProgress?.(50)
 
