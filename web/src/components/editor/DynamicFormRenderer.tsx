@@ -145,6 +145,7 @@ function RepeaterField({
                   <label className="text-sm font-semibold text-ink dark:text-white/90">{sf.label}</label>
                   <ImageUpload
                     urls={urls}
+                    maxFiles={sf.maxItems ?? 5}
                     onUploaded={(url) => updateItem(idx, sf.id, [...urls, url].slice(0, sf.maxItems ?? 5))}
                     onRemove={(url) => updateItem(idx, sf.id, urls.filter((item) => item !== url))}
                     templateId={templateId}
@@ -250,6 +251,7 @@ export function DynamicFormRenderer({ schema, values, templateId, allowMusic = t
               <label className="text-sm font-semibold text-ink dark:text-white/90">{field.label}</label>
               <ImageUpload
                 urls={urls}
+                maxFiles={field.maxItems ?? 5}
                 onUploaded={(url) => onChange(field.id, [...urls, url].slice(0, field.maxItems ?? 5))}
                 onRemove={(url) => onChange(field.id, urls.filter((item) => item !== url))}
                 templateId={templateId}

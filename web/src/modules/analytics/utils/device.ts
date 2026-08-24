@@ -12,12 +12,14 @@ export function getReferrer() {
   return document.referrer || null
 }
 
+import { generateUUID } from '../../../lib/uuid'
+
 export function getSessionId() {
   if (typeof window === 'undefined') return null
   const key = 'template_hub_analytics_session'
   const existing = window.localStorage.getItem(key)
   if (existing) return existing
-  const value = crypto.randomUUID()
+  const value = generateUUID()
   window.localStorage.setItem(key, value)
   return value
 }
