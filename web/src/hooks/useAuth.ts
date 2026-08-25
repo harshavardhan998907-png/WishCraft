@@ -77,6 +77,17 @@ export function useAuth() {
     return data
   }
 
+  async function signInWithGoogle() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth`,
+      },
+    })
+    if (error) throw new Error(error.message)
+    return data
+  }
+
   async function signOut() {
     const { error } = await supabase.auth.signOut()
     if (error) throw new Error(error.message)
@@ -84,5 +95,5 @@ export function useAuth() {
     setProfile(null)
   }
 
-  return { user, profile, role, permissions: permissions ?? getPermissions(role), signUp, signIn, signOut, loading }
+  return { user, profile, role, permissions: permissions ?? getPermissions(role), signUp, signIn, signInWithGoogle, signOut, loading }
 }
