@@ -117,7 +117,7 @@ export function Auth() {
           throw new Error(`Rate limit exceeded. Please wait ${waitTime} seconds before requesting again.`)
         }
         const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}/reset-password`,
         })
         if (resetErr) throw resetErr
         localStorage.setItem('last_password_reset_request', String(now))
