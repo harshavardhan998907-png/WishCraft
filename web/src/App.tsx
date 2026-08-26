@@ -19,6 +19,7 @@ const Expired = lazy(() => import('./pages/Expired').then((module) => ({ default
 const NotFound = lazy(() => import('./pages/NotFound').then((module) => ({ default: module.NotFound })))
 const Share = lazy(() => import('./pages/Share').then((module) => ({ default: module.Share })))
 const Unauthorized = lazy(() => import('./pages/Unauthorized').then((module) => ({ default: module.Unauthorized })))
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then((module) => ({ default: module.ResetPassword })))
 const PaymentHistory = lazy(() => import('./modules/payments/pages/PaymentHistory').then((module) => ({ default: module.PaymentHistory })))
 const NotificationPreferences = lazy(() => import('./modules/notifications/pages/NotificationPreferences').then((module) => ({ default: module.NotificationPreferences })))
 const SecuritySettings = lazy(() => import('./modules/security/pages/SecuritySettings').then((module) => ({ default: module.SecuritySettings })))
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/editor/:templateSlug" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
         <Route path="/preview" element={<ProtectedRoute><Preview /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
